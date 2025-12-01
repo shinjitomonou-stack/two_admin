@@ -123,25 +123,32 @@ export default async function Home() {
               </Link>
             </div>
             <div className="space-y-4">
-              {recentApps?.map((app) => (
-                <div key={app.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
+              {recentApps?.map((app) => {
+                const workerName = Array.isArray(app.workers) ? app.workers[0]?.full_name : (app.workers as any)?.full_name;
+                const jobTitle = Array.isArray(app.jobs) ? app.jobs[0]?.title : (app.jobs as any)?.title;
+
+                return (
+                  <div key={app.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{workerName}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{jobTitle}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{app.workers?.full_name}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{app.jobs?.title}</p>
+                    <div className="text-right">
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap">
+                        応募済み
+                      </span>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDate(app.created_at)}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap">
-                      応募済み
-                    </span>
-                    <p className="text-[10px] text-muted-foreground mt-1">{formatDate(app.created_at)}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               {(!recentApps || recentApps.length === 0) && (
                 <p className="text-sm text-muted-foreground text-center py-4">未対応の応募はありません</p>
               )}
