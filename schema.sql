@@ -224,3 +224,18 @@ CREATE INDEX idx_client_contracts_type ON public.client_contracts(contract_type)
 CREATE INDEX idx_client_job_contracts_client ON public.client_job_contracts(client_id);
 CREATE INDEX idx_client_job_contracts_job ON public.client_job_contracts(job_id);
 CREATE INDEX idx_client_job_contracts_status ON public.client_job_contracts(status);
+
+-- Admin Users table
+CREATE TABLE public.admin_users (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT NOT NULL,
+    role TEXT DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS for admin_users
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+-- Policies for admin_users
+CREATE POLICY "Admins can view own data" ON public.admin_users
+    FOR SELECT USING (auth.uid() = id);
