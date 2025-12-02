@@ -18,7 +18,13 @@ export default function ContractSigningForm({ templateId, workerId }: { template
                 alert(result.error);
                 setIsLoading(false);
             }
+            // If no error, the server action will redirect
         } catch (e) {
+            // Ignore NEXT_REDIRECT errors (these are expected when redirect() is called)
+            if (e && typeof e === 'object' && 'digest' in e && typeof e.digest === 'string' && e.digest.includes('NEXT_REDIRECT')) {
+                // This is a normal redirect, not an error
+                return;
+            }
             console.error(e);
             alert("エラーが発生しました");
             setIsLoading(false);
