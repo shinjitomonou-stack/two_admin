@@ -1,13 +1,15 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export default async function Home() {
   const supabase = await createClient();
-  const cookieStore = await cookies();
-  const workerId = cookieStore.get("worker_id")?.value;
+
+  // Get authenticated user from Supabase Auth
+  const { data: { user } } = await supabase.auth.getUser();
+  const workerId = user?.id;
 
   // Check for unsigned contract if logged in
   let showContractAlert = false;
@@ -168,6 +170,9 @@ export default async function Home() {
           )}
         </div>
       </header>
+
+      {/* Auth Success Message */}
+      <AuthSuccessMessage />
 
       {/* Contract Alert (Basic) */}
       {showContractAlert && (
