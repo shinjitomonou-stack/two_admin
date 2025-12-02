@@ -3,7 +3,8 @@
 export function LineConnectButton() {
     const handleLineConnect = () => {
         const clientId = process.env.NEXT_PUBLIC_LINE_CHANNEL_ID || '2006927485';
-        const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/line/callback`);
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const redirectUri = encodeURIComponent(`${siteUrl}/api/auth/line/callback`);
         const state = Math.random().toString(36).substring(7);
 
         // Store state in sessionStorage for verification
