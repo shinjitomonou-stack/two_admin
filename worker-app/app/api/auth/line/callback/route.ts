@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 
 const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || '2006927485';
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || 'bd2af8603cadd17d4bf62c0f64dde0e8';
@@ -59,19 +58,18 @@ export async function GET(request: NextRequest) {
         const profile = await profileResponse.json();
         const lineUserId = profile.userId;
 
-        // Save to database
-        const cookieStore = await cookies();
-        const workerId = cookieStore.get('worker_id')?.value;
+        // Get authenticated user from Supabase Auth
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!workerId) {
+        if (!user) {
             return NextResponse.redirect(`${origin}/login`);
         }
 
-        const supabase = await createClient();
         const { error: updateError } = await supabase
             .from('workers')
             .update({ line_user_id: lineUserId })
-            .eq('id', workerId);
+            .eq('id', user.id);
 
         if (updateError) {
             console.error('Database update failed:', updateError);
