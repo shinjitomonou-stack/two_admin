@@ -92,7 +92,7 @@ export async function registerWorker(formData: FormData) {
     }
 
     revalidatePath("/");
-    redirect("/?registered=true");
+    return { success: true };
 }
 
 export async function loginWorker(formData: FormData) {

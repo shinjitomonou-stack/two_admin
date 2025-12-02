@@ -8,6 +8,7 @@ import { Loader2, ArrowRight } from "lucide-react";
 export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
@@ -17,9 +18,34 @@ export default function RegisterPage() {
         if (result?.error) {
             setError(result.error);
             setIsLoading(false);
+        } else if (result?.success) {
+            setIsSuccess(true);
+            setIsLoading(false);
         }
-        // If success, server action redirects
     };
+
+    if (isSuccess) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Loader2 className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-4">登録を受け付けました</h1>
+                    <p className="text-slate-600 mb-8 leading-relaxed">
+                        ご登録いただいたメールアドレスに確認メールを送信しました。<br />
+                        メール内のリンクをクリックして、登録を完了してください。
+                    </p>
+                    <Link
+                        href="/login"
+                        className="block w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                    >
+                        ログインページへ戻る
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -38,6 +64,7 @@ export default function RegisterPage() {
                 )}
 
                 <form action={handleSubmit} className="space-y-6">
+                    {/* ... existing form fields ... */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700">名前(フルネーム)</label>
                         <input
