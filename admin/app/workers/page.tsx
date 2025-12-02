@@ -15,6 +15,17 @@ export default async function WorkersPage() {
         console.error("Error fetching workers:", error);
     }
 
+    // Fetch email verification status for each worker
+    const workersWithVerification = await Promise.all(
+        (workers || []).map(async (worker) => {
+            const { data: { user } } = await supabase.auth.admin.getUserById(worker.id);
+            return {
+                ...worker,
+                email_confirmed_at: user?.email_confirmed_at || null,
+            };
+        })
+    );
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -58,7 +69,7 @@ export default async function WorkersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {workers?.map((worker) => (
+                                {workersWithVerification?.map((worker) => (
                                     <tr key={worker.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{worker.full_name}</div>
@@ -70,7 +81,7 @@ export default async function WorkersPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {worker.is_verified ? (
+                                            {worker.email_confirmed_at ? (
                                                 <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium">
                                                     <ShieldCheck className="w-4 h-4" />
                                                     確認済み
@@ -106,7 +117,7 @@ export default async function WorkersPage() {
                                     </tr>
                                 ))}
                                 {
-                                    (!workers || workers.length === 0) && (
+                                    (!workersWithVerification || workersWithVerification.length === 0) && (
                                         <tr>
                                             <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
                                                 ワーカーがまだ登録されていません。
