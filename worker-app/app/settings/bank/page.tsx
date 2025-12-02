@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
@@ -6,15 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 import { BankAccountForm } from "@/components/BankAccountForm";
 
 export default async function BankAccountPage() {
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+    const supabase = await createClient();
 
-    if (!workerId) {
+    // Get authenticated user from Supabase Auth
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
         redirect("/login");
     }
 
+    const workerId = user.id;
+
     // Fetch existing bank account info
-    const supabase = await createClient();
     const { data: worker } = await supabase
         .from("workers")
         .select("bank_account")

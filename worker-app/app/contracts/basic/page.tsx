@@ -1,19 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ContractSigningForm from "@/app/contracts/basic/ContractSigningForm";
 
 export default async function BasicContractPage() {
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+    const supabase = await createClient();
 
-    if (!workerId) {
+    // Get authenticated user from Supabase Auth
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
         redirect("/login");
     }
 
-    const supabase = await createClient();
+    const workerId = user.id;
 
     // Fetch the active Basic Contract Template
     const { data: template } = await supabase

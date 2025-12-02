@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
@@ -6,14 +5,17 @@ import { createClient } from "@/lib/supabase/server";
 import { LineConnectButton } from "@/components/LineConnectButton";
 
 export default async function LineSettingsPage() {
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+    const supabase = await createClient();
 
-    if (!workerId) {
+    // Get authenticated user from Supabase Auth
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
         redirect('/login');
     }
 
-    const supabase = await createClient();
+    const workerId = user.id;
+
     const { data: worker } = await supabase
         .from('workers')
         .select('*')
