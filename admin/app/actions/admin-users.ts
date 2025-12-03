@@ -64,8 +64,8 @@ export async function createAdminUser(formData: FormData) {
         return { error: "ユーザーの作成に失敗しました" };
     }
 
-    // Create admin_users record
-    const { error: adminError } = await supabase
+    // Create admin_users record using admin client to bypass RLS
+    const { error: adminError } = await adminClient
         .from("admin_users")
         .insert([
             {
@@ -109,8 +109,11 @@ export async function deleteAdminUser(userId: string) {
         return { error: "管理者権限がありません" };
     }
 
+    // Use admin client for deleting from admin_users table to bypass RLS
+    const adminClient = await createAdminClient();
+
     // Delete from admin_users table
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminClient
         .from("admin_users")
         .delete()
         .eq("id", userId);
@@ -119,9 +122,6 @@ export async function deleteAdminUser(userId: string) {
         console.error("Admin deletion error:", deleteError);
         return { error: "削除に失敗しました: " + deleteError.message };
     }
-
-    // Use admin client for deleting auth users
-    const adminClient = await createAdminClient();
 
     // Delete from Supabase Auth
     const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
