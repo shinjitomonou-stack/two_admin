@@ -23,9 +23,6 @@ export default async function CalendarPage() {
         console.error("Error fetching applications:", error);
     }
 
-    console.log("Fetched applications:", applications?.length || 0);
-    console.log("First application:", applications?.[0]);
-
     // Transform data to match Calendar component interface
     const calendarJobs = (applications || []).map((app) => {
         const job = Array.isArray(app.job) ? app.job[0] : app.job;
@@ -44,8 +41,6 @@ export default async function CalendarPage() {
         };
     });
 
-    console.log("Transformed jobs:", calendarJobs.length);
-
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -55,10 +50,6 @@ export default async function CalendarPage() {
                     <p className="text-muted-foreground">
                         作業予定日ごとに案件を確認できます。
                     </p>
-                    {/* Debug Info */}
-                    <div className="mt-2 text-xs text-slate-500">
-                        デバッグ: 取得件数={applications?.length || 0}, エラー={error ? 'あり' : 'なし'}, 変換後={calendarJobs.length}
-                    </div>
                 </div>
 
                 {/* Stats - Above Calendar */}
