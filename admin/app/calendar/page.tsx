@@ -10,17 +10,15 @@ export default async function CalendarPage() {
         .from("job_applications")
         .select(`
             id,
-            scheduled_work_date,
-            scheduled_work_time_start,
-            scheduled_work_time_end,
+            scheduled_work_start,
+            scheduled_work_end,
             status,
             job:jobs(id, title, status),
-            worker:workers(full_name),
-            client:clients(name)
+            worker:workers(full_name)
         `)
-        .not("scheduled_work_date", "is", null)
-        .eq("status", "ACCEPTED")
-        .order("scheduled_work_date", { ascending: true });
+        .not("scheduled_work_start", "is", null)
+        .in("status", ["ASSIGNED", "CONFIRMED"])
+        .order("scheduled_work_start", { ascending: true });
 
     if (error) {
         console.error("Error fetching applications:", error);
@@ -30,24 +28,15 @@ export default async function CalendarPage() {
     const calendarJobs = (applications || []).map((app) => {
         const job = Array.isArray(app.job) ? app.job[0] : app.job;
         const worker = Array.isArray(app.worker) ? app.worker[0] : app.worker;
-        const client = Array.isArray(app.client) ? app.client[0] : app.client;
-
-        // Combine date and time
-        const scheduledStart = app.scheduled_work_date && app.scheduled_work_time_start
-            ? `${app.scheduled_work_date}T${app.scheduled_work_time_start}`
-            : app.scheduled_work_date;
-        const scheduledEnd = app.scheduled_work_date && app.scheduled_work_time_end
-            ? `${app.scheduled_work_date}T${app.scheduled_work_time_end}`
-            : null;
 
         return {
             id: job?.id || app.id,
             title: job?.title || "案件名不明",
             status: job?.status || "OPEN",
-            scheduled_work_start: scheduledStart,
-            scheduled_work_end: scheduledEnd,
+            scheduled_work_start: app.scheduled_work_start,
+            scheduled_work_end: app.scheduled_work_end,
             worker: worker,
-            client: client,
+            client: { name: "" }, // Client info not in applications table
         };
     });
 
