@@ -5,35 +5,51 @@ import { Calendar } from "@/components/Calendar";
 export default async function CalendarPage() {
     const supabase = await createClient();
 
-    // Fetch all jobs with their schedules, workers, and clients
-    const { data: jobs, error } = await supabase
-        .from("jobs")
+    // Fetch all job applications with their schedules
+    const { data: applications, error } = await supabase
+        .from("job_applications")
         .select(`
             id,
-            title,
+            scheduled_work_date,
+            scheduled_work_time_start,
+            scheduled_work_time_end,
             status,
-            scheduled_work_start,
-            scheduled_work_end,
+            job:jobs(id, title, status),
             worker:workers(full_name),
             client:clients(name)
         `)
-        .not("scheduled_work_start", "is", null)
-        .order("scheduled_work_start", { ascending: true });
+        .not("scheduled_work_date", "is", null)
+        .eq("status", "ACCEPTED")
+        .order("scheduled_work_date", { ascending: true });
 
     if (error) {
-        console.error("Error fetching jobs:", error);
+        console.error("Error fetching applications:", error);
     }
 
     // Transform data to match Calendar component interface
-    const calendarJobs = (jobs || []).map((job) => ({
-        id: job.id,
-        title: job.title,
-        status: job.status,
-        scheduled_work_start: job.scheduled_work_start,
-        scheduled_work_end: job.scheduled_work_end,
-        worker: Array.isArray(job.worker) ? job.worker[0] : job.worker,
-        client: Array.isArray(job.client) ? job.client[0] : job.client,
-    }));
+    const calendarJobs = (applications || []).map((app) => {
+        const job = Array.isArray(app.job) ? app.job[0] : app.job;
+        const worker = Array.isArray(app.worker) ? app.worker[0] : app.worker;
+        const client = Array.isArray(app.client) ? app.client[0] : app.client;
+
+        // Combine date and time
+        const scheduledStart = app.scheduled_work_date && app.scheduled_work_time_start
+            ? `${app.scheduled_work_date}T${app.scheduled_work_time_start}`
+            : app.scheduled_work_date;
+        const scheduledEnd = app.scheduled_work_date && app.scheduled_work_time_end
+            ? `${app.scheduled_work_date}T${app.scheduled_work_time_end}`
+            : null;
+
+        return {
+            id: job?.id || app.id,
+            title: job?.title || "案件名不明",
+            status: job?.status || "OPEN",
+            scheduled_work_start: scheduledStart,
+            scheduled_work_end: scheduledEnd,
+            worker: worker,
+            client: client,
+        };
+    });
 
     return (
         <AdminLayout>
