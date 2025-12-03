@@ -23,8 +23,15 @@ const STATUS_LABELS = {
     CONFIRMED: "契約済",
 };
 
-export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function JobDetailPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ return?: string }>;
+}) {
     const { id } = await params;
+    const { return: returnTo } = await searchParams;
     const supabase = await createClient();
 
     // Fetch Job Details
@@ -45,14 +52,19 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         .eq("job_id", id)
         .order("created_at", { ascending: false });
 
+    // Determine back link based on return parameter
+    const backLink = returnTo === 'calendar' ? '/calendar' : '/jobs';
+    const backLabel = returnTo === 'calendar' ? 'カレンダーに戻る' : '案件一覧に戻る';
+
     return (
         <AdminLayout>
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <Link
-                        href="/jobs"
+                        href={backLink}
                         className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        title={backLabel}
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
