@@ -55,6 +55,10 @@ export default async function CalendarPage() {
                     <p className="text-muted-foreground">
                         作業予定日ごとに案件を確認できます。
                     </p>
+                    {/* Debug Info */}
+                    <div className="mt-2 text-xs text-slate-500">
+                        デバッグ: 取得件数={applications?.length || 0}, エラー={error ? 'あり' : 'なし'}, 変換後={calendarJobs.length}
+                    </div>
                 </div>
 
                 {/* Stats - Above Calendar */}
