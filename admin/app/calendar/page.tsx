@@ -42,7 +42,7 @@ export default async function CalendarPage() {
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">案件カレンダー</h2>
                     <p className="text-muted-foreground">
-                        作業予定日ごとに案件を確認できます。
+                        作業予定日ごとに案件を確認できます。（取得件数: {calendarJobs.length}件）
                     </p>
                 </div>
 
