@@ -50,7 +50,14 @@ const sidebarItems = [
             { label: "請求金額集計", href: "/clients/billing" },
         ]
     },
-    { icon: Settings, label: "設定", href: "/settings" },
+    {
+        icon: Settings,
+        label: "設定",
+        href: "/settings",
+        subItems: [
+            { label: "管理者管理", href: "/settings/admins" },
+        ]
+    },
 ];
 
 export default function AdminLayout({
