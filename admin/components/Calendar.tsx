@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { JobEventCard } from "./JobEventCard";
+import { JobEventCard } from "@/components/JobEventCard";
 
 interface CalendarJob {
     id: string;
@@ -136,12 +136,12 @@ export function Calendar({ jobs }: CalendarProps) {
                             >
                                 <div
                                     className={`text-sm font-medium mb-1 ${isToday
-                                            ? 'text-blue-600'
-                                            : isSunday
-                                                ? 'text-red-600'
-                                                : isSaturday
-                                                    ? 'text-blue-600'
-                                                    : 'text-slate-700'
+                                        ? 'text-blue-600'
+                                        : isSunday
+                                            ? 'text-red-600'
+                                            : isSaturday
+                                                ? 'text-blue-600'
+                                                : 'text-slate-700'
                                         }`}
                                 >
                                     {day}
