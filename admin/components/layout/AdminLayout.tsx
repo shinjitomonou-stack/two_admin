@@ -11,7 +11,8 @@ import {
     LogOut,
     Menu,
     Building2,
-    FileSignature
+    FileSignature,
+    Calendar as CalendarIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -19,6 +20,7 @@ import { logout } from "@/app/actions/auth";
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: "ダッシュボード", href: "/" },
+    { icon: CalendarIcon, label: "カレンダー", href: "/calendar" },
     {
         icon: Briefcase,
         label: "案件管理",
