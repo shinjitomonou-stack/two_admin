@@ -17,7 +17,6 @@ export default async function CalendarPage() {
             worker:workers(full_name)
         `)
         .not("scheduled_work_start", "is", null)
-        .in("status", ["ASSIGNED", "CONFIRMED"])
         .order("scheduled_work_start", { ascending: true });
 
     if (error) {
