@@ -13,7 +13,7 @@ export default async function CalendarPage() {
             scheduled_work_start,
             scheduled_work_end,
             status,
-            job:jobs(id, title, status, billing_amount, payment_amount),
+            job:jobs(id, title, status, billing_amount, reward_amount),
             worker:workers(full_name)
         `)
         .not("scheduled_work_start", "is", null)
@@ -40,7 +40,7 @@ export default async function CalendarPage() {
             worker: worker,
             client: { name: "" },
             billing_amount: Number(job?.billing_amount) || 0,
-            payment_amount: Number(job?.payment_amount) || 0,
+            payment_amount: Number(job?.reward_amount) || 0,
         };
     });
 
