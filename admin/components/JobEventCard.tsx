@@ -38,7 +38,7 @@ export function JobEventCard({ job }: JobEventCardProps) {
 
     return (
         <Link
-            href={`/jobs/${job.id}`}
+            href={`/jobs/${job.id}?return=calendar`}
             className={`block text-xs p-2 rounded border ${statusColors[job.status] || statusColors.OPEN
                 } hover:opacity-80 transition-opacity`}
         >

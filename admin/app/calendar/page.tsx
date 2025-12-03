@@ -13,7 +13,7 @@ export default async function CalendarPage() {
             scheduled_work_start,
             scheduled_work_end,
             status,
-            job:jobs(id, title, status),
+            job:jobs(id, title, status, billing_amount, payment_amount),
             worker:workers(full_name)
         `)
         .not("scheduled_work_start", "is", null)
@@ -36,7 +36,9 @@ export default async function CalendarPage() {
             scheduled_work_start: app.scheduled_work_start,
             scheduled_work_end: app.scheduled_work_end,
             worker: worker,
-            client: { name: "" }, // Client info not in applications table
+            client: { name: "" },
+            billing_amount: job?.billing_amount || 0,
+            payment_amount: job?.payment_amount || 0,
         };
     });
 
@@ -47,8 +49,30 @@ export default async function CalendarPage() {
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">案件カレンダー</h2>
                     <p className="text-muted-foreground">
-                        作業予定日ごとに案件を確認できます。（取得件数: {calendarJobs.length}件）
+                        作業予定日ごとに案件を確認できます。
                     </p>
+                </div>
+
+                {/* Stats - Above Calendar */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <div className="text-sm text-slate-500">案件数</div>
+                        <div className="text-2xl font-bold text-slate-900 mt-1">
+                            {calendarJobs.length}件
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <div className="text-sm text-slate-500">請求金額</div>
+                        <div className="text-2xl font-bold text-blue-600 mt-1">
+                            ¥{calendarJobs.reduce((sum, job) => sum + (job.billing_amount || 0), 0).toLocaleString()}
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <div className="text-sm text-slate-500">報酬金額</div>
+                        <div className="text-2xl font-bold text-green-600 mt-1">
+                            ¥{calendarJobs.reduce((sum, job) => sum + (job.payment_amount || 0), 0).toLocaleString()}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Legend */}
@@ -80,38 +104,6 @@ export default async function CalendarPage() {
 
                 {/* Calendar */}
                 <Calendar jobs={calendarJobs} />
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">今月の案件</div>
-                        <div className="text-2xl font-bold text-slate-900 mt-1">
-                            {calendarJobs.filter((job) => {
-                                const date = new Date(job.scheduled_work_start);
-                                const now = new Date();
-                                return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                            }).length}
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">募集中</div>
-                        <div className="text-2xl font-bold text-blue-600 mt-1">
-                            {calendarJobs.filter((job) => job.status === "OPEN").length}
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">作業中</div>
-                        <div className="text-2xl font-bold text-orange-600 mt-1">
-                            {calendarJobs.filter((job) => job.status === "IN_PROGRESS").length}
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">完了</div>
-                        <div className="text-2xl font-bold text-green-600 mt-1">
-                            {calendarJobs.filter((job) => job.status === "COMPLETED").length}
-                        </div>
-                    </div>
-                </div>
             </div>
         </AdminLayout>
     );
