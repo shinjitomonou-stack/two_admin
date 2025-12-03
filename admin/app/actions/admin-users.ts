@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -45,8 +45,11 @@ export async function createAdminUser(formData: FormData) {
         return { error: "このメールアドレスは既に登録されています" };
     }
 
+    // Use admin client for creating users
+    const adminClient = await createAdminClient();
+
     // Create user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
         email,
         password,
         email_confirm: true, // Auto-confirm email for admin users
@@ -74,7 +77,7 @@ export async function createAdminUser(formData: FormData) {
     if (adminError) {
         console.error("Admin user creation error:", adminError);
         // Cleanup: delete auth user if admin_users creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
+        await adminClient.auth.admin.deleteUser(authData.user.id);
         return { error: "管理者の登録に失敗しました: " + adminError.message };
     }
 
@@ -117,8 +120,11 @@ export async function deleteAdminUser(userId: string) {
         return { error: "削除に失敗しました: " + deleteError.message };
     }
 
+    // Use admin client for deleting auth users
+    const adminClient = await createAdminClient();
+
     // Delete from Supabase Auth
-    const { error: authDeleteError } = await supabase.auth.admin.deleteUser(userId);
+    const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
 
     if (authDeleteError) {
         console.error("Auth user deletion error:", authDeleteError);
