@@ -23,6 +23,9 @@ export default async function CalendarPage() {
         console.error("Error fetching applications:", error);
     }
 
+    console.log("Fetched applications:", applications?.length || 0);
+    console.log("First application:", applications?.[0]);
+
     // Transform data to match Calendar component interface
     const calendarJobs = (applications || []).map((app) => {
         const job = Array.isArray(app.job) ? app.job[0] : app.job;
@@ -36,10 +39,12 @@ export default async function CalendarPage() {
             scheduled_work_end: app.scheduled_work_end,
             worker: worker,
             client: { name: "" },
-            billing_amount: job?.billing_amount || 0,
-            payment_amount: job?.payment_amount || 0,
+            billing_amount: Number(job?.billing_amount) || 0,
+            payment_amount: Number(job?.payment_amount) || 0,
         };
     });
+
+    console.log("Transformed jobs:", calendarJobs.length);
 
     return (
         <AdminLayout>
