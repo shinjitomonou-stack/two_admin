@@ -1,7 +1,7 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export default async function Home() {
@@ -16,6 +16,13 @@ export default async function Home() {
   let showBankAccountAlert = false;
   let showLineAlert = false;
   let workerName = "";
+
+  // Dashboard statistics
+  let workDaysThisMonth = 0;
+  let earningsThisMonth = 0;
+  let appliedCount = 0;
+  let confirmedCount = 0;
+  let upcomingSchedule: any[] = [];
 
   if (workerId) {
     // Fetch worker details
@@ -60,24 +67,73 @@ export default async function Home() {
         showContractAlert = true;
       }
     }
+
+    // Calculate dashboard statistics
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // This month's work days (completed work)
+    const { data: completedWork } = await supabase
+      .from("job_applications")
+      .select("id, actual_work_start")
+      .eq("worker_id", workerId)
+      .not("actual_work_start", "is", null)
+      .gte("actual_work_start", startOfMonth.toISOString())
+      .lte("actual_work_start", endOfMonth.toISOString());
+
+    workDaysThisMonth = completedWork?.length || 0;
+
+    // This month's earnings (confirmed and completed work)
+    const { data: earningsData } = await supabase
+      .from("job_applications")
+      .select("jobs(reward_amount)")
+      .eq("worker_id", workerId)
+      .in("status", ["CONFIRMED", "COMPLETED"])
+      .gte("scheduled_work_start", startOfMonth.toISOString())
+      .lte("scheduled_work_start", endOfMonth.toISOString());
+
+    if (earningsData) {
+      earningsThisMonth = earningsData.reduce((sum, app: any) => {
+        const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+        return sum + (job?.reward_amount || 0);
+      }, 0);
+    }
+
+    // Application counts
+    const { data: applications } = await supabase
+      .from("job_applications")
+      .select("status")
+      .eq("worker_id", workerId)
+      .in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]);
+
+    if (applications) {
+      appliedCount = applications.filter(app => app.status === "APPLIED").length;
+      confirmedCount = applications.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED").length;
+    }
+
+    // Upcoming schedule (next 7 days)
+    const { data: schedule } = await supabase
+      .from("job_applications")
+      .select(`
+        id,
+        scheduled_work_start,
+        scheduled_work_end,
+        jobs(id, title, address_text, clients(name))
+      `)
+      .eq("worker_id", workerId)
+      .in("status", ["ASSIGNED", "CONFIRMED"])
+      .gte("scheduled_work_start", now.toISOString())
+      .lte("scheduled_work_start", sevenDaysLater.toISOString())
+      .order("scheduled_work_start");
+
+    upcomingSchedule = schedule || [];
   }
 
   // Check for pending individual contracts
   let pendingIndividualContracts: any[] = [];
   if (workerId) {
-    const { data: pendingContracts } = await supabase
-      .from("job_individual_contracts")
-      .select(`
-            id,
-            job_applications (
-                jobs (title)
-            )
-        `)
-      .order("created_at", { ascending: false });
-
-    // Filter by worker_id via application relation is hard in one query without complex joins or RPC
-    // So we fetch by application_id where worker_id matches.
-    // Actually, we can join job_applications and filter by worker_id there.
     const { data: myPendingContracts } = await supabase
       .from("job_individual_contracts")
       .select(`
@@ -154,6 +210,18 @@ export default async function Home() {
   if (error) {
     console.error("Error fetching jobs:", error);
   }
+
+  // Helper function to format date
+  const formatScheduleDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekday = weekdays[date.getDay()];
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return { date: `${month}/${day} (${weekday})`, time: `${hours}:${minutes}` };
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -272,8 +340,6 @@ export default async function Home() {
         </div>
       )}
 
-
-
       {/* Bank Account Alert */}
       {
         showBankAccountAlert && (
@@ -322,6 +388,123 @@ export default async function Home() {
 
       {/* Main Content */}
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Dashboard Statistics */}
+        {workerId && (
+          <section className="bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm">今月の活動</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-blue-600 mb-1">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-xs font-medium">稼働日数</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-900">{workDaysThisMonth}日</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-green-600 mb-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-xs font-medium">報酬見込み</span>
+                </div>
+                <div className="text-2xl font-bold text-green-900">¥{earningsThisMonth.toLocaleString()}</div>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-purple-600 mb-1">
+                  <Briefcase className="w-4 h-4" />
+                  <span className="text-xs font-medium">応募中</span>
+                </div>
+                <div className="text-2xl font-bold text-purple-900">{appliedCount}件</div>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-orange-600 mb-1">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-xs font-medium">確定済み</span>
+                </div>
+                <div className="text-2xl font-bold text-orange-900">{confirmedCount}件</div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Upcoming Schedule */}
+        {workerId && (
+          <section className="bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              今後の予定
+            </h2>
+            {upcomingSchedule.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingSchedule.map((schedule) => {
+                  const job = Array.isArray(schedule.jobs) ? schedule.jobs[0] : schedule.jobs;
+                  const client = job?.clients ? (Array.isArray(job.clients) ? job.clients[0] : job.clients) : null;
+                  const startDate = formatScheduleDate(schedule.scheduled_work_start);
+                  const endTime = new Date(schedule.scheduled_work_end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+
+                  return (
+                    <Link
+                      key={schedule.id}
+                      href={`/jobs/${job?.id}`}
+                      className="block border border-slate-100 rounded-lg p-3 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="text-sm font-bold text-slate-900">{startDate.date}</div>
+                        <div className="text-xs text-slate-500">{startDate.time} - {endTime}</div>
+                      </div>
+                      <div className="text-sm font-medium text-slate-700">{job?.title}</div>
+                      {client && (
+                        <div className="text-xs text-slate-500 mt-1">{client.name}</div>
+                      )}
+                      {job?.address_text && (
+                        <div className="text-xs text-slate-500 mt-1">📍 {job.address_text}</div>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 text-center py-4">今後7日間の予定はありません</p>
+            )}
+          </section>
+        )}
+
+        {/* Quick Actions */}
+        {workerId && (
+          <section className="bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm">クイックアクション</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/jobs"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <Search className="w-6 h-6 text-blue-600" />
+                <span className="text-xs font-medium text-slate-700">案件を探す</span>
+              </Link>
+              <Link
+                href="/applications"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <Briefcase className="w-6 h-6 text-purple-600" />
+                <span className="text-xs font-medium text-slate-700">応募履歴</span>
+              </Link>
+              <Link
+                href="/reports"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <FileText className="w-6 h-6 text-green-600" />
+                <span className="text-xs font-medium text-slate-700">作業報告</span>
+              </Link>
+              <Link
+                href="/settings"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <Settings className="w-6 h-6 text-slate-600" />
+                <span className="text-xs font-medium text-slate-700">設定</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* New Jobs */}
         <section>
           <h2 className="font-bold text-slate-900 mb-4">新着の案件</h2>
           <div className="space-y-4">
