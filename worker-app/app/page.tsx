@@ -1,7 +1,7 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock } from "lucide-react";
+import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export default async function Home() {
@@ -24,11 +24,17 @@ export default async function Home() {
   let confirmedCount = 0;
   let upcomingSchedule: any[] = [];
 
+  // Phase 2 variables
+  let recentActivity: any[] = [];
+  let announcementsWithReadStatus: any[] = [];
+  let profileCompletion = 0;
+  let incompleteItems: string[] = [];
+
   if (workerId) {
     // Fetch worker details
     const { data: worker } = await supabase
       .from("workers")
-      .select("full_name, bank_account, line_user_id")
+      .select("full_name, email, phone, bank_account, line_user_id")
       .eq("id", workerId)
       .single();
 
@@ -117,11 +123,11 @@ export default async function Home() {
     const { data: schedule } = await supabase
       .from("job_applications")
       .select(`
-        id,
-        scheduled_work_start,
-        scheduled_work_end,
-        jobs(id, title, address_text, clients(name))
-      `)
+id,
+  scheduled_work_start,
+  scheduled_work_end,
+  jobs(id, title, address_text, clients(name))
+    `)
       .eq("worker_id", workerId)
       .in("status", ["ASSIGNED", "CONFIRMED"])
       .gte("scheduled_work_start", now.toISOString())
@@ -129,6 +135,79 @@ export default async function Home() {
       .order("scheduled_work_start");
 
     upcomingSchedule = schedule || [];
+
+    // Phase 2: Recent Activity (completed work)
+    const { data: recentActivityData } = await supabase
+      .from("job_applications")
+      .select(`
+        id,
+        actual_work_end,
+        jobs(id, title, reward_amount),
+        reports(id, status)
+      `)
+      .eq("worker_id", workerId)
+      .eq("status", "COMPLETED")
+      .not("actual_work_end", "is", null)
+      .order("actual_work_end", { ascending: false })
+      .limit(5);
+
+    recentActivity = recentActivityData || [];
+
+    // Phase 2: Announcements
+    const { data: announcementsData } = await supabase
+      .from("announcements")
+      .select("*")
+      .eq("is_active", true)
+      .or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    // Check which announcements have been read
+    if (announcementsData) {
+      for (const announcement of announcementsData) {
+        const { data: readStatus } = await supabase
+          .from("worker_announcement_reads")
+          .select("id")
+          .eq("worker_id", workerId)
+          .eq("announcement_id", announcement.id)
+          .maybeSingle();
+
+        announcementsWithReadStatus.push({
+          ...announcement,
+          isRead: !!readStatus
+        });
+      }
+    }
+
+    // Phase 2: Profile Completion
+    if (worker) {
+      const checks = [
+        { field: worker.full_name, label: "氏名" },
+        { field: worker.email, label: "メールアドレス" },
+        { field: worker.phone, label: "電話番号" },
+        { field: worker.bank_account, label: "口座情報" },
+        { field: worker.line_user_id, label: "LINE連携" },
+      ];
+
+      // Check basic contract
+      const hasBasicContract = !showContractAlert;
+      if (hasBasicContract) {
+        profileCompletion += 1;
+      } else {
+        incompleteItems.push("基本契約");
+      }
+
+      checks.forEach(check => {
+        if (check.field) {
+          profileCompletion += 1;
+        } else {
+          incompleteItems.push(check.label);
+        }
+      });
+
+      // Calculate percentage (6 total items)
+      profileCompletion = Math.round((profileCompletion / 6) * 100);
+    }
   }
 
   // Check for pending individual contracts
@@ -137,12 +216,12 @@ export default async function Home() {
     const { data: myPendingContracts } = await supabase
       .from("job_individual_contracts")
       .select(`
-            id,
-            job_applications!inner (
-                worker_id,
-                jobs (title)
-            )
-        `)
+id,
+  job_applications!inner(
+    worker_id,
+    jobs(title)
+  )
+    `)
       .eq("status", "PENDING")
       .eq("job_applications.worker_id", workerId);
 
@@ -159,14 +238,14 @@ export default async function Home() {
     const { data: assignedApplications } = await supabase
       .from("job_applications")
       .select(`
-        id,
-        scheduled_work_start,
-        scheduled_work_end,
-        jobs (
-          id,
-          title
-        )
-      `)
+id,
+  scheduled_work_start,
+  scheduled_work_end,
+  jobs(
+    id,
+    title
+  )
+    `)
       .eq("worker_id", workerId)
       .in("status", ["ASSIGNED", "CONFIRMED"]);
 
@@ -198,11 +277,11 @@ export default async function Home() {
   const { data: jobs, error } = await supabase
     .from("jobs")
     .select(`
-      *,
-      clients (
-        name,
-        address
-      )
+  *,
+  clients(
+    name,
+    address
+  )
     `)
     .eq("status", "OPEN")
     .order("created_at", { ascending: false });
@@ -501,6 +580,137 @@ export default async function Home() {
                 <span className="text-xs font-medium text-slate-700">設定</span>
               </Link>
             </div>
+          </section>
+        )}
+
+        {/* Phase 2: Recent Activity */}
+        {workerId && recentActivity && recentActivity.length > 0 && (
+          <section className="bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              最近の活動
+            </h2>
+            <div className="space-y-3">
+              {recentActivity.map((activity: any) => {
+                const job = Array.isArray(activity.jobs) ? activity.jobs[0] : activity.jobs;
+                const report = activity.reports && activity.reports.length > 0 ? activity.reports[0] : null;
+                const completedDate = new Date(activity.actual_work_end);
+                const formattedDate = `${completedDate.getMonth() + 1}/${completedDate.getDate()}`;
+
+                return (
+                  <Link
+                    key={activity.id}
+                    href={`/jobs/${job?.id}`}
+                    className="block border border-slate-100 rounded-lg p-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-slate-700">{job?.title}</span>
+                      </div>
+                      <span className="text-xs text-slate-500">{formattedDate}完了</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-green-600 font-medium">報酬: ¥{job?.reward_amount?.toLocaleString()}</span>
+                      {report ? (
+                        <span className="text-blue-600">📋 報告済み</span>
+                      ) : (
+                        <span className="text-orange-600">📋 報告待ち</span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link
+              href="/applications"
+              className="block text-center text-sm text-blue-600 font-medium mt-4 hover:underline"
+            >
+              すべての履歴を見る →
+            </Link>
+          </section>
+        )}
+
+        {/* Phase 2: Announcements */}
+        {workerId && announcementsWithReadStatus && announcementsWithReadStatus.length > 0 && (
+          <section className="bg-white rounded-xl border border-slate-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              お知らせ
+            </h2>
+            <div className="space-y-3">
+              {announcementsWithReadStatus.map((announcement: any) => {
+                const createdDate = new Date(announcement.created_at);
+                const formattedDate = `${createdDate.getMonth() + 1}/${createdDate.getDate()}`;
+                const typeIcon = announcement.type === 'IMPORTANT' ? '🔔' : announcement.type === 'WARNING' ? '⚠️' : 'ℹ️';
+                const typeColor = announcement.type === 'IMPORTANT' ? 'text-red-600' : announcement.type === 'WARNING' ? 'text-orange-600' : 'text-blue-600';
+
+                return (
+                  <div
+                    key={announcement.id}
+                    className={`border rounded-lg p-3 ${announcement.isRead ? 'border-slate-100 bg-slate-50' : 'border-blue-200 bg-blue-50'}`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{typeIcon}</span>
+                        <span className={`text-sm font-medium ${typeColor}`}>{announcement.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500">{formattedDate}</span>
+                        {!announcement.isRead && (
+                          <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">未読</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">{announcement.content}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Phase 2: Profile Completion */}
+        {workerId && profileCompletion < 100 && (
+          <section className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-4">
+            <h2 className="font-bold text-slate-900 mb-4 text-sm flex items-center gap-2">
+              <User className="w-4 h-4" />
+              プロフィール完成度
+            </h2>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl font-bold text-blue-600">{profileCompletion}%</span>
+                <span className="text-xs text-slate-600">完成まであと少し！</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+            </div>
+            {incompleteItems.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-medium text-slate-700 mb-2">未完了の項目：</p>
+                <ul className="space-y-1">
+                  {incompleteItems.map((item, index) => (
+                    <li key={index} className="text-xs text-slate-600 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-xs text-slate-600 mb-3">
+              プロフィールを完成させると、案件に採用されやすくなります
+            </p>
+            <Link
+              href="/settings"
+              className="block text-center bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              プロフィールを編集する
+            </Link>
           </section>
         )}
 
