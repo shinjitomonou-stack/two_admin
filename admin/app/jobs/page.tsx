@@ -1,12 +1,17 @@
+"use client";
+
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Plus, Search, Filter, MoreHorizontal, MapPin, Calendar, Eye, Edit } from "lucide-react";
+import { Plus, MapPin, Calendar, Eye, Edit, Users } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import { JobFilters, FilterState } from "@/components/JobFilters";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const STATUS_STYLES = {
     OPEN: "bg-green-100 text-green-700",
     FILLED: "bg-blue-100 text-blue-700",
+    IN_PROGRESS: "bg-orange-100 text-orange-700",
     COMPLETED: "bg-slate-100 text-slate-700",
     CANCELLED: "bg-red-100 text-red-700",
     DRAFT: "bg-gray-100 text-gray-700",
@@ -15,24 +20,142 @@ const STATUS_STYLES = {
 const STATUS_LABELS = {
     OPEN: "募集中",
     FILLED: "満員",
+    IN_PROGRESS: "作業中",
     COMPLETED: "完了",
     CANCELLED: "中止",
     DRAFT: "下書き",
 };
 
-export default async function JobsPage() {
-    const supabase = await createClient();
-    const { data: jobs, error } = await supabase
-        .from("jobs")
-        .select(`
-            *,
-            clients(name),
-            job_applications(id, status, workers(full_name))
-        `)
-        .order("created_at", { ascending: false });
+interface Job {
+    id: string;
+    title: string;
+    status: string;
+    reward_amount: number;
+    billing_amount: number | null;
+    max_workers: number;
+    start_time: string;
+    end_time: string;
+    address_text: string | null;
+    clients: { name: string } | null;
+    job_applications: Array<{
+        id: string;
+        status: string;
+        scheduled_work_start: string | null;
+        actual_work_start: string | null;
+        workers: { full_name: string } | null;
+    }>;
+}
 
-    if (error) {
-        console.error("Error fetching jobs:", error);
+export default function JobsPage() {
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+    const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        const supabase = createClient();
+
+        // Fetch jobs
+        const { data: jobsData, error: jobsError } = await supabase
+            .from("jobs")
+            .select(`
+                *,
+                clients(name),
+                job_applications(
+                    id,
+                    status,
+                    scheduled_work_start,
+                    actual_work_start,
+                    workers(full_name)
+                )
+            `)
+            .order("created_at", { ascending: false });
+
+        if (jobsError) {
+            console.error("Error fetching jobs:", jobsError);
+        } else {
+            setJobs(jobsData || []);
+            setFilteredJobs(jobsData || []);
+        }
+
+        // Fetch clients for filter
+        const { data: clientsData, error: clientsError } = await supabase
+            .from("clients")
+            .select("id, name")
+            .order("name");
+
+        if (clientsError) {
+            console.error("Error fetching clients:", clientsError);
+        } else {
+            setClients(clientsData || []);
+        }
+
+        setLoading(false);
+    };
+
+    const handleFilterChange = (filters: FilterState) => {
+        let filtered = [...jobs];
+
+        // Search filter
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            filtered = filtered.filter(
+                (job) =>
+                    job.title.toLowerCase().includes(searchLower) ||
+                    (job.clients?.name || "").toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Status filter
+        if (filters.status.length > 0) {
+            filtered = filtered.filter((job) => filters.status.includes(job.status));
+        }
+
+        // Client filter
+        if (filters.clientId) {
+            filtered = filtered.filter((job) => {
+                const clientData = job.clients as any;
+                return clientData?.id === filters.clientId;
+            });
+        }
+
+        // Date range filter (based on scheduled work start from applications)
+        if (filters.dateFrom || filters.dateTo) {
+            filtered = filtered.filter((job) => {
+                const applications = job.job_applications || [];
+                const scheduledDates = applications
+                    .map((app) => app.scheduled_work_start)
+                    .filter((date): date is string => date !== null);
+
+                if (scheduledDates.length === 0) return false;
+
+                const earliestDate = new Date(Math.min(...scheduledDates.map((d) => new Date(d).getTime())));
+
+                if (filters.dateFrom && earliestDate < new Date(filters.dateFrom)) {
+                    return false;
+                }
+                if (filters.dateTo && earliestDate > new Date(filters.dateTo)) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        setFilteredJobs(filtered);
+    };
+
+    if (loading) {
+        return (
+            <AdminLayout>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-slate-500">読み込み中...</div>
+                </div>
+            </AdminLayout>
+        );
     }
 
     return (
@@ -56,19 +179,11 @@ export default async function JobsPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="案件名、クライアント名で検索..."
-                            className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-3 py-2 border border-input rounded-md hover:bg-slate-50 text-sm font-medium">
-                        <Filter className="w-4 h-4" />
-                        フィルター
-                    </button>
+                <JobFilters onFilterChange={handleFilterChange} clients={clients} />
+
+                {/* Results Count */}
+                <div className="text-sm text-slate-600">
+                    {filteredJobs.length}件の案件
                 </div>
 
                 {/* Table */}
@@ -78,104 +193,153 @@ export default async function JobsPage() {
                             <thead className="bg-slate-50 border-b border-border text-slate-500">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">案件名 / クライアント</th>
-                                    <th className="px-6 py-3 font-medium">場所 / 日時</th>
-                                    <th className="px-6 py-3 font-medium">報酬</th>
+                                    <th className="px-6 py-3 font-medium">作業予定日 / 実施日</th>
+                                    <th className="px-6 py-3 font-medium">場所</th>
+                                    <th className="px-6 py-3 font-medium">報酬 / 請求金額</th>
+                                    <th className="px-6 py-3 font-medium">応募数 / 募集人数</th>
+                                    <th className="px-6 py-3 font-medium">アサイン済み</th>
                                     <th className="px-6 py-3 font-medium">ステータス</th>
-                                    <th className="px-6 py-3 font-medium">募集人数</th>
                                     <th className="px-6 py-3 font-medium text-right">操作</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {jobs?.map((job) => (
-                                    <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <Link href={`/jobs/${job.id}`} className="block group">
-                                                <div className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">{job.title}</div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {/* @ts-ignore: Joined data */}
-                                                    {job.clients?.name || "クライアント未設定"}
-                                                </div>
-                                            </Link>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-slate-600">
-                                                <MapPin className="w-3.5 h-3.5" />
-                                                <span className="truncate max-w-[150px]">{job.address_text || "場所未定"}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {formatDate(job.start_time)}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-medium">
-                                            ¥{job.reward_amount.toLocaleString()}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] || STATUS_STYLES.DRAFT}`}>
-                                                {STATUS_LABELS[job.status as keyof typeof STATUS_LABELS] || job.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="space-y-1">
-                                                {(() => {
-                                                    // @ts-ignore
-                                                    const applications = job.job_applications || [];
-                                                    const assignedApps = applications.filter((app: any) =>
-                                                        app.status === 'ASSIGNED' || app.status === 'CONFIRMED'
-                                                    );
-                                                    const assignedCount = assignedApps.length;
+                                {filteredJobs.map((job) => {
+                                    const applications = job.job_applications || [];
+                                    const assignedApps = applications.filter(
+                                        (app) => app.status === "ASSIGNED" || app.status === "CONFIRMED"
+                                    );
+                                    const totalApps = applications.length;
+                                    const assignedCount = assignedApps.length;
 
-                                                    return (
-                                                        <>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs text-slate-500">
-                                                                    {assignedCount}/{job.max_workers}名
-                                                                </span>
-                                                                {assignedCount > 0 && (
-                                                                    <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
-                                                                        アサイン済
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            {assignedCount > 0 && (
-                                                                <div className="text-xs text-slate-600">
-                                                                    {assignedApps.slice(0, 2).map((app: any, idx: number) => (
-                                                                        <div key={idx}>{app.workers?.full_name}</div>
-                                                                    ))}
-                                                                    {assignedCount > 2 && (
-                                                                        <div className="text-slate-400">他{assignedCount - 2}名</div>
-                                                                    )}
-                                                                </div>
+                                    // Get scheduled and actual dates
+                                    const scheduledDates = applications
+                                        .map((app) => app.scheduled_work_start)
+                                        .filter((date): date is string => date !== null);
+                                    const actualDates = applications
+                                        .map((app) => app.actual_work_start)
+                                        .filter((date): date is string => date !== null);
+
+                                    const earliestScheduled = scheduledDates.length > 0
+                                        ? new Date(Math.min(...scheduledDates.map((d) => new Date(d).getTime())))
+                                        : null;
+                                    const earliestActual = actualDates.length > 0
+                                        ? new Date(Math.min(...actualDates.map((d) => new Date(d).getTime())))
+                                        : null;
+
+                                    return (
+                                        <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <Link href={`/jobs/${job.id}`} className="block group">
+                                                    <div className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
+                                                        {job.title}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {job.clients?.name || "クライアント未設定"}
+                                                    </div>
+                                                </Link>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="space-y-1 text-xs">
+                                                    {earliestScheduled && (
+                                                        <div className="flex items-center gap-1 text-slate-600">
+                                                            <Calendar className="w-3 h-3" />
+                                                            <span>予定: {formatDate(earliestScheduled.toISOString())}</span>
+                                                        </div>
+                                                    )}
+                                                    {earliestActual && (
+                                                        <div className="flex items-center gap-1 text-green-600">
+                                                            <Calendar className="w-3 h-3" />
+                                                            <span>実施: {formatDate(earliestActual.toISOString())}</span>
+                                                        </div>
+                                                    )}
+                                                    {!earliestScheduled && !earliestActual && (
+                                                        <span className="text-slate-400">未設定</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5 text-slate-600 text-xs">
+                                                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                                                    <span className="truncate max-w-[150px]">
+                                                        {job.address_text || "場所未定"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="space-y-1 text-xs">
+                                                    <div className="font-medium text-slate-900">
+                                                        報酬: ¥{job.reward_amount.toLocaleString()}
+                                                    </div>
+                                                    {job.billing_amount && (
+                                                        <div className="text-blue-600">
+                                                            請求: ¥{job.billing_amount.toLocaleString()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-xs text-slate-600">
+                                                        {totalApps} / {job.max_workers}名
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {assignedCount > 0 ? (
+                                                    <div className="space-y-1">
+                                                        <div className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-block">
+                                                            {assignedCount}名
+                                                        </div>
+                                                        <div className="text-xs text-slate-600">
+                                                            {assignedApps.slice(0, 2).map((app, idx) => (
+                                                                <div key={idx}>{app.workers?.full_name}</div>
+                                                            ))}
+                                                            {assignedCount > 2 && (
+                                                                <div className="text-slate-400">他{assignedCount - 2}名</div>
                                                             )}
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link
-                                                    href={`/jobs/${job.id}`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
-                                                    title="詳細"
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">未アサイン</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] ||
+                                                        STATUS_STYLES.DRAFT
+                                                        }`}
                                                 >
-                                                    <Eye className="w-4 h-4" />
-                                                </Link>
-                                                <Link
-                                                    href={`/jobs/${job.id}/edit`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
-                                                    title="編集"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Link>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {(!jobs || jobs.length === 0) && (
+                                                    {STATUS_LABELS[job.status as keyof typeof STATUS_LABELS] || job.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link
+                                                        href={`/jobs/${job.id}`}
+                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                        title="詳細"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                    <Link
+                                                        href={`/jobs/${job.id}/edit`}
+                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                        title="編集"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {filteredJobs.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                                            案件がまだありません。
+                                        <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                                            {jobs.length === 0
+                                                ? "案件がまだありません。"
+                                                : "条件に一致する案件がありません。"}
                                         </td>
                                     </tr>
                                 )}
