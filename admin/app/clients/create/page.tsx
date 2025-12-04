@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Save, Building2, Mail, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Save, Building2, Mail, Phone, MapPin, User, CreditCard, Banknote } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -17,9 +17,20 @@ export default function CreateClientPage() {
         email: "",
         phone: "",
         address: "",
+        business_number: "",
+        representative_name: "",
+        bank_name: "",
+        bank_branch_name: "",
+        bank_account_type: "",
+        bank_account_number: "",
+        bank_account_holder: "",
+        billing_contact_name: "",
+        billing_contact_email: "",
+        billing_contact_phone: "",
+        billing_method: "銀行振込",
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -48,7 +59,7 @@ export default function CreateClientPage() {
 
     return (
         <AdminLayout>
-            <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <Link
@@ -65,8 +76,10 @@ export default function CreateClientPage() {
                     </div>
                 </div>
 
+                {/* Basic Information */}
                 <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
-                    <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">基本情報</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium flex items-center gap-2">
                                 <Building2 className="w-4 h-4 text-slate-500" />
@@ -128,18 +141,177 @@ export default function CreateClientPage() {
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
                             />
                         </div>
-                    </div>
 
-                    <div className="pt-4 border-t border-border">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-2.5 rounded-lg hover:bg-slate-800 transition-colors font-medium disabled:opacity-50"
-                        >
-                            <Save className="w-4 h-4" />
-                            {isLoading ? "保存中..." : "登録する"}
-                        </button>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">事業者番号</label>
+                            <input
+                                name="business_number"
+                                value={formData.business_number}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="1234567890123"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                                <User className="w-4 h-4 text-slate-500" />
+                                代表者名
+                            </label>
+                            <input
+                                name="representative_name"
+                                value={formData.representative_name}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="山田 太郎"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
                     </div>
+                </div>
+
+                {/* Bank Account Information */}
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Banknote className="w-5 h-5" />
+                        口座情報
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">銀行名</label>
+                            <input
+                                name="bank_name"
+                                value={formData.bank_name}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="みずほ銀行"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">支店名</label>
+                            <input
+                                name="bank_branch_name"
+                                value={formData.bank_branch_name}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="渋谷支店"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">口座種別</label>
+                            <select
+                                name="bank_account_type"
+                                value={formData.bank_account_type}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            >
+                                <option value="">選択してください</option>
+                                <option value="普通">普通</option>
+                                <option value="当座">当座</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">口座番号</label>
+                            <input
+                                name="bank_account_number"
+                                value={formData.bank_account_number}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="1234567"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                            <label className="text-sm font-medium">口座名義</label>
+                            <input
+                                name="bank_account_holder"
+                                value={formData.bank_account_holder}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="カ）テオ"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Billing Contact Information */}
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <CreditCard className="w-5 h-5" />
+                        請求担当者情報
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">担当者氏名</label>
+                            <input
+                                name="billing_contact_name"
+                                value={formData.billing_contact_name}
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="佐藤 花子"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">担当者メールアドレス</label>
+                            <input
+                                name="billing_contact_email"
+                                value={formData.billing_contact_email}
+                                onChange={handleChange}
+                                type="email"
+                                placeholder="billing@teo-inc.com"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">担当者電話番号</label>
+                            <input
+                                name="billing_contact_phone"
+                                value={formData.billing_contact_phone}
+                                onChange={handleChange}
+                                type="tel"
+                                placeholder="03-1234-5678"
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">請求方法</label>
+                            <select
+                                name="billing_method"
+                                value={formData.billing_method}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            >
+                                <option value="銀行振込">銀行振込</option>
+                                <option value="請求書払い">請求書払い</option>
+                                <option value="クレジットカード">クレジットカード</option>
+                                <option value="その他">その他</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-2.5 rounded-lg hover:bg-slate-800 transition-colors font-medium disabled:opacity-50"
+                    >
+                        <Save className="w-4 h-4" />
+                        {isLoading ? "保存中..." : "登録する"}
+                    </button>
                 </div>
             </form>
         </AdminLayout>
