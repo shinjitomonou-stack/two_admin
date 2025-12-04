@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Building2, Mail, Phone, MapPin, Calendar, Edit } from "lucide-react";
+import { ArrowLeft, Building2, Mail, Phone, MapPin, Calendar, Edit, User, Banknote, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -55,6 +55,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Main Info */}
                     <div className="md:col-span-2 space-y-6">
+                        {/* Basic Information */}
                         <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2">
                                 <Building2 className="w-5 h-5 text-slate-500" />
@@ -96,6 +97,117 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                                 </div>
                             </div>
                         </div>
+
+                        {/* Business Information */}
+                        {(client.business_number || client.representative_name) && (
+                            <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                                <h3 className="font-semibold text-lg flex items-center gap-2">
+                                    <User className="w-5 h-5 text-slate-500" />
+                                    事業者情報
+                                </h3>
+
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    {client.business_number && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">事業者番号</label>
+                                            <div className="text-sm font-medium">{client.business_number}</div>
+                                        </div>
+                                    )}
+                                    {client.representative_name && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">代表者名</label>
+                                            <div className="text-sm font-medium">{client.representative_name}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Bank Account Information */}
+                        {(client.bank_name || client.bank_account_number) && (
+                            <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                                <h3 className="font-semibold text-lg flex items-center gap-2">
+                                    <Banknote className="w-5 h-5 text-slate-500" />
+                                    口座情報
+                                </h3>
+
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    {client.bank_name && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">銀行名</label>
+                                            <div className="text-sm font-medium">{client.bank_name}</div>
+                                        </div>
+                                    )}
+                                    {client.bank_branch_name && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">支店名</label>
+                                            <div className="text-sm font-medium">{client.bank_branch_name}</div>
+                                        </div>
+                                    )}
+                                    {client.bank_account_type && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">口座種別</label>
+                                            <div className="text-sm font-medium">{client.bank_account_type}</div>
+                                        </div>
+                                    )}
+                                    {client.bank_account_number && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">口座番号</label>
+                                            <div className="text-sm font-medium">{client.bank_account_number}</div>
+                                        </div>
+                                    )}
+                                    {client.bank_account_holder && (
+                                        <div className="space-y-1 sm:col-span-2">
+                                            <label className="text-xs font-medium text-muted-foreground">口座名義</label>
+                                            <div className="text-sm font-medium">{client.bank_account_holder}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Billing Contact Information */}
+                        {(client.billing_contact_name || client.billing_contact_email || client.billing_method) && (
+                            <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                                <h3 className="font-semibold text-lg flex items-center gap-2">
+                                    <CreditCard className="w-5 h-5 text-slate-500" />
+                                    請求情報
+                                </h3>
+
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    {client.billing_contact_name && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">担当者氏名</label>
+                                            <div className="text-sm font-medium">{client.billing_contact_name}</div>
+                                        </div>
+                                    )}
+                                    {client.billing_contact_email && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">担当者メールアドレス</label>
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Mail className="w-4 h-4 text-slate-400" />
+                                                {client.billing_contact_email}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {client.billing_contact_phone && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">担当者電話番号</label>
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Phone className="w-4 h-4 text-slate-400" />
+                                                {client.billing_contact_phone}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {client.billing_method && (
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-muted-foreground">請求方法</label>
+                                            <div className="text-sm font-medium">{client.billing_method}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Jobs History */}
                         <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
