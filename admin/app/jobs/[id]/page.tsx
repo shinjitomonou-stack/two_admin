@@ -4,8 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatTime } from "@/lib/utils";
-import { ApplicationRow } from "@/components/ApplicationRow";
-import { ManualAssignmentButton } from "@/components/ManualAssignmentButton";
+import { ApplicationList } from "@/components/ApplicationList";
 
 const STATUS_STYLES = {
     APPLIED: "bg-blue-100 text-blue-700",
@@ -156,46 +155,13 @@ export default async function JobDetailPage({
 
                     {/* Right Column: Applications */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                            <div className="p-6 border-b border-border flex items-center justify-between">
-                                <h3 className="font-semibold text-lg">応募者一覧 ({applications?.length || 0})</h3>
-                                <div className="flex items-center gap-3">
-                                    <div className="text-sm text-muted-foreground">
-                                        募集人数: {job.max_workers}名
-                                    </div>
-                                    <ManualAssignmentButton
-                                        jobId={id}
-                                        existingWorkerIds={applications?.map(app => app.workers?.id).filter(Boolean) || []}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-slate-50 border-b border-border text-slate-500">
-                                        <tr>
-                                            <th className="px-6 py-3 font-medium">ワーカー</th>
-                                            <th className="px-6 py-3 font-medium">ステータス</th>
-                                            <th className="px-6 py-3 font-medium">応募日時</th>
-                                            <th className="px-6 py-3 font-medium text-right">アクション</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {applications?.map((app) => (
-                                            // @ts-ignore
-                                            <ApplicationRow key={app.id} app={app} />
-                                        ))}
-                                        {(!applications || applications.length === 0) && (
-                                            <tr>
-                                                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                                                    まだ応募はありません。
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        {/* @ts-ignore */}
+                        <ApplicationList
+                            // @ts-ignore
+                            applications={applications || []}
+                            // @ts-ignore
+                            job={job}
+                        />
                     </div>
                 </div>
             </div>

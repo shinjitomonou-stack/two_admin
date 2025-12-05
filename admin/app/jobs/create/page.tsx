@@ -24,6 +24,7 @@ export default function CreateJobPage() {
         longitude: "",
         reward: "",
         billingAmount: "",
+        maxWorkers: "1", // Number of workers needed
         // Date settings
         isFlexible: false,
         date: "", // For fixed date
@@ -116,6 +117,7 @@ export default function CreateJobPage() {
                     : null,
                 reward_amount: rewardAmount,
                 billing_amount: formData.billingAmount ? parseInt(formData.billingAmount) : null,
+                max_workers: parseInt(formData.maxWorkers),
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
                 is_flexible: formData.isFlexible,
@@ -323,7 +325,24 @@ export default function CreateJobPage() {
                             </h3>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">報酬金額 (円) <span className="text-red-500">*</span></label>
+                                <label className="text-sm font-medium">募集人数 <span className="text-red-500">*</span></label>
+                                <input
+                                    required
+                                    name="maxWorkers"
+                                    value={formData.maxWorkers}
+                                    onChange={handleChange}
+                                    type="number"
+                                    min="1"
+                                    placeholder="1"
+                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    ※ この案件に必要なワーカーの人数
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">報酬金額（1人あたり・円）<span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
                                     <input
@@ -339,7 +358,7 @@ export default function CreateJobPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">請求金額 (円)</label>
+                                <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
                                     <input
@@ -355,6 +374,39 @@ export default function CreateJobPage() {
                                     ※ クライアントへの請求額を入力します（任意）
                                 </p>
                             </div>
+
+                            {/* Calculations */}
+                            {formData.reward && formData.maxWorkers && parseInt(formData.maxWorkers) > 0 && (
+                                <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                    <h4 className="text-sm font-semibold mb-3 text-slate-700">見積</h4>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-600">総報酬額:</span>
+                                            <span className="font-semibold">
+                                                ¥{(parseInt(formData.reward) * parseInt(formData.maxWorkers)).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        {formData.billingAmount && (
+                                            <>
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-600">総請求額:</span>
+                                                    <span className="font-semibold">
+                                                        ¥{(parseInt(formData.billingAmount) * parseInt(formData.maxWorkers)).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between pt-2 border-t border-slate-300">
+                                                    <span className="text-slate-600">粗利:</span>
+                                                    <span className="font-semibold text-green-600">
+                                                        ¥{((parseInt(formData.billingAmount) - parseInt(formData.reward)) * parseInt(formData.maxWorkers)).toLocaleString()}
+                                                        {' '}
+                                                        ({Math.round(((parseInt(formData.billingAmount) - parseInt(formData.reward)) / parseInt(formData.billingAmount)) * 100)}%)
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-4">

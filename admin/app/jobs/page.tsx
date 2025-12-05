@@ -268,11 +268,11 @@ export default function JobsPage() {
                                             <td className="px-6 py-4">
                                                 <div className="space-y-1 text-xs">
                                                     <div className="font-medium text-slate-900">
-                                                        報酬: ¥{job.reward_amount.toLocaleString()}
+                                                        報酬: ¥{job.reward_amount.toLocaleString()} /人
                                                     </div>
                                                     {job.billing_amount && (
                                                         <div className="text-blue-600">
-                                                            請求: ¥{job.billing_amount.toLocaleString()}
+                                                            請求: ¥{job.billing_amount.toLocaleString()} /人
                                                         </div>
                                                     )}
                                                 </div>

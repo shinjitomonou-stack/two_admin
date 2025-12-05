@@ -23,6 +23,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             *,
             clients (
                 name
+            ),
+            job_applications (
+                status
             )
         `)
         .eq("id", id)
@@ -40,6 +43,14 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </div>
         );
     }
+
+    // Calculate capacity
+    const maxWorkers = job.max_workers || 1;
+    const confirmedCount = job.job_applications?.filter(
+        (app: any) => app.status === 'ASSIGNED' || app.status === 'CONFIRMED'
+    ).length || 0;
+    const remainingSlots = Math.max(0, maxWorkers - confirmedCount);
+    const isFull = remainingSlots === 0;
 
     // Check if already applied
     const { data: existingApplication } = await supabase
@@ -80,7 +91,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
             <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
                 {/* Job Status Badge */}
-                {existingApplication && (
+                {existingApplication ? (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                         <span className="font-medium text-blue-900">
                             {existingApplication.status === 'APPLIED' && '応募済み'}
@@ -89,140 +100,147 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                             {existingApplication.status === 'REJECTED' && '不採用'}
                         </span>
                     </div>
+                ) : (
+                    <div className={`border rounded-lg p-3 text-sm flex items-center justify-between ${isFull ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                        <span className={`font-medium ${isFull ? 'text-red-900' : 'text-green-900'}`}>
+                            {isFull ? '満員御礼' : `募集中 (残り${remainingSlots}枠)`}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                            定員: {maxWorkers}名
+                        </span>
+                    </div>
                 )}
 
                 {/* Report Status Badge */}
                 {existingReport && (
                     <div className={`border rounded-lg p-3 text-sm ${existingReport.status === 'APPROVED' ? 'bg-green-50 border-green-200' :
-                            existingReport.status === 'REJECTED' ? 'bg-red-50 border-red-200' :
-                                'bg-amber-50 border-amber-200'
+                        existingReport.status === 'REJECTED' ? 'bg-red-50 border-red-200' :
+                            'bg-amber-50 border-amber-200'
                         }`}>
                         <div className="flex items-center justify-between">
-                            <span className={`font-medium ${existingReport.status === 'APPROVED' ? 'text-green-900' :
-                                    existingReport.status === 'REJECTED' ? 'text-red-900' :
-                                        'text-amber-900'
-                                }`}>
-                                {existingReport.status === 'APPROVED' && '✓ 作業報告が承認されました'}
-                                {existingReport.status === 'REJECTED' && '⚠ 作業報告が差し戻されました'}
-                                {existingReport.status === 'SUBMITTED' && '📝 作業報告を提出済み（確認中）'}
+                            <span className="font-medium">
+                                {existingReport.status === 'APPROVED' && '日報承認済み'}
+                                {existingReport.status === 'REJECTED' && '日報差し戻し'}
+                                {existingReport.status === 'SUBMITTED' && '日報確認中'}
+                            </span>
+                            <span className="text-xs opacity-70">
+                                {new Date(existingReport.created_at).toLocaleDateString()}
                             </span>
                         </div>
-                        {existingReport.status === 'REJECTED' && (
-                            <p className="text-xs text-red-700 mt-2">
-                                報告を修正して再提出してください。
-                            </p>
-                        )}
                     </div>
                 )}
 
-                {/* Job Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 space-y-4">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900 mb-2">{job.title}</h2>
-                            {job.clients && (
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                    <Building2 className="w-4 h-4" />
-                                    <span>{job.clients.name}</span>
-                                </div>
-                            )}
+                {/* Main Job Info */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 leading-tight mb-2">
+                            {job.title}
+                        </h2>
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <Building2 className="w-4 h-4" />
+                            <span>{job.clients?.name}</span>
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">
-                                    {job.is_flexible ? '期間' : '日時'}
-                                </label>
-                                {job.is_flexible ? (
-                                    <>
-                                        <div className="flex items-center gap-2 text-sm mt-1">
-                                            <Calendar className="w-4 h-4 text-slate-400" />
-                                            <span>{startDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
-                                        </div>
-                                        <div className="text-sm text-slate-500 pl-6">〜</div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <Calendar className="w-4 h-4 text-slate-400" />
-                                            <span>{endDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
-                                        </div>
-                                        <div className="mt-2 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded inline-block">
-                                            期間内で調整可能
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center gap-2 text-sm mt-1">
-                                            <Calendar className="w-4 h-4 text-slate-400" />
-                                            <span>{startDate.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <Clock className="w-4 h-4 text-slate-400" />
-                                            <span>{startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} - {endDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}</span>
-                                        </div>
-                                    </>
-                                )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-3 rounded-xl space-y-1">
+                            <div className="text-xs text-slate-500 font-medium">報酬</div>
+                            <div className="flex items-center gap-1 font-bold text-slate-900">
+                                <DollarSign className="w-4 h-4 text-slate-400" />
+                                <span>¥{job.reward_amount.toLocaleString()}</span>
                             </div>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl space-y-1">
+                            <div className="text-xs text-slate-500 font-medium">場所</div>
+                            <div className="flex items-center gap-1 font-bold text-slate-900 truncate">
+                                <MapPin className="w-4 h-4 text-slate-400" />
+                                <span className="truncate">{job.address_text || "未設定"}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">報酬</label>
-                                <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
-                                    <DollarSign className="w-4 h-4 text-slate-400" />
-                                    ¥{job.reward_amount.toLocaleString()}
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                        <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                <Calendar className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm font-bold text-slate-900">日時</div>
+                                <div className="text-sm text-slate-600 mt-0.5">
+                                    {job.is_flexible ? (
+                                        <>
+                                            <div>{startDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })} 〜 {endDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}</div>
+                                            <div className="text-xs text-blue-600 mt-1">期間内で自由に実施可能</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div>{startDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}</div>
+                                            <div>{startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} 〜 {endDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {job.schedule_notes && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                <div className="flex items-start gap-2">
-                                    <div className="text-amber-600 mt-0.5">
-                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-medium text-amber-900 mb-1">日時に関する備考</p>
-                                        <p className="text-sm text-amber-800 whitespace-pre-wrap">{job.schedule_notes}</p>
-                                    </div>
+                            <div className="bg-amber-50 p-3 rounded-lg text-sm text-amber-800">
+                                <p className="font-bold text-xs mb-1">日時に関する備考</p>
+                                {job.schedule_notes}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+                                <MapPin className="w-4 h-4 text-purple-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm font-bold text-slate-900">勤務地</div>
+                                <div className="text-sm text-slate-600 mt-0.5">
+                                    {job.address_text || "未設定"}
+                                </div>
+                                {/* Map placeholder */}
+                                <div className="mt-2 h-32 bg-slate-100 rounded-lg w-full flex items-center justify-center text-slate-400 text-xs">
+                                    地図が表示されます
                                 </div>
                             </div>
-                        )}
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">勤務地</label>
-                            <div className="flex items-center gap-2 text-sm mt-1">
-                                <MapPin className="w-4 h-4 text-slate-400" />
-                                <span>{job.address_text || '未設定'}</span>
-                            </div>
                         </div>
-
-                        {job.description && (
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-muted-foreground">詳細</label>
-                                <p className="text-sm text-slate-700 whitespace-pre-wrap">{job.description}</p>
-                            </div>
-                        )}
                     </div>
-
-                    {!existingApplication && job.status === 'OPEN' && (
-                        <div className="p-6 border-t border-slate-100 bg-slate-50">
-                            <ApplyButton jobId={id} />
-                        </div>
-                    )}
                 </div>
 
-                {existingApplication && (existingApplication.status === 'ASSIGNED' || existingApplication.status === 'CONFIRMED') && (!existingReport || existingReport.status === 'REJECTED') && (
-                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 pb-8">
-                        <div className="max-w-md mx-auto">
-                            <Link
-                                href={`/jobs/${id}/report`}
-                                className="block w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all text-center"
-                            >
-                                {existingReport?.status === 'REJECTED' ? '作業報告を再提出する' : '作業報告を提出する'}
-                            </Link>
-                        </div>
+                {/* Description */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 className="font-bold text-lg text-slate-900">業務内容</h3>
+                    <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                        {job.description || "詳細はありません。"}
                     </div>
-                )}
+                </div>
             </div>
+
+            {/* Fixed Bottom Action */}
+            {!existingApplication && (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-8 safe-area-bottom">
+                    <div className="max-w-md mx-auto">
+                        <ApplyButton
+                            jobId={id}
+                            disabled={isFull}
+                            disabledLabel="定員に達しました"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {existingApplication && (existingApplication.status === 'ASSIGNED' || existingApplication.status === 'CONFIRMED') && (!existingReport || existingReport.status === 'REJECTED') && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 pb-8">
+                    <div className="max-w-md mx-auto">
+                        <Link
+                            href={`/jobs/${id}/report`}
+                            className="block w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all text-center"
+                        >
+                            {existingReport?.status === 'REJECTED' ? '作業報告を再提出する' : '作業報告を提出する'}
+                        </Link>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

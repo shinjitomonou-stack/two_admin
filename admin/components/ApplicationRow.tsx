@@ -42,7 +42,19 @@ const STATUS_LABELS = {
     CONFIRMED: "契約済",
 };
 
-export function ApplicationRow({ app }: { app: Application }) {
+import { CheckSquare, Square } from "lucide-react";
+
+export function ApplicationRow({
+    app,
+    isSelected,
+    onSelect,
+    isSelectable
+}: {
+    app: Application;
+    isSelected?: boolean;
+    onSelect?: () => void;
+    isSelectable?: boolean;
+}) {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isEditingSchedule, setIsEditingSchedule] = useState(false);
     const [scheduleDate, setScheduleDate] = useState("");
@@ -85,6 +97,20 @@ export function ApplicationRow({ app }: { app: Application }) {
 
     return (
         <tr className="hover:bg-slate-50/50 transition-colors">
+            <td className="px-6 py-4 w-12">
+                {isSelectable && (
+                    <button
+                        onClick={onSelect}
+                        className={isSelected ? "text-blue-600" : "text-slate-300 hover:text-slate-400"}
+                    >
+                        {isSelected ? (
+                            <CheckSquare className="w-5 h-5" />
+                        ) : (
+                            <Square className="w-5 h-5" />
+                        )}
+                    </button>
+                )}
+            </td>
             <td className="px-6 py-4">
                 <Link href={`/workers/${app.worker_id}`} className="group">
                     <div className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">

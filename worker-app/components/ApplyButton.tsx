@@ -4,10 +4,19 @@ import { useState } from "react";
 import { applyJob } from "@/app/actions/job";
 import { Loader2 } from "lucide-react";
 
-export function ApplyButton({ jobId }: { jobId: string }) {
+export function ApplyButton({
+    jobId,
+    disabled,
+    disabledLabel
+}: {
+    jobId: string;
+    disabled?: boolean;
+    disabledLabel?: string;
+}) {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleApply = async () => {
+        if (disabled) return;
         if (!confirm("この案件に応募しますか？")) return;
 
         setIsLoading(true);
@@ -24,8 +33,8 @@ export function ApplyButton({ jobId }: { jobId: string }) {
     return (
         <button
             onClick={handleApply}
-            disabled={isLoading}
-            className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+            disabled={isLoading || disabled}
+            className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
             {isLoading ? (
                 <>
@@ -33,7 +42,7 @@ export function ApplyButton({ jobId }: { jobId: string }) {
                     応募処理中...
                 </>
             ) : (
-                "この案件に応募する"
+                disabled ? (disabledLabel || "応募できません") : "この案件に応募する"
             )}
         </button>
     );

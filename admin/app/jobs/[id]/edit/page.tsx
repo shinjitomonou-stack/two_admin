@@ -175,9 +175,20 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                         />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">報酬金額 (円) <span className="text-red-500">*</span></label>
+                            <label className="text-sm font-medium">募集人数 <span className="text-red-500">*</span></label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                value={formData.max_workers}
+                                onChange={(e) => setFormData({ ...formData, max_workers: Number(e.target.value) })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">報酬金額（1人あたり・円） <span className="text-red-500">*</span></label>
                             <input
                                 type="number"
                                 required
@@ -188,7 +199,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">請求金額 (円)</label>
+                            <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
                             <input
                                 type="number"
                                 min="0"
@@ -210,19 +221,40 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                                 ))}
                             </select>
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">募集人数 <span className="text-red-500">*</span></label>
-                            <input
-                                type="number"
-                                required
-                                min="1"
-                                value={formData.max_workers}
-                                onChange={(e) => setFormData({ ...formData, max_workers: Number(e.target.value) })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            />
-                        </div>
                     </div>
+
+                    {/* Calculations */}
+                    {formData.reward_amount > 0 && formData.max_workers > 0 && (
+                        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <h4 className="text-sm font-semibold mb-3 text-slate-700">見積</h4>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-600">総報酬額:</span>
+                                    <span className="font-semibold">
+                                        ¥{(formData.reward_amount * formData.max_workers).toLocaleString()}
+                                    </span>
+                                </div>
+                                {formData.billing_amount > 0 && (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-600">総請求額:</span>
+                                            <span className="font-semibold">
+                                                ¥{(formData.billing_amount * formData.max_workers).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between pt-2 border-t border-slate-300">
+                                            <span className="text-slate-600">粗利:</span>
+                                            <span className="font-semibold text-green-600">
+                                                ¥{((formData.billing_amount - formData.reward_amount) * formData.max_workers).toLocaleString()}
+                                                {' '}
+                                                ({Math.round(((formData.billing_amount - formData.reward_amount) / formData.billing_amount) * 100)}%)
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 pb-2 border-b border-slate-100">

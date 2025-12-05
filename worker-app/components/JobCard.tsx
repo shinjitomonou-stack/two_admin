@@ -18,6 +18,8 @@ export type Job = {
     is_flexible?: boolean;
     work_period_start?: string;
     work_period_end?: string;
+    max_workers?: number;
+    confirmed_count?: number;
 };
 
 export function JobCard({ job }: { job: Job }) {
@@ -45,6 +47,11 @@ export function JobCard({ job }: { job: Job }) {
     const image = job.image || "https://images.unsplash.com/photo-1581578731117-104f2a863a30?w=800&q=80";
     const tags = job.tags || ["募集中"];
 
+    const maxWorkers = job.max_workers || 1;
+    const confirmedCount = job.confirmed_count || 0;
+    const remainingSlots = Math.max(0, maxWorkers - confirmedCount);
+    const isFull = remainingSlots === 0;
+
     return (
         <Link href={`/jobs/${job.id}`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-border shadow-sm active:scale-[0.98] transition-transform duration-200">
@@ -60,12 +67,21 @@ export function JobCard({ job }: { job: Job }) {
                 </div>
                 <div className="p-4 space-y-3">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs text-blue-600 font-medium">
+                        <div className="flex items-center gap-2 text-xs text-blue-600 font-medium flex-wrap">
                             {tags.map((tag) => (
                                 <span key={tag} className="bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">
                                     {tag}
                                 </span>
                             ))}
+                            {isFull ? (
+                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">
+                                    満員
+                                </span>
+                            ) : (
+                                <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded font-bold">
+                                    残り{remainingSlots}枠
+                                </span>
+                            )}
                         </div>
                         <h3 className="font-bold text-lg leading-tight line-clamp-2">
                             {job.title}

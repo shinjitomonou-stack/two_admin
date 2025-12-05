@@ -8,7 +8,7 @@ export default async function JobsPage() {
     const supabase = await createClient();
     const { data: jobs, error } = await supabase
         .from("jobs")
-        .select("*")
+        .select("*, job_applications(status)")
         .eq("status", "OPEN")
         .order("created_at", { ascending: false });
 
@@ -18,6 +18,11 @@ export default async function JobsPage() {
 
     // Map Supabase data to Job type
     const mappedJobs: Job[] = jobs?.map((job) => {
+        // Calculate confirmed count (ASSIGNED or CONFIRMED)
+        const confirmedCount = job.job_applications?.filter(
+            (app: any) => app.status === 'ASSIGNED' || app.status === 'CONFIRMED'
+        ).length || 0;
+
         return {
             id: job.id,
             title: job.title,
@@ -30,6 +35,8 @@ export default async function JobsPage() {
             is_flexible: job.is_flexible,
             work_period_start: job.work_period_start,
             work_period_end: job.work_period_end,
+            max_workers: job.max_workers,
+            confirmed_count: confirmedCount,
         };
     }) || [];
 
