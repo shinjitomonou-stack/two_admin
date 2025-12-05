@@ -67,6 +67,21 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                                     <label className="text-xs font-medium text-muted-foreground">会社名</label>
                                     <div className="text-sm font-medium">{client.name}</div>
                                 </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">契約形態</label>
+                                    <div className="text-sm font-medium">
+                                        {client.contract_type === 'PLACING' ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                発注 (支払)
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                受注 (請求)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground">メールアドレス</label>
                                     <div className="flex items-center gap-2 text-sm">
@@ -240,6 +255,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </AdminLayout >
     );
 }

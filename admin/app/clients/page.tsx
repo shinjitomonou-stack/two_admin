@@ -54,6 +54,7 @@ export default async function ClientsPage() {
                             <thead className="bg-slate-50 border-b border-border text-slate-500">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">会社名</th>
+                                    <th className="px-6 py-3 font-medium">契約形態</th>
                                     <th className="px-6 py-3 font-medium">連絡先</th>
                                     <th className="px-6 py-3 font-medium">住所</th>
                                     <th className="px-6 py-3 font-medium">登録日</th>
@@ -70,6 +71,17 @@ export default async function ClientsPage() {
                                                 </div>
                                                 <div className="font-medium text-slate-900">{client.name}</div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {client.contract_type === 'PLACING' ? (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                    発注 (支払)
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    受注 (請求)
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-slate-900">{client.email}</div>

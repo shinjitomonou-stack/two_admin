@@ -28,6 +28,7 @@ export default function CreateClientPage() {
         billing_contact_email: "",
         billing_contact_phone: "",
         billing_method: "銀行振込",
+        contract_type: "RECEIVING",
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -167,6 +168,26 @@ export default function CreateClientPage() {
                                 placeholder="山田 太郎"
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium flex items-center gap-2">
+                                <Banknote className="w-4 h-4 text-slate-500" />
+                                契約形態 <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                required
+                                name="contract_type"
+                                value={formData.contract_type}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                            >
+                                <option value="RECEIVING">受注 (請求する)</option>
+                                <option value="PLACING">発注 (支払う)</option>
+                            </select>
+                            <p className="text-xs text-muted-foreground">
+                                クライアントとの取引形態を選択してください。
+                            </p>
                         </div>
                     </div>
                 </div>
