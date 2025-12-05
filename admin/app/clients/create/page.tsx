@@ -99,10 +99,9 @@ export default function CreateClientPage() {
                         <div className="space-y-2">
                             <label className="text-sm font-medium flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-slate-500" />
-                                メールアドレス <span className="text-red-500">*</span>
+                                メールアドレス
                             </label>
                             <input
-                                required
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
