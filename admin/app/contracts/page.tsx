@@ -62,24 +62,24 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
 
                 {/* Tabs */}
                 <div className="border-b border-border">
-                    <div className="flex gap-6">
+                    <div className="flex gap-8">
                         <Link
                             href="/contracts?tab=basic"
-                            className={`pb - 3 text - sm font - medium border - b - 2 transition - colors ${currentTab === 'basic'
-                                ? "border-slate-900 text-slate-900"
-                                : "border-transparent text-muted-foreground hover:text-slate-600"
-                                } `}
+                            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'basic'
+                                ? 'border-slate-900 text-slate-900'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                                }`}
                         >
-                            基本契約書
+                            基本契約
                         </Link>
                         <Link
                             href="/contracts?tab=individual"
-                            className={`pb - 3 text - sm font - medium border - b - 2 transition - colors ${currentTab === 'individual'
-                                ? "border-slate-900 text-slate-900"
-                                : "border-transparent text-muted-foreground hover:text-slate-600"
-                                } `}
+                            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'individual'
+                                ? 'border-slate-900 text-slate-900'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                                }`}
                         >
-                            個別契約書
+                            個別契約
                         </Link>
                     </div>
                 </div>
