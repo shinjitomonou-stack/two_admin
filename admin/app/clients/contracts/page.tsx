@@ -3,17 +3,33 @@ import { Search, Filter, Plus, FileText, Calendar, Building2, CheckCircle, Clock
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import ServerPagination from "@/components/ui/ServerPagination";
 
-export default async function ClientContractsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-    const { tab } = await searchParams;
+const ITEMS_PER_PAGE = 100;
+
+export default async function ClientContractsPage({ searchParams }: { searchParams: Promise<{ tab?: string; page?: string }> }) {
+    const { tab, page } = await searchParams;
     const currentTab = tab || 'basic';
+    const currentPage = Number(page) || 1;
+    const from = (currentPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
 
     const supabase = await createClient();
 
     // Fetch contracts based on tab
     let contracts: any[] = [];
+    let totalPages = 0;
 
     if (currentTab === 'basic' || currentTab === 'nda') {
+        // Get count
+        const { count } = await supabase
+            .from("client_contracts")
+            .select("*", { count: "exact", head: true })
+            .eq("contract_type", currentTab.toUpperCase());
+
+        totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
+
+        // Get paginated data
         const { data } = await supabase
             .from("client_contracts")
             .select(`
@@ -21,9 +37,18 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                 clients(name)
             `)
             .eq("contract_type", currentTab.toUpperCase())
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })
+            .range(from, to);
         contracts = data || [];
     } else if (currentTab === 'individual') {
+        // Get count
+        const { count } = await supabase
+            .from("client_job_contracts")
+            .select("*", { count: "exact", head: true });
+
+        totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
+
+        // Get paginated data
         const { data } = await supabase
             .from("client_job_contracts")
             .select(`
@@ -31,7 +56,8 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                 clients(name),
                 jobs(title)
             `)
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })
+            .range(from, to);
         contracts = data || [];
     }
 
@@ -220,6 +246,13 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             </tbody>
                         </table>
                     </div>
+                    {totalPages > 1 && (
+                        <ServerPagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            baseUrl={`/clients/contracts?tab=${currentTab}`}
+                        />
+                    )}
                 </div>
             </div>
         </AdminLayout>

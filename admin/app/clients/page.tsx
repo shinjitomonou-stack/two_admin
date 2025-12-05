@@ -3,13 +3,31 @@ import { Building2, Search, Filter, Plus, MoreHorizontal, Eye, Edit } from "luci
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import ServerPagination from "@/components/ui/ServerPagination";
 
-export default async function ClientsPage() {
+const ITEMS_PER_PAGE = 100;
+
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+    const { page } = await searchParams;
+    const currentPage = Number(page) || 1;
+    const from = (currentPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
     const supabase = await createClient();
+
+    // Get total count
+    const { count } = await supabase
+        .from("clients")
+        .select("*", { count: "exact", head: true });
+
+    const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
+
+    // Get paginated data
     const { data: clients, error } = await supabase
         .from("clients")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
     if (error) {
         console.error("Error fetching clients:", error);
@@ -113,6 +131,13 @@ export default async function ClientsPage() {
                             </tbody>
                         </table>
                     </div>
+                    {totalPages > 1 && (
+                        <ServerPagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            baseUrl="/clients"
+                        />
+                    )}
                 </div>
             </div>
         </AdminLayout>
