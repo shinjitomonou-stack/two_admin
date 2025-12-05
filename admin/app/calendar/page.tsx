@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { createClient } from "@/lib/supabase/server";
-import { Calendar } from "@/components/Calendar";
+import { CalendarWithStats } from "@/components/CalendarWithStats";
 
 export default async function CalendarPage() {
     const supabase = await createClient();
@@ -52,27 +52,8 @@ export default async function CalendarPage() {
                     </p>
                 </div>
 
-                {/* Stats - Above Calendar */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">案件数</div>
-                        <div className="text-2xl font-bold text-slate-900 mt-1">
-                            {calendarJobs.length}件
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">請求金額</div>
-                        <div className="text-2xl font-bold text-blue-600 mt-1">
-                            ¥{calendarJobs.reduce((sum, job) => sum + (job.billing_amount || 0), 0).toLocaleString()}
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg border border-slate-200 p-4">
-                        <div className="text-sm text-slate-500">報酬金額</div>
-                        <div className="text-2xl font-bold text-green-600 mt-1">
-                            ¥{calendarJobs.reduce((sum, job) => sum + (job.payment_amount || 0), 0).toLocaleString()}
-                        </div>
-                    </div>
-                </div>
+                {/* Calendar with Dynamic Stats */}
+                <CalendarWithStats jobs={calendarJobs} />
 
                 {/* Legend */}
                 <div className="bg-white rounded-lg border border-slate-200 p-4">
@@ -100,9 +81,6 @@ export default async function CalendarPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Calendar */}
-                <Calendar jobs={calendarJobs} />
             </div>
         </AdminLayout>
     );
