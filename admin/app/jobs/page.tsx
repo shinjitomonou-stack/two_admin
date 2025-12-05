@@ -7,6 +7,9 @@ import { formatDate } from "@/lib/utils";
 import { JobFilters, FilterState } from "@/components/JobFilters";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Pagination from "@/components/ui/Pagination";
+
+const ITEMS_PER_PAGE = 100;
 
 const STATUS_STYLES = {
     OPEN: "bg-green-100 text-green-700",
@@ -49,8 +52,11 @@ interface Job {
 export default function JobsPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+    const [paginatedJobs, setPaginatedJobs] = useState<Job[]>([]);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
     useEffect(() => {
         fetchData();
@@ -146,7 +152,15 @@ export default function JobsPage() {
         }
 
         setFilteredJobs(filtered);
+        setCurrentPage(1); // Reset to first page when filters change
     };
+
+    // Update paginated jobs when filteredJobs or currentPage changes
+    useEffect(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        setPaginatedJobs(filteredJobs.slice(startIndex, endIndex));
+    }, [filteredJobs, currentPage]);
 
     if (loading) {
         return (
@@ -188,9 +202,9 @@ export default function JobsPage() {
 
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto max-h-[calc(100vh-24rem)]">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 border-b border-border text-slate-500">
+                            <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">案件名 / クライアント</th>
                                     <th className="px-6 py-3 font-medium">作業予定日 / 実施日</th>
@@ -203,7 +217,7 @@ export default function JobsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {filteredJobs.map((job) => {
+                                {paginatedJobs.map((job) => {
                                     const applications = job.job_applications || [];
                                     const assignedApps = applications.filter(
                                         (app) => app.status === "ASSIGNED" || app.status === "CONFIRMED"
@@ -346,6 +360,13 @@ export default function JobsPage() {
                             </tbody>
                         </table>
                     </div>
+                    {totalPages > 1 && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
                 </div>
             </div>
         </AdminLayout>

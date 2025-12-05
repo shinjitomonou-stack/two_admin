@@ -75,9 +75,9 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
 
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto max-h-[calc(100vh-20rem)]">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 border-b border-border text-slate-500">
+                            <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">氏名 / メール</th>
                                     <th className="px-6 py-3 font-medium">ランク</th>
