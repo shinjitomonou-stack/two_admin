@@ -17,6 +17,7 @@ export default function CreateClientContractPage() {
 
     const [formData, setFormData] = useState({
         contract_type: "BASIC" as "BASIC" | "NDA" | "INDIVIDUAL",
+        trading_type: "RECEIVING" as "RECEIVING" | "PLACING",
         client_id: "",
         job_id: "",
         template_id: "",
@@ -122,6 +123,7 @@ export default function CreateClientContractPage() {
                     .insert([{
                         client_id: formData.client_id,
                         job_id: formData.job_id,
+                        trading_type: formData.trading_type,
                         template_id: formData.template_id || null,
                         title: formData.title,
                         content_snapshot: formData.content_snapshot,
@@ -138,6 +140,7 @@ export default function CreateClientContractPage() {
                     .insert([{
                         client_id: formData.client_id,
                         contract_type: formData.contract_type,
+                        trading_type: formData.trading_type,
                         template_id: formData.template_id || null,
                         title: formData.title,
                         content_snapshot: formData.content_snapshot,
@@ -207,6 +210,21 @@ export default function CreateClientContractPage() {
                                 <option value="BASIC">基本契約</option>
                                 <option value="NDA">NDA（秘密保持契約）</option>
                                 <option value="INDIVIDUAL">個別契約</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                取引形態 <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                required
+                                value={formData.trading_type}
+                                onChange={(e) => setFormData({ ...formData, trading_type: e.target.value as any })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            >
+                                <option value="RECEIVING">受注 (請求する)</option>
+                                <option value="PLACING">発注 (支払う)</option>
                             </select>
                         </div>
 
