@@ -156,6 +156,11 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                     </button>
                 </div>
 
+                {/* Results Count */}
+                <div className="text-sm text-slate-600">
+                    {contracts.length}件の契約
+                </div>
+
                 {/* Table */}
                 <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto max-h-[calc(100vh-20rem)]">

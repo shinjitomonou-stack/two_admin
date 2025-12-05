@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Edit } from "lucide-react";
+import Pagination from "@/components/ui/Pagination";
+
+const ITEMS_PER_PAGE = 100;
 
 type Report = {
     id: string;
@@ -26,10 +29,13 @@ type Report = {
 export default function ReportsPage() {
     const [reports, setReports] = useState<Report[]>([]);
     const [filteredReports, setFilteredReports] = useState<Report[]>([]);
+    const [paginatedReports, setPaginatedReports] = useState<Report[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
     const supabase = createClient();
 
     useEffect(() => {
@@ -57,7 +63,15 @@ export default function ReportsPage() {
         }
 
         setFilteredReports(filtered);
+        setCurrentPage(1); // Reset to first page when filters change
     }, [statusFilter, startDate, endDate, reports]);
+
+    // Update paginated reports when filteredReports or currentPage changes
+    useEffect(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        setPaginatedReports(filteredReports.slice(startIndex, endIndex));
+    }, [filteredReports, currentPage]);
 
     const fetchReports = async () => {
         const { data, error } = await supabase
@@ -265,59 +279,68 @@ export default function ReportsPage() {
                         {statusFilter === "ALL" ? "報告がありません" : `${statusFilter === "SUBMITTED" ? "提出済み" : statusFilter === "APPROVED" ? "承認済み" : "差し戻し"}の報告がありません`}
                     </div>
                 ) : (
-                    <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">案件名</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ワーカー</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">作業日時</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">提出日時</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ステータス</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200">
-                            {filteredReports.map((report) => (
-                                <tr key={report.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-4 py-3 text-sm text-slate-900">
-                                        {report.job_applications?.jobs?.title || "-"}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-900">
-                                        {report.job_applications?.workers?.full_name || "-"}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-600">
-                                        {formatDateTime(report.work_start_at)}
-                                        <br />
-                                        <span className="text-xs">〜 {formatDateTime(report.work_end_at)}</span>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-600">
-                                        {formatDateTime(report.created_at)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {getStatusBadge(report.status)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <Link
-                                                href={`/reports/${report.id}`}
-                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
-                                                title="詳細"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </Link>
-                                            <Link
-                                                href={`/reports/${report.id}/edit`}
-                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
-                                                title="編集"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </Link>
-                                        </div>
-                                    </td>
+                    <>
+                        <table className="w-full">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">案件名</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ワーカー</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">作業日時</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">提出日時</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ステータス</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">操作</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {paginatedReports.map((report) => (
+                                    <tr key={report.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3 text-sm text-slate-900">
+                                            {report.job_applications?.jobs?.title || "-"}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-900">
+                                            {report.job_applications?.workers?.full_name || "-"}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-600">
+                                            {formatDateTime(report.work_start_at)}
+                                            <br />
+                                            <span className="text-xs">〜 {formatDateTime(report.work_end_at)}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-slate-600">
+                                            {formatDateTime(report.created_at)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {getStatusBadge(report.status)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/reports/${report.id}`}
+                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                    title="詳細"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Link>
+                                                <Link
+                                                    href={`/reports/${report.id}/edit`}
+                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                    title="編集"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {totalPages > 1 && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </div>
