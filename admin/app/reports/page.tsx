@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Edit } from "lucide-react";
 
 type Report = {
     id: string;
@@ -297,13 +297,22 @@ export default function ReportsPage() {
                                         {getStatusBadge(report.status)}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <Link
-                                            href={`/reports/${report.id}`}
-                                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                        >
-                                            <FileText className="w-4 h-4" />
-                                            詳細
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/reports/${report.id}`}
+                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                title="詳細"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
+                                            <Link
+                                                href={`/reports/${report.id}/edit`}
+                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                title="編集"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

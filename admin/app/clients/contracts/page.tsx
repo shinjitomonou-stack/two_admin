@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Search, Filter, Plus, FileText, Calendar, Building2, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Search, Filter, Plus, FileText, Calendar, Building2, CheckCircle, Clock, XCircle, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -87,8 +87,8 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                         <Link
                             href="/clients/contracts?tab=basic"
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'basic'
-                                    ? 'border-slate-900 text-slate-900'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                ? 'border-slate-900 text-slate-900'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             基本契約
@@ -96,8 +96,8 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                         <Link
                             href="/clients/contracts?tab=nda"
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'nda'
-                                    ? 'border-slate-900 text-slate-900'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                ? 'border-slate-900 text-slate-900'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             NDA
@@ -105,8 +105,8 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                         <Link
                             href="/clients/contracts?tab=individual"
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'individual'
-                                    ? 'border-slate-900 text-slate-900'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                ? 'border-slate-900 text-slate-900'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             個別契約
@@ -191,12 +191,22 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                             {formatDate(contract.signed_at)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/clients/contracts/${currentTab}/${contract.id}`}
-                                                className="text-blue-600 hover:underline text-sm font-medium"
-                                            >
-                                                詳細
-                                            </Link>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    href={`/clients/contracts/${currentTab}/${contract.id}`}
+                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                    title="詳細"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Link>
+                                                <Link
+                                                    href={`/clients/contracts/${currentTab}/${contract.id}/edit`}
+                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                    title="編集"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

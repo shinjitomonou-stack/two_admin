@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -152,21 +152,30 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
         <AdminLayout>
             <div className="space-y-6 max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link
-                        href="/reports"
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-slate-500" />
-                    </Link>
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">作業報告詳細</h2>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <span>{report.job_applications.workers.full_name}</span>
-                            <span>•</span>
-                            <span>{report.job_applications.jobs.title}</span>
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/reports"
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5 text-slate-500" />
+                        </Link>
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">作業報告詳細</h2>
+                            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                <span>{report.job_applications.workers.full_name}</span>
+                                <span>•</span>
+                                <span>{report.job_applications.jobs.title}</span>
+                            </div>
                         </div>
                     </div>
+                    <Link
+                        href={`/reports/${id}/edit`}
+                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
+                    >
+                        <Edit className="w-4 h-4" />
+                        編集する
+                    </Link>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
@@ -263,8 +272,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                     <label className="text-xs font-medium text-muted-foreground">ステータス</label>
                                     <div className="mt-2">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${report.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                                report.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                    'bg-blue-100 text-blue-700'
+                                            report.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                'bg-blue-100 text-blue-700'
                                             }`}>
                                             {report.status === 'APPROVED' ? '承認済み' :
                                                 report.status === 'REJECTED' ? '差し戻し' : '提出済み'}

@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Plus } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/utils";
@@ -65,12 +65,22 @@ export default async function ReportTemplatesPage() {
                                         {formatDateTime(template.created_at)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link
-                                            href={`/report-templates/${template.id}`}
-                                            className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                                        >
-                                            編集
-                                        </Link>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link
+                                                href={`/report-templates/${template.id}`}
+                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                title="詳細"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
+                                            <Link
+                                                href={`/report-templates/${template.id}/edit`}
+                                                className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                title="編集"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
