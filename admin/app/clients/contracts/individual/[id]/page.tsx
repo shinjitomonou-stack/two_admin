@@ -24,7 +24,20 @@ export default async function IndividualContractDetailPage({ params }: { params:
 
     if (error || !contract) {
         console.error("Contract fetch error:", error);
-        notFound();
+        return (
+            <AdminLayout>
+                <div className="p-8 text-center">
+                    <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Contract (Debug Mode)</h2>
+                    <p className="text-slate-600 mb-4">Contract ID: {id}</p>
+                    <p className="font-mono text-sm bg-slate-100 p-4 rounded text-left overflow-auto">
+                        {error ? JSON.stringify(error, null, 2) : "Contract not found (null)"}
+                    </p>
+                    <div className="mt-4 text-xs text-left">
+                        <p>Query Table: client_job_contracts</p>
+                    </div>
+                </div>
+            </AdminLayout>
+        );
     }
 
     const getStatusBadge = (status: string) => {
