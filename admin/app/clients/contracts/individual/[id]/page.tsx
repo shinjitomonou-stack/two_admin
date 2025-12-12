@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import StatusChanger from "@/components/StatusChanger";
+import ContractNotificationButton from "@/components/contracts/ContractNotificationButton";
 
 export default async function IndividualContractDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -22,6 +23,7 @@ export default async function IndividualContractDetailPage({ params }: { params:
         .single();
 
     if (error || !contract) {
+        console.error("Contract fetch error:", error);
         notFound();
     }
 
@@ -62,7 +64,14 @@ export default async function IndividualContractDetailPage({ params }: { params:
                         <h2 className="text-2xl font-bold tracking-tight">{contract.title}</h2>
                         <p className="text-muted-foreground text-sm">個別契約</p>
                     </div>
-                    {getStatusBadge(contract.status)}
+                    <div className="flex items-center gap-3">
+                        <ContractNotificationButton
+                            contractId={id}
+                            // @ts-ignore
+                            sentAt={contract.notification_sent_at}
+                        />
+                        {getStatusBadge(contract.status)}
+                    </div>
                 </div>
 
                 {/* Contract Info */}
