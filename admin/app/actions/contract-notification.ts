@@ -45,11 +45,12 @@ export async function sendContractNotification(contractId: string) {
 
         // 3. Send LINE messages
         for (const app of applications) {
-            // @ts-ignore - Handle potential schema mismatches or missing types
-            const worker = app.workers;
-            // Use line_id based on schema.sql. 
-            // Note: If schema uses line_user_id, this needs to be updated.
-            const lineUserId = worker?.line_id || (worker as any)?.line_user_id;
+            // Handle potential array return from Supabase
+            const rawWorker = app.workers;
+            const worker = Array.isArray(rawWorker) ? rawWorker[0] : rawWorker;
+
+            // @ts-ignore
+            const lineUserId = (worker as any)?.line_id || (worker as any)?.line_user_id;
 
             if (lineUserId) {
                 const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n案件「${jobTitle}」に関する個別契約書が発行されました。\n\n管理画面より内容をご確認ください。`;
