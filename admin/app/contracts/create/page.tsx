@@ -19,19 +19,7 @@ type Template = {
     version: string;
 };
 
-type JobApplication = {
-    id: string;
-    worker_id: string;
-    job_id: string;
-    workers: {
-        id: string;
-        full_name: string;
-        email: string;
-    };
-    jobs: {
-        title: string;
-    };
-};
+
 
 export default function CreateContractPage() {
     const router = useRouter();
@@ -195,7 +183,7 @@ export default function CreateContractPage() {
                                     checked={contractType === "BASIC"}
                                     onChange={() => {
                                         setContractType("BASIC");
-                                        setSelectedWorkerId("");
+                                        setFormData(prev => ({ ...prev, worker_id: "" }));
                                     }}
                                     className="w-4 h-4 text-slate-900 focus:ring-slate-500"
                                 />
@@ -209,7 +197,7 @@ export default function CreateContractPage() {
                                     checked={contractType === "INDIVIDUAL"}
                                     onChange={() => {
                                         setContractType("INDIVIDUAL");
-                                        setSelectedWorkerId("");
+                                        setFormData(prev => ({ ...prev, worker_id: "" }));
                                     }}
                                     className="w-4 h-4 text-slate-900 focus:ring-slate-500"
                                 />
