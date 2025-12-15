@@ -27,10 +27,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                 workers (full_name, email),
                 jobs (
                     title,
-                    salary_amount,
-                    salary_type,
-                    daily_salary,
-                    hourly_salary,
+                    reward_amount,
                     clients (name)
                 )
             )
@@ -39,22 +36,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .single();
 
     if (error || !contract) {
-        console.error("Error fetching individual contract:", error);
-        // notFound();
-        return (
-            <AdminLayout>
-                <div className="p-8">
-                    <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
-                        <h2 className="font-bold text-lg mb-2">Error Loading Contract</h2>
-                        <p>ID: {id}</p>
-                        <pre className="mt-2 text-xs bg-white p-2 rounded border overflow-auto">
-                            {JSON.stringify(error, null, 2)}
-                        </pre>
-                        {!contract && <p className="mt-2">Contract is null</p>}
-                    </div>
-                </div>
-            </AdminLayout>
-        );
+        notFound();
     }
 
     // Determine worker: Try direct relationship first, fallback to application's worker (migration support)
@@ -167,10 +149,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                     <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
                                         <span className="text-slate-500">金額</span>
                                         <span>
-                                            {job.salary_amount?.toLocaleString()}円
-                                            {job.salary_type === "HOURLY" ? "/時" :
-                                                job.salary_type === "DAILY" ? "/日" :
-                                                    job.salary_type === "MONTHLY" ? "/月" : ""}
+                                            {job.reward_amount?.toLocaleString()}円
                                         </span>
                                     </div>
                                 </div>
