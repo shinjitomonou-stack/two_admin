@@ -64,7 +64,7 @@ export function ApplicationRow({
     const handleStatusUpdate = async (newStatus: 'ASSIGNED' | 'REJECTED' | 'CANCELLED') => {
         const confirmMessage = newStatus === 'ASSIGNED' ? "このワーカーを採用しますか？" :
             newStatus === 'REJECTED' ? "このワーカーを不採用にしますか？" :
-                "このワーカーの採用を解除（キャンセル）しますか？\n※ワーカーにキャンセル通知が送信されます。";
+                "このワーカーの採用を解除（キャンセル）しますか？";
 
         if (!confirm(confirmMessage)) return;
 

@@ -34,9 +34,6 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
             if (newStatus === 'ASSIGNED') {
                 const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
                 await sendLineMessage(worker.line_user_id, message);
-            } else if (newStatus === 'CANCELLED') {
-                const message = `【採用キャンセル通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」の採用がキャンセルされました。\n\nご不明な点がございましたらお問い合わせください。`;
-                await sendLineMessage(worker.line_user_id, message);
             }
         }
 
