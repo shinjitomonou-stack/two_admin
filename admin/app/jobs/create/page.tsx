@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 export default function CreateJobPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -200,20 +201,17 @@ export default function CreateJobPage() {
                                         新規登録
                                     </Link>
                                 </div>
-                                <select
-                                    name="clientId"
-                                    value={formData.clientId}
-                                    onChange={handleChange}
+                                <SearchableSelect
                                     required
-                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none"
-                                >
-                                    <option value="">選択してください</option>
-                                    {clients.map(client => (
-                                        <option key={client.id} value={client.id}>{client.name}</option>
-                                    ))}
-                                    {/* Fallback for demo if no clients exist */}
-                                    {clients.length === 0 && <option value="demo-client-id">デモクライアント (DB未接続時はエラーになります)</option>}
-                                </select>
+                                    value={formData.clientId}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
+                                    options={[
+                                        ...clients.map(c => ({ value: c.id, label: c.name })),
+                                        ...(clients.length === 0 ? [{ value: "demo-client-id", label: "デモクライアント (DB未接続時はエラーになります)" }] : [])
+                                    ]}
+                                    placeholder="クライアントを選択してください"
+                                    searchPlaceholder="クライアント名で検索"
+                                />
                                 {clients.length === 0 && (
                                     <p className="text-xs text-orange-500">
                                         ※ クライアントが見つかりません。先にDBにクライアントデータを登録してください。

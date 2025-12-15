@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 type Worker = {
     id: string;
@@ -209,19 +210,18 @@ export default function CreateContractPage() {
                     {/* Combined Worker Selection for both types */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">ワーカー <span className="text-red-500">*</span></label>
-                        <select
+                        <SearchableSelect
                             required
                             value={formData.worker_id}
-                            onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
-                            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        >
-                            <option value="">選択してください</option>
-                            {workers.map((worker) => (
-                                <option key={worker.id} value={worker.id}>
-                                    {worker.full_name} ({worker.email})
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(value) => setFormData(prev => ({ ...prev, worker_id: value }))}
+                            options={workers.map(w => ({
+                                value: w.id,
+                                label: w.full_name,
+                                subLabel: w.email
+                            }))}
+                            placeholder="ワーカーを選択してください"
+                            searchPlaceholder="名前やメールアドレスで検索"
+                        />
                     </div>
 
                     <div className="space-y-2">

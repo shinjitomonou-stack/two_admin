@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 export default function CreateClientContractPage() {
     const router = useRouter();
@@ -232,19 +233,14 @@ export default function CreateClientContractPage() {
                             <label className="text-sm font-medium">
                                 クライアント <span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <SearchableSelect
                                 required
                                 value={formData.client_id}
-                                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="">選択してください</option>
-                                {clients.map((client) => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.name}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+                                options={clients.map(c => ({ value: c.id, label: c.name }))}
+                                placeholder="クライアントを選択してください"
+                                searchPlaceholder="クライアント名で検索"
+                            />
                         </div>
                     </div>
 
@@ -253,19 +249,14 @@ export default function CreateClientContractPage() {
                             <label className="text-sm font-medium">
                                 関連案件 <span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <SearchableSelect
                                 required
                                 value={formData.job_id}
-                                onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="">選択してください</option>
-                                {jobs.map((job) => (
-                                    <option key={job.id} value={job.id}>
-                                        {job.title}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setFormData(prev => ({ ...prev, job_id: value }))}
+                                options={jobs.map(j => ({ value: j.id, label: j.title }))}
+                                placeholder="案件を選択してください"
+                                searchPlaceholder="案件名で検索"
+                            />
                         </div>
                     )}
 
