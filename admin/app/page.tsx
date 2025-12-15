@@ -177,7 +177,7 @@ export default async function Home() {
                   </div>
                   <Link
                     href={`/workers/${worker.id}`}
-                    className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-slate-800 whitespace-nowrap"
+                    className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 whitespace-nowrap"
                   >
                     確認する
                   </Link>

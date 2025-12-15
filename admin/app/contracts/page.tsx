@@ -54,7 +54,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                     </div>
                     <Link
                         href="/contracts/create"
-                        className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium"
+                        className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
                     >
                         <Plus className="w-4 h-4" />
                         新規契約登録
@@ -67,7 +67,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                         <Link
                             href="/contracts?tab=basic"
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'basic'
-                                ? 'border-slate-900 text-slate-900'
+                                ? 'border-primary text-slate-900'
                                 : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
@@ -76,7 +76,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                         <Link
                             href="/contracts?tab=individual"
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'individual'
-                                ? 'border-slate-900 text-slate-900'
+                                ? 'border-primary text-slate-900'
                                 : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >

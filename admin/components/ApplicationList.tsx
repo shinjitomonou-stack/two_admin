@@ -125,7 +125,7 @@ export function ApplicationList({
                         <button
                             onClick={handleBulkAssign}
                             disabled={isAssigning}
-                            className="bg-slate-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
                             {isAssigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckSquare className="w-4 h-4" />}
                             {selectedIds.length}名を一括採用
