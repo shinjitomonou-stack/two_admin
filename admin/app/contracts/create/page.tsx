@@ -148,7 +148,7 @@ export default function CreateContractPage() {
         }
     };
 
-    if (isFetching && !workers.length && !applications.length && !templates.length) {
+    if (isFetching && !workers.length && !templates.length) {
         return (
             <AdminLayout>
                 <div className="flex items-center justify-center h-64">
