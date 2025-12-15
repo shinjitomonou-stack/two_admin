@@ -39,8 +39,22 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .single();
 
     if (error || !contract) {
-        // console.error("Error fetching individual contract:", error);
-        notFound();
+        console.error("Error fetching individual contract:", error);
+        // notFound();
+        return (
+            <AdminLayout>
+                <div className="p-8">
+                    <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+                        <h2 className="font-bold text-lg mb-2">Error Loading Contract</h2>
+                        <p>ID: {id}</p>
+                        <pre className="mt-2 text-xs bg-white p-2 rounded border overflow-auto">
+                            {JSON.stringify(error, null, 2)}
+                        </pre>
+                        {!contract && <p className="mt-2">Contract is null</p>}
+                    </div>
+                </div>
+            </AdminLayout>
+        );
     }
 
     // Determine worker: Try direct relationship first, fallback to application's worker (migration support)
