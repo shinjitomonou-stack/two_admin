@@ -20,21 +20,22 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         if (!error) basicContracts = data || [];
     } else {
         // For individual contracts, we need to join:
-        // job_individual_contracts -> job_applications -> jobs -> clients
-        // Supabase nested joins syntax:
+        // job_individual_contracts -> workers (directly)
+        // job_individual_contracts -> job_applications (optional) -> jobs -> clients
         const { data, error } = await supabase
             .from("job_individual_contracts")
             .select(`
-    *,
-    contract_templates(title, version),
-    job_applications(
-        workers(full_name, email),
-        jobs(
-            title,
-            clients(name)
-        )
-    )
-        `)
+                *,
+                contract_templates(title, version),
+                worker:workers(full_name, email),
+                job_applications(
+                    workers(full_name, email),
+                    jobs(
+                        title,
+                        clients(name)
+                    )
+                )
+            `)
             .order("signed_at", { ascending: false });
 
         if (!error) individualContracts = data || [];
@@ -170,58 +171,67 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                                     )
                                 ) : (
                                     // Individual Contracts List
-                                    individualContracts.length > 0 ? individualContracts.map((contract) => (
-                                        <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <FileSignature className="w-4 h-4 text-purple-500" />
-                                                    <div>
-                                                        {/* @ts-ignore */}
-                                                        <div className="font-medium">{contract.contract_templates?.title}</div>
-                                                        {/* @ts-ignore */}
-                                                        <div className="text-xs text-muted-foreground">Ver. {contract.contract_templates?.version}</div>
+                                    individualContracts.length > 0 ? individualContracts.map((contract) => {
+                                        // @ts-ignore
+                                        const worker = contract.worker || contract.job_applications?.workers;
+                                        // @ts-ignore
+                                        const job = contract.job_applications?.jobs;
+
+                                        return (
+                                            <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileSignature className="w-4 h-4 text-purple-500" />
+                                                        <div>
+                                                            {/* @ts-ignore */}
+                                                            <div className="font-medium">{contract.contract_templates?.title}</div>
+                                                            {/* @ts-ignore */}
+                                                            <div className="text-xs text-muted-foreground">Ver. {contract.contract_templates?.version}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {/* @ts-ignore */}
-                                                <div className="font-medium text-slate-900">{contract.job_applications?.workers?.full_name}</div>
-                                                {/* @ts-ignore */}
-                                                <div className="text-xs text-muted-foreground">{contract.job_applications?.workers?.email}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {/* @ts-ignore */}
-                                                <div className="font-medium text-slate-900">{contract.job_applications?.jobs?.title}</div>
-                                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                                                    <Building2 className="w-3 h-3" />
-                                                    {/* @ts-ignore */}
-                                                    {contract.job_applications?.jobs?.clients?.name}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-800' :
-                                                    contract.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                        'bg-yellow-100 text-yellow-800'
-                                                    } `}>
-                                                    {contract.status === 'SIGNED' ? '締結済み' :
-                                                        contract.status === 'REJECTED' ? '却下' :
-                                                            '未締結 (依頼中)'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-500">
-                                                {contract.signed_at ? new Date(contract.signed_at).toLocaleString() : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <Link
-                                                    href={`/contracts/individual/${contract.id}`}
-                                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors font-medium"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    確認
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    )) : (
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-slate-900">{worker?.full_name || "不明"}</div>
+                                                    <div className="text-xs text-muted-foreground">{worker?.email}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {job ? (
+                                                        <>
+                                                            <div className="font-medium text-slate-900">{job.title}</div>
+                                                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                                                <Building2 className="w-3 h-3" />
+                                                                {job.clients?.name}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-xs">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-800' :
+                                                        contract.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
+                                                        } `}>
+                                                        {contract.status === 'SIGNED' ? '締結済み' :
+                                                            contract.status === 'REJECTED' ? '却下' :
+                                                                '未締結 (依頼中)'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-500">
+                                                    {contract.signed_at ? new Date(contract.signed_at).toLocaleString() : '-'}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <Link
+                                                        href={`/contracts/individual/${contract.id}`}
+                                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        確認
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }) : (
                                         <tr>
                                             <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                                                 契約書データがありません。

@@ -24,6 +24,7 @@ type JobApplication = {
     worker_id: string;
     job_id: string;
     workers: {
+        id: string;
         full_name: string;
         email: string;
     };
@@ -40,11 +41,9 @@ export default function CreateContractPage() {
     const [contractType, setContractType] = useState<"BASIC" | "INDIVIDUAL">("BASIC");
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
-    const [applications, setApplications] = useState<JobApplication[]>([]);
 
     const [formData, setFormData] = useState({
         worker_id: "",
-        application_id: "",
         template_id: "",
     });
 
@@ -70,29 +69,12 @@ export default function CreateContractPage() {
                 }
             }
 
-            if (contractType === "BASIC") {
-                // Fetch Workers for Basic Contract
-                const { data: workersData } = await supabase
-                    .from("workers")
-                    .select("id, full_name, email")
-                    .order("created_at", { ascending: false });
-                if (workersData) setWorkers(workersData);
-            } else {
-                // Fetch Job Applications for Individual Contract
-                // Only fetch applications that are APPLIED or ASSIGNED (and maybe not yet contracted?)
-                const { data: appsData } = await supabase
-                    .from("job_applications")
-                    .select(`
-                        id, worker_id, job_id,
-                        workers (full_name, email),
-                        jobs (title)
-                    `)
-                    .in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"])
-                    .order("created_at", { ascending: false });
-
-                // @ts-ignore
-                if (appsData) setApplications(appsData);
-            }
+            // Fetch Workers for both contract types
+            const { data: workersData } = await supabase
+                .from("workers")
+                .select("id, full_name, email")
+                .order("created_at", { ascending: false });
+            if (workersData) setWorkers(workersData);
 
             setIsFetching(false);
         };
@@ -100,15 +82,15 @@ export default function CreateContractPage() {
         fetchData();
     }, [contractType]);
 
+    // Calculate available workers - No longer needed as we fetch all workers for both types
+    // Filter applications - No longer needed
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (contractType === "BASIC" && !formData.worker_id) {
+        if (!formData.worker_id) {
             alert("ワーカーを選択してください");
-            return;
-        }
-        if (contractType === "INDIVIDUAL" && !formData.application_id) {
-            alert("案件応募を選択してください");
             return;
         }
         if (!formData.template_id) {
@@ -146,7 +128,8 @@ export default function CreateContractPage() {
                     .from("job_individual_contracts")
                     .insert([
                         {
-                            application_id: formData.application_id,
+                            // application_id is now optional/removed, use worker_id instead
+                            worker_id: formData.worker_id,
                             template_id: formData.template_id,
                             status: "PENDING",
                         },
@@ -210,7 +193,10 @@ export default function CreateContractPage() {
                                     name="contractType"
                                     value="BASIC"
                                     checked={contractType === "BASIC"}
-                                    onChange={() => setContractType("BASIC")}
+                                    onChange={() => {
+                                        setContractType("BASIC");
+                                        setSelectedWorkerId("");
+                                    }}
                                     className="w-4 h-4 text-slate-900 focus:ring-slate-500"
                                 />
                                 <span className="text-sm">基本契約</span>
@@ -221,7 +207,10 @@ export default function CreateContractPage() {
                                     name="contractType"
                                     value="INDIVIDUAL"
                                     checked={contractType === "INDIVIDUAL"}
-                                    onChange={() => setContractType("INDIVIDUAL")}
+                                    onChange={() => {
+                                        setContractType("INDIVIDUAL");
+                                        setSelectedWorkerId("");
+                                    }}
                                     className="w-4 h-4 text-slate-900 focus:ring-slate-500"
                                 />
                                 <span className="text-sm">個別契約</span>
@@ -229,42 +218,23 @@ export default function CreateContractPage() {
                         </div>
                     </div>
 
-                    {contractType === "BASIC" ? (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">ワーカー <span className="text-red-500">*</span></label>
-                            <select
-                                required
-                                value={formData.worker_id}
-                                onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="">選択してください</option>
-                                {workers.map((worker) => (
-                                    <option key={worker.id} value={worker.id}>
-                                        {worker.full_name} ({worker.email})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">対象の案件応募 <span className="text-red-500">*</span></label>
-                            <select
-                                required
-                                value={formData.application_id}
-                                onChange={(e) => setFormData({ ...formData, application_id: e.target.value })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="">選択してください</option>
-                                {applications.map((app) => (
-                                    <option key={app.id} value={app.id}>
-                                        {app.workers.full_name} - {app.jobs.title}
-                                    </option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-muted-foreground">※ 応募・アサイン済みの案件のみ表示されます</p>
-                        </div>
-                    )}
+                    {/* Combined Worker Selection for both types */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">ワーカー <span className="text-red-500">*</span></label>
+                        <select
+                            required
+                            value={formData.worker_id}
+                            onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
+                            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        >
+                            <option value="">選択してください</option>
+                            {workers.map((worker) => (
+                                <option key={worker.id} value={worker.id}>
+                                    {worker.full_name} ({worker.email})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium">契約書テンプレート <span className="text-red-500">*</span></label>

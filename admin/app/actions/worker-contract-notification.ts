@@ -14,6 +14,7 @@ export async function sendWorkerContractNotification(contractId: string) {
             .from("job_individual_contracts")
             .select(`
                 *,
+                worker:workers (full_name, line_id, line_user_id),
                 job_applications (
                     workers (full_name, line_id, line_user_id),
                     jobs (title)
@@ -29,12 +30,18 @@ export async function sendWorkerContractNotification(contractId: string) {
 
         // Handle array or object structure for relations
         const app = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
-        if (!app) throw new Error("No job application found");
 
-        const worker = Array.isArray(app.workers) ? app.workers[0] : app.workers;
+        // Try to get worker from direct link first, then fallback to application
+        // @ts-ignore
+        let worker = contract.worker;
+
+        if (!worker && app) {
+            worker = Array.isArray(app.workers) ? app.workers[0] : app.workers;
+        }
+
         if (!worker) throw new Error("No worker found");
 
-        const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+        const job = app ? (Array.isArray(app.jobs) ? app.jobs[0] : app.jobs) : null;
         const jobTitle = job?.title || "未設定";
 
         // @ts-ignore

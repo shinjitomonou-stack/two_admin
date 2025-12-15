@@ -34,27 +34,21 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     const applicationIds = applications?.map(app => app.id) || [];
 
     // 2. Get contracts
-    let individualContracts: any[] = [];
-
-    if (applicationIds.length > 0) {
-        const { data } = await supabase
-            .from("job_individual_contracts")
-            .select(`
-                *,
-                contract_templates(title),
-                job_applications (
-                    jobs (title)
-                )
-            `)
-            .in("application_id", applicationIds)
-            .in("application_id", applicationIds);
-
-        if (data) {
-            individualContracts = data.sort((a, b) =>
-                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            );
-        }
-    }
+    // Fetch directly by worker_id (new schema) and also include those by application_id (legacy support if needed, but worker_id backfill should cover it)
+    // Actually, simply fetching by worker_id is sufficient if we assume backfill.
+    // However, to be safe during transition, we can query both... but easier to just rely on worker_id being populated.
+    // If we strictly follow the new schema:
+    const { data: individualContracts } = await supabase
+        .from("job_individual_contracts")
+        .select(`
+            *,
+            contract_templates(title),
+            job_applications (
+                jobs (title)
+            )
+        `)
+        .eq("worker_id", id)
+        .order("created_at", { ascending: false });
 
     if (error || !worker) {
         notFound();
