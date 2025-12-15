@@ -44,8 +44,12 @@ export async function sendWorkerContractNotification(contractId: string) {
             return { success: false, message: "Worker has no LINE ID" };
         }
 
+        // TODO: This should be an environment variable in the future
+        const WORKER_APP_URL = process.env.WORKER_APP_URL || "https://two-admin.vercel.app";
+
         // 2. Send LINE message
-        const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n案件「${jobTitle}」に関する個別契約書が発行されました。\n\n管理画面より内容をご確認ください。`;
+        const contractUrl = `${WORKER_APP_URL}/contracts/individual/${contractId}`;
+        const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n案件「${jobTitle}」に関する個別契約書が発行されました。\n\n以下のURLより内容をご確認の上、署名をお願いいたします。\n${contractUrl}`;
 
         const result = await sendLineMessage(lineUserId, message);
 
