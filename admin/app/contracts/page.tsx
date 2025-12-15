@@ -153,7 +153,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={`/ contracts / basic / ${contract.id} `}
+                                                    href={`/contracts/basic/${contract.id}`}
                                                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors font-medium"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -213,7 +213,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <Link
-                                                    href={`/ contracts / individual / ${contract.id} `}
+                                                    href={`/contracts/individual/${contract.id}`}
                                                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors font-medium"
                                                 >
                                                     <Eye className="w-4 h-4" />

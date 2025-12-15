@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import WorkerContractNotificationButton from "@/components/contracts/WorkerContractNotificationButton";
 
 export default async function IndividualContractDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -41,9 +42,16 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
-                    <div>
+                    <div className="flex-1">
                         <h2 className="text-2xl font-bold tracking-tight">個別契約書詳細・証跡</h2>
                         <p className="text-muted-foreground text-xs font-mono">ID: {contract.id}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <WorkerContractNotificationButton
+                            contractId={id}
+                            // @ts-ignore
+                            sentAt={contract.notification_sent_at}
+                        />
                     </div>
                 </div>
 
