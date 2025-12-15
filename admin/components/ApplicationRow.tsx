@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle, Loader2, Calendar, Clock, Save, FileText } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Calendar, Clock, Save, FileText, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -61,8 +61,12 @@ export function ApplicationRow({
     const [scheduleStartTime, setScheduleStartTime] = useState("");
     const [scheduleEndTime, setScheduleEndTime] = useState("");
 
-    const handleStatusUpdate = async (newStatus: 'ASSIGNED' | 'REJECTED') => {
-        if (!confirm(newStatus === 'ASSIGNED' ? "このワーカーを採用しますか？" : "このワーカーを不採用にしますか？")) return;
+    const handleStatusUpdate = async (newStatus: 'ASSIGNED' | 'REJECTED' | 'CANCELLED') => {
+        const confirmMessage = newStatus === 'ASSIGNED' ? "このワーカーを採用しますか？" :
+            newStatus === 'REJECTED' ? "このワーカーを不採用にしますか？" :
+                "このワーカーの採用を解除（キャンセル）しますか？\n※ワーカーにキャンセル通知が送信されます。";
+
+        if (!confirm(confirmMessage)) return;
 
         setIsUpdating(true);
         await updateApplicationStatus(app.id, newStatus);
@@ -251,6 +255,18 @@ export function ApplicationRow({
                             title="不採用"
                         >
                             {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+                        </button>
+                    </div>
+                )}
+                {(app.status === 'ASSIGNED' || app.status === 'CONFIRMED') && (
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            onClick={() => handleStatusUpdate('CANCELLED')}
+                            disabled={isUpdating}
+                            className="p-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            title="採用解除 (キャンセル)"
+                        >
+                            {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserMinus className="w-5 h-5" />}
                         </button>
                     </div>
                 )}
