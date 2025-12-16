@@ -3,6 +3,7 @@ import { Users, Briefcase, FileCheck, AlertCircle, ArrowRight, ShieldAlert } fro
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -35,6 +36,7 @@ export default async function Home() {
     .eq("status", "PENDING");
 
   // 2. Fetch Recent Data
+  // 2. Fetch Recent Data
   // Recent Applications
   const { data: recentApps } = await supabase
     .from("job_applications")
@@ -56,6 +58,107 @@ export default async function Home() {
     .eq("is_verified", false)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  // 3. Aggregate Data for Charts
+  // A. Monthly Sales (Client Job Contracts + Client Contracts)
+  // Note: This is a simplified estimation.
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1); // Start of month
+
+  const { data: jobContracts } = await supabase
+    .from("client_job_contracts")
+    .select("contract_amount, created_at")
+    .gte("created_at", sixMonthsAgo.toISOString());
+
+  const { data: monthlyContracts } = await supabase
+    .from("client_contracts")
+    .select("monthly_amount, created_at")
+    .gte("created_at", sixMonthsAgo.toISOString());
+
+  // Helper to format month Key (e.g., "2023-11")
+  const getMonthKey = (dateStr: string) => dateStr.substring(0, 7);
+
+  const salesMap = new Map<string, number>();
+  // Initialize last 6 months
+  for (let i = 0; i < 6; i++) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const key = getMonthKey(d.toISOString());
+    salesMap.set(key, 0);
+  }
+
+  jobContracts?.forEach(c => {
+    const key = getMonthKey(c.created_at);
+    if (salesMap.has(key)) {
+      salesMap.set(key, (salesMap.get(key) || 0) + Number(c.contract_amount));
+    }
+  });
+  monthlyContracts?.forEach(c => {
+    const key = getMonthKey(c.created_at);
+    if (salesMap.has(key)) {
+      salesMap.set(key, (salesMap.get(key) || 0) + Number(c.monthly_amount)); // Assuming initial value as monthly impact
+    }
+  });
+
+  const salesData = Array.from(salesMap.entries())
+    .map(([month, amount]) => ({
+      month: month.substring(5) + "月", // "11月"
+      amount,
+      sortKey: month
+    }))
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .map(({ month, amount }) => ({ month, amount }));
+
+  // B. Application Trends (Last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: applications } = await supabase
+    .from("job_applications")
+    .select("created_at")
+    .gte("created_at", thirtyDaysAgo.toISOString());
+
+  const appMap = new Map<string, number>();
+  // Initialize last 30 days
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().substring(0, 10); // YYYY-MM-DD
+    appMap.set(key, 0);
+  }
+
+  applications?.forEach(app => {
+    const key = app.created_at.substring(0, 10);
+    if (appMap.has(key)) {
+      appMap.set(key, (appMap.get(key) || 0) + 1);
+    }
+  });
+
+  const applicationData = Array.from(appMap.entries())
+    .map(([date, count]) => ({
+      date: date.substring(5).replace("-", "/"), // MM/DD
+      count,
+      sortKey: date
+    }))
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .map(({ date, count }) => ({ date, count }));
+
+  // C. Worker Status
+  const { count: verifiedCount } = await supabase
+    .from("workers")
+    .select("*", { count: "exact", head: true })
+    .eq("is_verified", true);
+
+  const workerData = [
+    { name: "本人確認済み", value: verifiedCount || 0 },
+    { name: "未確認", value: unverifiedWorkersCount || 0 },
+  ].filter(d => d.value > 0);
+
+  // Fallback for empty data to avoid ugly chart
+  if (workerData.length === 0) {
+    workerData.push({ name: "データなし", value: 1 });
+  }
 
   return (
     <AdminLayout>
@@ -112,6 +215,13 @@ export default async function Home() {
             </Link>
           ))}
         </div>
+
+        {/* Charts Section */}
+        <DashboardCharts
+          salesData={salesData}
+          applicationData={applicationData}
+          workerData={workerData}
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Recent Applications */}
