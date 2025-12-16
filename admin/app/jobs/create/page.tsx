@@ -24,7 +24,12 @@ export default function CreateJobPage() {
         address: "",
         latitude: "",
         longitude: "",
-        reward: "",
+        // Reward settings
+        rewardType: "FIXED", // 'FIXED' | 'UNIT'
+        rewardUnitPrice: "",
+        billingUnitPrice: "", // New field
+        rewardQuantity: "",
+        reward: "", // Calculated or input total
         billingAmount: "",
         maxWorkers: "1", // Number of workers needed
         // Date settings
@@ -56,6 +61,24 @@ export default function CreateJobPage() {
         fetchData();
     }, []);
 
+    // Helper to calculate total reward and billing
+    useEffect(() => {
+        if (formData.rewardType === 'UNIT') {
+            const unitPrice = parseFloat(formData.rewardUnitPrice) || 0;
+            const quantity = parseFloat(formData.rewardQuantity) || 0;
+            const rewardTotal = Math.round(unitPrice * quantity);
+
+            const billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
+            const billingTotal = Math.round(billingUnitPrice * quantity);
+
+            setFormData(prev => ({
+                ...prev,
+                reward: rewardTotal.toString(),
+                billingAmount: billingTotal > 0 ? billingTotal.toString() : prev.billingAmount
+            }));
+        }
+    }, [formData.rewardType, formData.rewardUnitPrice, formData.rewardQuantity, formData.billingUnitPrice]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -76,9 +99,14 @@ export default function CreateJobPage() {
                 throw new Error("クライアントを選択してください（デモ用IDは使用できません）");
             }
 
-            const rewardAmount = parseInt(formData.reward);
+            const rewardAmount = parseInt(formData.reward); // Total must be integer for now, or just use number
             if (isNaN(rewardAmount)) {
                 throw new Error("報酬金額には数値を入力してください");
+            }
+            if (formData.rewardType === 'UNIT') {
+                if (!formData.rewardUnitPrice || !formData.rewardQuantity) {
+                    throw new Error("報酬単価と数量を入力してください");
+                }
             }
 
             let startDateTime: Date;
@@ -117,7 +145,13 @@ export default function CreateJobPage() {
                 location: formData.latitude && formData.longitude
                     ? `POINT(${formData.longitude} ${formData.latitude})`
                     : null,
+                // Reward fields - use parsed values
                 reward_amount: rewardAmount,
+                reward_type: formData.rewardType,
+                reward_unit_price: formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null,
+                billing_unit_price: formData.rewardType === 'UNIT' && formData.billingUnitPrice ? parseFloat(formData.billingUnitPrice) : null,
+                reward_quantity: formData.rewardType === 'UNIT' ? parseInt(formData.rewardQuantity) : null,
+
                 billing_amount: formData.billingAmount ? parseInt(formData.billingAmount) : null,
                 max_workers: parseInt(formData.maxWorkers),
                 start_time: startDateTime.toISOString(),
@@ -340,39 +374,144 @@ export default function CreateJobPage() {
                                 </p>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">報酬金額（1人あたり・円）<span className="text-red-500">*</span></label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
-                                    <input
-                                        required
-                                        name="reward"
-                                        value={formData.reward}
-                                        onChange={handleChange}
-                                        type="number"
-                                        placeholder="5000"
-                                        className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
-                                    />
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium">報酬設定タイプ</label>
+                                    <div className="flex items-center gap-4 mt-1.5">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="rewardType"
+                                                value="FIXED"
+                                                checked={formData.rewardType === "FIXED"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-slate-900 focus:ring-slate-500"
+                                            />
+                                            <span className="text-sm">固定金額（総額）</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="rewardType"
+                                                value="UNIT"
+                                                checked={formData.rewardType === "UNIT"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-slate-900 focus:ring-slate-500"
+                                            />
+                                            <span className="text-sm">単価 × 数量</span>
+                                        </label>
+                                    </div>
                                 </div>
+
+                                {formData.rewardType === "UNIT" ? (
+                                    <div className="grid gap-4 animate-in fade-in slide-in-from-top-1">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">数量 <span className="text-red-500">*</span></label>
+                                                <input
+                                                    required
+                                                    name="rewardQuantity"
+                                                    value={formData.rewardQuantity}
+                                                    onChange={handleChange}
+                                                    type="number"
+                                                    placeholder="50"
+                                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                {/* Filler */}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">報酬単価（支払） <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
+                                                <input
+                                                    required
+                                                    name="rewardUnitPrice"
+                                                    value={formData.rewardUnitPrice}
+                                                    onChange={handleChange}
+                                                    type="number"
+                                                    step="any"
+                                                    placeholder="100.5"
+                                                    className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">請求単価（クライアントへ）</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
+                                                <input
+                                                    name="billingUnitPrice"
+                                                    value={formData.billingUnitPrice}
+                                                    onChange={handleChange}
+                                                    type="number"
+                                                    step="any"
+                                                    placeholder="150.8"
+                                                    className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                        <label className="text-sm font-medium">報酬金額（1人あたり・円）<span className="text-red-500">*</span></label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
+                                            <input
+                                                required
+                                                name="reward"
+                                                value={formData.reward}
+                                                onChange={handleChange}
+                                                type="number"
+                                                placeholder="5000"
+                                                className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Total Reward Display for Unit Type */}
+                                {formData.rewardType === "UNIT" && (
+                                    <div className="p-3 bg-blue-50 rounded-md border border-blue-100 space-y-2 text-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-blue-700 font-medium">報酬総額 (支払・四捨五入):</span>
+                                            <span className="text-blue-900 font-bold text-lg">
+                                                ¥{(parseInt(formData.reward) || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        {formData.billingAmount && parseInt(formData.billingAmount) > 0 && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-blue-700 font-medium">請求総額 (売上):</span>
+                                                <span className="text-blue-900 font-bold">
+                                                    ¥{(parseInt(formData.billingAmount) || 0).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
-                                    <input
-                                        name="billingAmount"
-                                        value={formData.billingAmount}
-                                        onChange={handleChange}
-                                        type="number"
-                                        placeholder="8000"
-                                        className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
-                                    />
+                            {formData.rewardType === "FIXED" && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">¥</span>
+                                        <input
+                                            name="billingAmount"
+                                            value={formData.billingAmount}
+                                            onChange={handleChange}
+                                            type="number"
+                                            placeholder="8000"
+                                            className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        ※ クライアントへの請求額を入力します（任意）
+                                    </p>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    ※ クライアントへの請求額を入力します（任意）
-                                </p>
-                            </div>
+                            )}
 
                             {/* Calculations */}
                             {formData.reward && formData.maxWorkers && parseInt(formData.maxWorkers) > 0 && (

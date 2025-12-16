@@ -29,6 +29,11 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         work_period_end: "",
         schedule_notes: "",
         report_template_id: "",
+        // New fields
+        reward_type: "FIXED",
+        reward_unit_price: 0,
+        billing_unit_price: 0,
+        reward_quantity: 0,
     });
 
     useEffect(() => {
@@ -81,6 +86,11 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     work_period_end: data.work_period_end ? formatDateTime(data.work_period_end) : "",
                     schedule_notes: data.schedule_notes || "",
                     report_template_id: data.report_template_id || "",
+                    // New fields
+                    reward_type: data.reward_type || "FIXED",
+                    reward_unit_price: data.reward_unit_price || 0,
+                    billing_unit_price: data.billing_unit_price || 0,
+                    reward_quantity: data.reward_quantity || 0,
                 });
             }
             setIsFetching(false);
@@ -88,6 +98,27 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
         fetchJob();
     }, [params, router]);
+
+    // Recalculate totals when unit/qty changes
+    useEffect(() => {
+        if (!isFetching && formData.reward_type === 'UNIT') {
+            const unitPrice = parseFloat(formData.reward_unit_price.toString()) || 0;
+            const billingUnitPrice = parseFloat(formData.billing_unit_price.toString()) || 0;
+            const quantity = parseInt(formData.reward_quantity.toString()) || 0;
+
+            // Avoid infinite loop by only updating if values are different
+            const newReward = Math.round(unitPrice * quantity);
+            const newBilling = Math.round(billingUnitPrice * quantity);
+
+            if (newReward !== formData.reward_amount || (newBilling > 0 && newBilling !== formData.billing_amount)) {
+                setFormData(prev => ({
+                    ...prev,
+                    reward_amount: newReward,
+                    billing_amount: newBilling > 0 ? newBilling : prev.billing_amount
+                }));
+            }
+        }
+    }, [formData.reward_type, formData.reward_unit_price, formData.billing_unit_price, formData.reward_quantity, isFetching]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -100,6 +131,15 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                 .from("jobs")
                 .update({
                     ...formData,
+                    // Parse values
+                    reward_amount: Math.round(Number(formData.reward_amount)),
+                    billing_amount: Math.round(Number(formData.billing_amount)),
+                    max_workers: parseInt(String(formData.max_workers)),
+
+                    reward_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null,
+                    billing_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null,
+                    reward_quantity: formData.reward_type === 'UNIT' ? parseInt(String(formData.reward_quantity)) : null,
+
                     start_time: new Date(formData.start_time).toISOString(),
                     end_time: new Date(formData.end_time).toISOString(),
                     work_period_start: formData.work_period_start ? new Date(formData.work_period_start).toISOString() : null,
@@ -175,7 +215,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">募集人数 <span className="text-red-500">*</span></label>
                             <input
@@ -187,27 +227,99 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">報酬金額（1人あたり・円） <span className="text-red-500">*</span></label>
-                            <input
-                                type="number"
-                                required
-                                min="0"
-                                value={formData.reward_amount}
-                                onChange={(e) => setFormData({ ...formData, reward_amount: Number(e.target.value) })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            />
+
+                        <div className="space-y-2 lg:col-span-2">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">報酬設定タイプ</label>
+                                    <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="reward_type"
+                                                value="FIXED"
+                                                checked={formData.reward_type === "FIXED"}
+                                                onChange={(e) => setFormData({ ...formData, reward_type: "FIXED" })}
+                                                className="w-4 h-4 text-slate-900 focus:ring-slate-500"
+                                            />
+                                            <span className="text-sm">固定金額（総額）</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="reward_type"
+                                                value="UNIT"
+                                                checked={formData.reward_type === "UNIT"}
+                                                onChange={(e) => setFormData({ ...formData, reward_type: "UNIT" })}
+                                                className="w-4 h-4 text-slate-900 focus:ring-slate-500"
+                                            />
+                                            <span className="text-sm">単価 × 数量</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {formData.reward_type === "UNIT" ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">数量 <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={formData.reward_quantity}
+                                                onChange={(e) => setFormData({ ...formData, reward_quantity: Number(e.target.value) })}
+                                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">報酬単価 <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                required
+                                                value={formData.reward_unit_price}
+                                                onChange={(e) => setFormData({ ...formData, reward_unit_price: Number(e.target.value) })}
+                                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">請求単価</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                value={formData.billing_unit_price}
+                                                onChange={(e) => setFormData({ ...formData, billing_unit_price: Number(e.target.value) })}
+                                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">報酬金額（1人あたり・円） <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="0"
+                                                value={formData.reward_amount}
+                                                onChange={(e) => setFormData({ ...formData, reward_amount: Number(e.target.value) })}
+                                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.billing_amount}
+                                                onChange={(e) => setFormData({ ...formData, billing_amount: Number(e.target.value) })}
+                                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={formData.billing_amount}
-                                onChange={(e) => setFormData({ ...formData, billing_amount: Number(e.target.value) })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            />
-                        </div>
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium">作業報告テンプレート</label>
                             <select
