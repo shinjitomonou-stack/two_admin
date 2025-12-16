@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
@@ -79,11 +80,11 @@ export default function CreateContractPage() {
         e.preventDefault();
 
         if (!formData.worker_id) {
-            alert("ワーカーを選択してください");
+            toast.error("ワーカーを選択してください");
             return;
         }
         if (!formData.template_id) {
-            alert("テンプレートを選択してください");
+            toast.error("テンプレートを選択してください");
             return;
         }
 
@@ -126,12 +127,12 @@ export default function CreateContractPage() {
                 if (error) throw error;
             }
 
-            alert("契約依頼を作成しました");
+            toast.success("契約依頼を作成しました");
             router.push(`/contracts?tab=${contractType.toLowerCase()}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

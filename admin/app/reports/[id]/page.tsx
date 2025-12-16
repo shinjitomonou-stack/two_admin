@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [id, setId] = useState<string | null>(null);
@@ -83,9 +84,9 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
             .eq("id", id);
 
         if (error) {
-            alert("承認に失敗しました: " + error.message);
+            toast.error("承認に失敗しました: " + error.message);
         } else {
-            alert("報告を承認しました");
+            toast.success("報告を承認しました");
             fetchReport(); // Refresh data
         }
 
@@ -105,9 +106,9 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
             .eq("id", id);
 
         if (error) {
-            alert("差し戻しに失敗しました: " + error.message);
+            toast.error("差し戻しに失敗しました: " + error.message);
         } else {
-            alert("報告を差し戻しました");
+            toast.success("報告を差し戻しました");
             setShowRejectModal(false);
             setRejectionReason("");
             fetchReport(); // Refresh data

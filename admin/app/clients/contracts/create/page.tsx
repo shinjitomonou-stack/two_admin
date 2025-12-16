@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, Save, Loader2, Upload, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
@@ -156,11 +157,11 @@ export default function CreateClientContractPage() {
                 if (error) throw error;
             }
 
-            alert("契約を作成しました");
+            toast.success("契約を作成しました");
             router.push(`/clients/contracts?tab=${formData.contract_type.toLowerCase()}`);
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

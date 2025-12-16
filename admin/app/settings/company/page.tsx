@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, Save, Loader2, Building2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -79,11 +80,11 @@ export default function CompanySettingsPage() {
                 if (error) throw error;
             }
 
-            alert("保存しました");
+            toast.success("保存しました");
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 export default function CreateJobPage() {
@@ -138,14 +139,14 @@ export default function CreateJobPage() {
                 throw error;
             }
 
-            alert("案件を作成しました！");
+            toast.success("案件を作成しました！");
             router.push("/jobs");
             router.refresh();
         } catch (error: any) {
             console.error("Error creating job:", error);
             // Show detailed error in alert
             const errorMessage = error.message || JSON.stringify(error, null, 2) || "不明なエラーが発生しました";
-            alert(`エラーが発生しました:\n${errorMessage}`);
+            toast.error(`エラーが発生しました:\n${errorMessage}`);
         } finally {
             setIsLoading(false);
         }
