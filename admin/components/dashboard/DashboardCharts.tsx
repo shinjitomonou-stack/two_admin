@@ -48,7 +48,7 @@ export function DashboardCharts({ salesData, applicationData, workerData }: Dash
                                 tick={{ fontSize: 12, fill: "#6b7280" }}
                             />
                             <Tooltip
-                                formatter={(value: number) => [`¥${value.toLocaleString()}`, "売上"]}
+                                formatter={(value: number | undefined) => [`¥${(value || 0).toLocaleString()}`, "売上"]}
                                 cursor={{ fill: "#f3f4f6" }}
                                 contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                             />
@@ -77,7 +77,7 @@ export function DashboardCharts({ salesData, applicationData, workerData }: Dash
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => [`${value}人`, "人数"]} />
+                            <Tooltip formatter={(value: number | undefined) => [`${value || 0}人`, "人数"]} />
                             <Legend verticalAlign="bottom" height={36} />
                         </PieChart>
                     </ResponsiveContainer>
