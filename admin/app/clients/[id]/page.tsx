@@ -26,6 +26,35 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         .eq("client_id", id)
         .order("created_at", { ascending: false });
 
+    // Fetch related contracts
+    const { data: basicAndNdaContracts } = await supabase
+        .from("client_contracts")
+        .select("*")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false });
+
+    const { data: individualContracts } = await supabase
+        .from("client_job_contracts")
+        .select(`
+            *,
+            jobs(title)
+        `)
+        .eq("client_id", id)
+        .order("created_at", { ascending: false });
+
+    const getStatusStyle = (status: string) => {
+        const styles: Record<string, string> = {
+            DRAFT: "bg-slate-100 text-slate-700",
+            PENDING: "bg-orange-100 text-orange-700",
+            ACTIVE: "bg-green-100 text-green-700",
+            EXPIRED: "bg-red-100 text-red-700",
+            TERMINATED: "bg-red-100 text-red-700",
+            COMPLETED: "bg-blue-100 text-blue-700",
+            CANCELLED: "bg-slate-100 text-slate-700",
+        };
+        return styles[status] || "bg-slate-100 text-slate-700";
+    };
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -210,6 +239,72 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                             </div>
                         )}
 
+                        {/* Contracts Section */}
+                        <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                            <h3 className="font-semibold text-lg">契約一覧</h3>
+
+                            <div className="space-y-4">
+                                {/* Basic & NDA */}
+                                {basicAndNdaContracts?.map(contract => (
+                                    <Link key={contract.id} href={`/clients/contracts/${contract.contract_type.toLowerCase()}/${contract.id}`}
+                                        className="block p-4 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 className="font-medium text-slate-900">{contract.title}</h4>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {contract.contract_type === 'BASIC' ? '基本契約' : 'NDA'}
+                                                </p>
+                                            </div>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getStatusStyle(contract.status)}`}>
+                                                {contract.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
+                                            </div>
+                                            {contract.monthly_amount && (
+                                                <div className="flex items-center gap-1">
+                                                    <Banknote className="w-3 h-3" />
+                                                    ¥{contract.monthly_amount.toLocaleString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
+                                ))}
+
+                                {/* Individual */}
+                                {individualContracts?.map(contract => (
+                                    <Link key={contract.id} href={`/clients/contracts/individual/${contract.id}`}
+                                        className="block p-4 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 className="font-medium text-slate-900">{contract.title}</h4>
+                                                <p className="text-xs text-muted-foreground">
+                                                    個別契約: {/* @ts-ignore */}{contract.jobs?.title || '案件名不明'}
+                                                </p>
+                                            </div>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getStatusStyle(contract.status)}`}>
+                                                {contract.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-1">
+                                                <Banknote className="w-3 h-3" />
+                                                ¥{contract.contract_amount?.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+
+                                {(!basicAndNdaContracts || basicAndNdaContracts.length === 0) &&
+                                    (!individualContracts || individualContracts.length === 0) && (
+                                        <p className="text-sm text-muted-foreground">契約情報はありません。</p>
+                                    )}
+                            </div>
+                        </div>
+
                         {/* Jobs History */}
                         <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
                             <h3 className="font-semibold text-lg">発注案件履歴</h3>
@@ -227,7 +322,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                                                     {job.status}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                 <Calendar className="w-3 h-3" />
                                                 {formatDate(job.start_time)} 〜 {formatDate(job.end_time)}
                                             </div>

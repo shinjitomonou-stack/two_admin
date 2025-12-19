@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 interface StatusChangeProps {
     contractId: string;
     currentStatus: string;
-    contractType: "client_contracts" | "client_job_contracts";
+    contractType: "client_contracts" | "client_job_contracts" | "worker_basic_contracts" | "job_individual_contracts";
 }
 
 export default function StatusChanger({ contractId, currentStatus, contractType }: StatusChangeProps) {
@@ -15,21 +15,34 @@ export default function StatusChanger({ contractId, currentStatus, contractType 
     const [isUpdating, setIsUpdating] = useState(false);
     const router = useRouter();
 
-    const statusOptions = contractType === "client_contracts"
-        ? [
-            { value: "DRAFT", label: "下書き" },
-            { value: "PENDING", label: "承認待ち" },
-            { value: "ACTIVE", label: "有効" },
-            { value: "EXPIRED", label: "期限切れ" },
-            { value: "TERMINATED", label: "解約" },
-        ]
-        : [
-            { value: "DRAFT", label: "下書き" },
-            { value: "PENDING", label: "承認待ち" },
-            { value: "ACTIVE", label: "有効" },
-            { value: "COMPLETED", label: "完了" },
-            { value: "CANCELLED", label: "キャンセル" },
+    const getStatusOptions = () => {
+        if (contractType === "client_contracts") {
+            return [
+                { value: "DRAFT", label: "下書き" },
+                { value: "PENDING", label: "承認待ち" },
+                { value: "ACTIVE", label: "有効" },
+                { value: "EXPIRED", label: "期限切れ" },
+                { value: "TERMINATED", label: "解約" },
+            ];
+        }
+        if (contractType === "client_job_contracts") {
+            return [
+                { value: "DRAFT", label: "下書き" },
+                { value: "PENDING", label: "承認待ち" },
+                { value: "ACTIVE", label: "有効" },
+                { value: "COMPLETED", label: "完了" },
+                { value: "CANCELLED", label: "キャンセル" },
+            ];
+        }
+        // Worker contracts (worker_basic_contracts, job_individual_contracts)
+        return [
+            { value: "PENDING", label: "依頼中" },
+            { value: "SIGNED", label: "締結済み" },
+            { value: "REJECTED", label: "却下" },
         ];
+    };
+
+    const statusOptions = getStatusOptions();
 
     const handleStatusChange = async (newStatus: string) => {
         if (newStatus === status) return;
@@ -37,12 +50,18 @@ export default function StatusChanger({ contractId, currentStatus, contractType 
         setIsUpdating(true);
         const supabase = createClient();
 
+        const updateData: any = {
+            status: newStatus,
+        };
+
+        // If setting worker contract to SIGNED, record the timestamp
+        if (newStatus === "SIGNED" && (contractType === "worker_basic_contracts" || contractType === "job_individual_contracts")) {
+            updateData.signed_at = new Date().toISOString();
+        }
+
         const { error } = await supabase
             .from(contractType)
-            .update({
-                status: newStatus,
-                updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq("id", contractId);
 
         if (error) {
@@ -82,8 +101,8 @@ export default function StatusChanger({ contractId, currentStatus, contractType 
                             onClick={() => handleStatusChange(option.value)}
                             disabled={isUpdating}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${status === option.value
-                                    ? getStatusStyle(option.value)
-                                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                                ? getStatusStyle(option.value)
+                                : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                                 }`}
                         >
                             {option.label}

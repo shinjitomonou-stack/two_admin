@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import StatusChanger from "@/components/StatusChanger";
 import WorkerContractNotificationButton from "@/components/contracts/WorkerContractNotificationButton";
 
 export default async function IndividualContractDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -231,6 +232,15 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                     法的紛争時の証拠として使用される可能性があります。
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Status Changer */}
+                        <div className="mt-6">
+                            <StatusChanger
+                                contractId={id}
+                                currentStatus={contract.status}
+                                contractType="job_individual_contracts"
+                            />
                         </div>
                     </div>
                 </div>

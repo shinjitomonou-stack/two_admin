@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
+import StatusChanger from "@/components/StatusChanger";
 
 export default async function SignedContractDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -133,6 +134,13 @@ export default async function SignedContractDetailPage(props: { params: Promise<
                                 </p>
                             </div>
                         </div>
+
+                        {/* Status Changer */}
+                        <StatusChanger
+                            contractId={id}
+                            currentStatus={contract.status}
+                            contractType="worker_basic_contracts"
+                        />
                     </div>
                 </div>
             </div>
