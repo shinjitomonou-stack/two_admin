@@ -4,6 +4,8 @@ import Link from "next/link";
 import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -353,7 +355,7 @@ id,
               <div>
                 <h3 className="font-bold text-red-800 text-sm">個別契約の確認依頼があります</h3>
                 <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                  案件: {contract.job_applications.jobs.title}
+                  案件: {contract.job_applications?.jobs?.title || "案件名不明"}
                   <br />
                   内容をご確認の上、署名をお願いします。
                 </p>
@@ -378,7 +380,7 @@ id,
               <div>
                 <h3 className="font-bold text-yellow-800 text-sm">作業予定日の設定が必要です</h3>
                 <p className="text-xs text-yellow-700 mt-1 leading-relaxed">
-                  案件: {app.jobs.title}
+                  案件: {app.jobs?.title || "案件名不明"}
                   <br />
                   作業予定日を設定してください。
                 </p>
@@ -403,12 +405,12 @@ id,
               <div>
                 <h3 className="font-bold text-orange-800 text-sm">作業報告の提出が必要です</h3>
                 <p className="text-xs text-orange-700 mt-1 leading-relaxed">
-                  案件: {app.jobs.title}
+                  案件: {app.jobs?.title || "案件名不明"}
                   <br />
                   作業予定日を過ぎています。作業報告を提出してください。
                 </p>
                 <Link
-                  href={`/jobs/${app.jobs.id}`}
+                  href={`/jobs/${app.jobs?.id}`}
                   className="inline-block mt-3 bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                 >
                   作業報告を提出する

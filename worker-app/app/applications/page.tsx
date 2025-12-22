@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Briefcase, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -187,8 +189,8 @@ export default function ApplicationsPage() {
                                 <button
                                     onClick={() => setStatusFilter("all")}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === "all"
-                                            ? "bg-slate-900 text-white"
-                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                         }`}
                                 >
                                     すべて
@@ -196,8 +198,8 @@ export default function ApplicationsPage() {
                                 <button
                                     onClick={() => setStatusFilter("applied")}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === "applied"
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                                         }`}
                                 >
                                     応募中
@@ -205,8 +207,8 @@ export default function ApplicationsPage() {
                                 <button
                                     onClick={() => setStatusFilter("confirmed")}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === "confirmed"
-                                            ? "bg-green-600 text-white"
-                                            : "bg-green-100 text-green-700 hover:bg-green-200"
+                                        ? "bg-green-600 text-white"
+                                        : "bg-green-100 text-green-700 hover:bg-green-200"
                                         }`}
                                 >
                                     確定済み
@@ -214,8 +216,8 @@ export default function ApplicationsPage() {
                                 <button
                                     onClick={() => setStatusFilter("completed")}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === "completed"
-                                            ? "bg-slate-600 text-white"
-                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                        ? "bg-slate-600 text-white"
+                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                         }`}
                                 >
                                     完了
@@ -223,8 +225,8 @@ export default function ApplicationsPage() {
                                 <button
                                     onClick={() => setStatusFilter("rejected")}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === "rejected"
-                                            ? "bg-red-600 text-white"
-                                            : "bg-red-100 text-red-700 hover:bg-red-200"
+                                        ? "bg-red-600 text-white"
+                                        : "bg-red-100 text-red-700 hover:bg-red-200"
                                         }`}
                                 >
                                     不採用
@@ -283,7 +285,7 @@ export default function ApplicationsPage() {
                                 </div>
 
                                 {/* Job Info */}
-                                <h3 className="font-bold text-slate-900 mb-1">{job?.title}</h3>
+                                <h3 className="font-bold text-slate-900 mb-1">{job?.title || "案件名不明"}</h3>
                                 {client && (
                                     <p className="text-sm text-slate-600 mb-3">{client.name}</p>
                                 )}
@@ -314,8 +316,8 @@ export default function ApplicationsPage() {
 
                                     {/* Reward */}
                                     <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                                        <Briefcase className="w-4 h-4" />
-                                        <span>報酬: ¥{job?.reward_amount?.toLocaleString()}</span>
+                                        <Briefcase className="w-4 h-4 text-slate-400" />
+                                        <span>報酬: ¥{(job?.reward_amount || 0).toLocaleString()}</span>
                                     </div>
 
                                     {/* Report Status */}

@@ -1,4 +1,7 @@
 import Link from "next/link";
+
+export const dynamic = 'force-dynamic';
+
 import { ArrowLeft, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
@@ -200,11 +203,11 @@ export default async function ReportsPage() {
                                                             {formatDateTime(report.work_start_at)} - {formatDateTime(report.work_end_at)}
                                                         </span>
                                                     </div>
-                                                    {job?.reward_amount && (
+                                                    {job && (
                                                         <div className="flex items-center justify-between p-2 bg-green-50 rounded">
                                                             <span className="text-green-700">報酬金額</span>
                                                             <span className="text-green-900 font-bold">
-                                                                ¥{job.reward_amount.toLocaleString()}
+                                                                ¥{(job.reward_amount || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                     )}
