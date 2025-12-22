@@ -3,8 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendLineMessage } from "@/lib/line";
 import { revalidatePath } from "next/cache";
+import { verifyAdmin } from "@/lib/auth";
 
 export async function sendWorkerContractNotification(contractId: string) {
+    await verifyAdmin();
     console.log("Starting sendWorkerContractNotification for:", contractId);
     const supabase = await createClient();
 

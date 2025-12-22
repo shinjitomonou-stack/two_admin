@@ -93,7 +93,7 @@ export default async function BasicContractPage() {
                     </div>
 
                     <div className="p-6 border-t border-slate-100 bg-white">
-                        <ContractSigningForm templateId={template.id} workerId={workerId} />
+                        <ContractSigningForm templateId={template.id} />
                     </div>
                 </div>
             </div>

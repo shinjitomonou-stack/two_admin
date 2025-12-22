@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signBasicContract } from "@/app/actions/contract";
 import { Loader2 } from "lucide-react";
 
-export default function ContractSigningForm({ templateId, workerId }: { templateId: string, workerId: string }) {
+export default function ContractSigningForm({ templateId }: { templateId: string }) {
     const [agreed, setAgreed] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -13,7 +13,7 @@ export default function ContractSigningForm({ templateId, workerId }: { template
         setIsLoading(true);
 
         try {
-            const result = await signBasicContract(templateId, workerId);
+            const result = await signBasicContract(templateId);
             if (result?.error) {
                 alert(result.error);
                 setIsLoading(false);

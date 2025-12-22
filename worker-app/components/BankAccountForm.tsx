@@ -6,7 +6,6 @@ import { Save } from "lucide-react";
 import { updateBankAccount } from "@/app/actions/worker";
 
 interface BankAccountFormProps {
-    workerId: string;
     initialData?: {
         bankName: string;
         branchName: string;
@@ -16,7 +15,7 @@ interface BankAccountFormProps {
     };
 }
 
-export function BankAccountForm({ workerId, initialData }: BankAccountFormProps) {
+export function BankAccountForm({ initialData }: BankAccountFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -46,7 +45,7 @@ export function BankAccountForm({ workerId, initialData }: BankAccountFormProps)
                 throw new Error("口座名義は全角カタカナで入力してください");
             }
 
-            await updateBankAccount(workerId, {
+            await updateBankAccount({
                 bank_name: formData.bankName,
                 branch_name: formData.branchName,
                 account_type: formData.accountType,

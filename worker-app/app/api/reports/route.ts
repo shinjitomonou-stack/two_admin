@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     try {
-        const cookieStore = await cookies();
-        const workerId = cookieStore.get("worker_id")?.value;
+        const supabase = await createClient();
+
+        // Get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        const workerId = user?.id;
 
         if (!workerId) {
             return NextResponse.json(
@@ -23,8 +25,6 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
-
-        const supabase = await createClient();
 
         // Verify application belongs to worker
         const { data: application, error: appError } = await supabase

@@ -2,8 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { verifyAdmin } from "@/lib/auth";
 
 export async function updateApplicationStatus(applicationId: string, newStatus: 'ASSIGNED' | 'REJECTED' | 'CANCELLED') {
+    await verifyAdmin();
     const supabase = await createClient();
 
     try {
@@ -50,6 +52,7 @@ export async function updateApplicationSchedule(
     scheduledStart: string | null,
     scheduledEnd: string | null
 ) {
+    await verifyAdmin();
     const supabase = await createClient();
 
     try {
@@ -72,6 +75,7 @@ export async function updateApplicationSchedule(
 }
 
 export async function assignMultipleWorkers(applicationIds: string[]) {
+    await verifyAdmin();
     const supabase = await createClient();
 
     try {

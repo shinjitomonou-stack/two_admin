@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -13,9 +12,11 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify worker is authenticated
-        const cookieStore = await cookies();
-        const workerId = cookieStore.get("worker_id")?.value;
+        const supabase = await createClient();
+
+        // Get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        const workerId = user?.id;
 
         if (!workerId) {
             return NextResponse.json(
@@ -23,8 +24,6 @@ export async function POST(request: Request) {
                 { status: 401 }
             );
         }
-
-        const supabase = await createClient();
 
         // Verify the application belongs to this worker
         const { data: application } = await supabase

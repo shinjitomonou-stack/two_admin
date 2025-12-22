@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { verifyAdmin } from "@/lib/auth";
 
 export async function createAdminUser(formData: FormData) {
     const email = formData.get("email") as string;
@@ -18,21 +19,7 @@ export async function createAdminUser(formData: FormData) {
 
     const supabase = await createClient();
 
-    // Check if current user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return { error: "認証が必要です" };
-    }
-
-    const { data: currentAdmin } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-    if (!currentAdmin) {
-        return { error: "管理者権限がありません" };
-    }
+    await verifyAdmin();
 
     // Check if email already exists
     const { data: existingAdmin } = await supabase
@@ -88,26 +75,10 @@ export async function createAdminUser(formData: FormData) {
 export async function deleteAdminUser(userId: string) {
     const supabase = await createClient();
 
-    // Check if current user is admin
+    await verifyAdmin();
+
+    // Get current user for self-deletion check
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return { error: "認証が必要です" };
-    }
-
-    // Prevent self-deletion
-    if (user.id === userId) {
-        return { error: "自分自身を削除することはできません" };
-    }
-
-    const { data: currentAdmin } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-    if (!currentAdmin) {
-        return { error: "管理者権限がありません" };
-    }
 
     // Use admin client for deleting from admin_users table to bypass RLS
     const adminClient = await createAdminClient();

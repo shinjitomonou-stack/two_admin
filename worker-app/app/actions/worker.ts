@@ -3,13 +3,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function updateBankAccount(workerId: string, bankAccount: any) {
+export async function updateBankAccount(bankAccount: any) {
     const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("ログインが必要です");
+    }
 
     const { error } = await supabase
         .from("workers")
         .update({ bank_account: bankAccount })
-        .eq("id", workerId);
+        .eq("id", user.id);
 
     if (error) {
         console.error("Error updating bank account:", error);

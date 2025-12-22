@@ -5,8 +5,17 @@ import { redirect } from "next/navigation";
 import { headers, cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-export async function signBasicContract(templateId: string, workerId: string) {
+export async function signBasicContract(templateId: string) {
     const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    const workerId = user?.id;
+
+    if (!workerId) {
+        return { error: "ログインが必要です" };
+    }
+
     const headersList = await headers();
     const ip = headersList.get("x-forwarded-for") || "unknown";
     const userAgent = headersList.get("user-agent") || "unknown";
@@ -91,14 +100,16 @@ export async function signBasicContract(templateId: string, workerId: string) {
 
 export async function signIndividualContract(formData: FormData) {
     const contractId = formData.get("contract_id") as string;
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+
+    const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    const workerId = user?.id;
 
     if (!workerId || !contractId) {
         return { error: "不正なリクエストです" };
     }
-
-    const supabase = await createClient();
     const headersList = await headers();
     const ip = headersList.get("x-forwarded-for") || "unknown";
     const userAgent = headersList.get("user-agent") || "unknown";

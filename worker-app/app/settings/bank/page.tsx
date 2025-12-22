@@ -50,7 +50,7 @@ export default async function BankAccountPage() {
                         <p className="text-sm">報酬の振込先口座を登録してください。</p>
                     </div>
 
-                    <BankAccountForm workerId={workerId} initialData={initialData} />
+                    <BankAccountForm initialData={initialData} />
                 </div>
             </main>
         </div>

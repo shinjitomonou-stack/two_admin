@@ -6,14 +6,15 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function applyJob(jobId: string) {
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+    const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    const workerId = user?.id;
 
     if (!workerId) {
         return { error: "ログインが必要です" };
     }
-
-    const supabase = await createClient();
 
     // Check if already applied
     const { data: existingApplication } = await supabase
