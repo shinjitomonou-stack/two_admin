@@ -5,6 +5,8 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const supabase = await createClient();
 
