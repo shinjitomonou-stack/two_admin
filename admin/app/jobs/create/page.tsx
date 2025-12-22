@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { createJob } from "@/app/actions/job";
 
 export default function CreateJobPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -166,11 +167,10 @@ export default function CreateJobPage() {
 
             console.log("Sending payload:", payload);
 
-            const { data, error } = await supabase.from("jobs").insert(payload).select();
+            const result = await createJob(payload);
 
-            if (error) {
-                console.error("Supabase Error:", error);
-                throw error;
+            if (!result.success) {
+                throw result.error;
             }
 
             toast.success("案件を作成しました！");

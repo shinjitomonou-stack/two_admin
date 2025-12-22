@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { updateClientAction } from "@/app/actions/client";
+import { toast } from "sonner";
 
 export default function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -87,19 +89,16 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
         const supabase = createClient();
 
         try {
-            const { error } = await supabase
-                .from("clients")
-                .update(formData)
-                .eq("id", id);
+            const result = await updateClientAction(id!, formData);
 
-            if (error) throw error;
+            if (!result.success) throw result.error;
 
-            alert("保存しました");
+            toast.success("保存しました");
             router.push(`/clients/${id}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
+import { updateReportStatusAction } from "@/app/actions/report";
 
 export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [id, setId] = useState<string | null>(null);
@@ -78,43 +79,42 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
         if (!id) return;
         setIsProcessing(true);
 
-        const { error } = await supabase
-            .from("reports")
-            .update({ status: "APPROVED" })
-            .eq("id", id);
+        try {
+            const result = await updateReportStatusAction(id, "APPROVED");
 
-        if (error) {
-            toast.error("承認に失敗しました: " + error.message);
-        } else {
-            toast.success("報告を承認しました");
-            fetchReport(); // Refresh data
+            if (!result.success) {
+                toast.error("承認に失敗しました: " + (result.error as any)?.message);
+            } else {
+                toast.success("報告を承認しました");
+                fetchReport(); // Refresh data
+            }
+        } catch (error: any) {
+            toast.error("承認中にエラーが発生しました: " + error.message);
+        } finally {
+            setIsProcessing(false);
         }
-
-        setIsProcessing(false);
     };
 
     const handleReject = async () => {
         if (!id) return;
         setIsProcessing(true);
 
-        const { error } = await supabase
-            .from("reports")
-            .update({
-                status: "REJECTED",
-                // Note: rejection_reason column needs to be added to schema if you want to store it
-            })
-            .eq("id", id);
+        try {
+            const result = await updateReportStatusAction(id, "REJECTED");
 
-        if (error) {
-            toast.error("差し戻しに失敗しました: " + error.message);
-        } else {
-            toast.success("報告を差し戻しました");
-            setShowRejectModal(false);
-            setRejectionReason("");
-            fetchReport(); // Refresh data
+            if (!result.success) {
+                toast.error("差し戻しに失敗しました: " + (result.error as any)?.message);
+            } else {
+                toast.success("報告を差し戻しました");
+                setShowRejectModal(false);
+                setRejectionReason("");
+                fetchReport(); // Refresh data
+            }
+        } catch (error: any) {
+            toast.error("差し戻し中にエラーが発生しました: " + error.message);
+        } finally {
+            setIsProcessing(false);
         }
-
-        setIsProcessing(false);
     };
 
     const getFieldLabel = (fieldId: string) => {

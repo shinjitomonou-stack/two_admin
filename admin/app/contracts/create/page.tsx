@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { createWorkerBasicContract, createJobIndividualContract } from "@/app/actions/contract";
 
 type Worker = {
     id: string;
@@ -101,31 +102,15 @@ export default function CreateContractPage() {
 
             if (!template) throw new Error("テンプレートが見つかりません");
 
-            // 2. Insert contract request (PENDING)
+            // 2. Insert contract request via Server Actions
+            let result;
             if (contractType === "BASIC") {
-                const { error } = await supabase
-                    .from("worker_basic_contracts")
-                    .insert([
-                        {
-                            worker_id: formData.worker_id,
-                            template_id: formData.template_id,
-                            status: "PENDING",
-                        },
-                    ]);
-                if (error) throw error;
+                result = await createWorkerBasicContract(formData.worker_id, formData.template_id);
             } else {
-                const { error } = await supabase
-                    .from("job_individual_contracts")
-                    .insert([
-                        {
-                            // application_id is now optional/removed, use worker_id instead
-                            worker_id: formData.worker_id,
-                            template_id: formData.template_id,
-                            status: "PENDING",
-                        },
-                    ]);
-                if (error) throw error;
+                result = await createJobIndividualContract(formData.worker_id, formData.template_id);
             }
+
+            if (!result.success) throw result.error;
 
             toast.success("契約依頼を作成しました");
             router.push(`/contracts?tab=${contractType.toLowerCase()}`);

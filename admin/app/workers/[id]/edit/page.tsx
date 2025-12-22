@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { updateWorkerAction } from "@/app/actions/worker";
+import { toast } from "sonner";
 
 export default function EditWorkerPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -76,19 +78,16 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
         const supabase = createClient();
 
         try {
-            const { error } = await supabase
-                .from("workers")
-                .update(formData)
-                .eq("id", id);
+            const result = await updateWorkerAction(id!, formData);
 
-            if (error) throw error;
+            if (!result.success) throw result.error;
 
-            alert("保存しました");
+            toast.success("保存しました");
             router.push(`/workers/${id}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

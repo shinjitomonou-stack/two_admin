@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { createClientAction } from "@/app/actions/client";
+import { toast } from "sonner";
 
 export default function CreateClientPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -40,18 +42,16 @@ export default function CreateClientPage() {
         setIsLoading(true);
 
         try {
-            const { error } = await supabase
-                .from("clients")
-                .insert([formData]);
+            const result = await createClientAction(formData);
 
-            if (error) throw error;
+            if (!result.success) throw result.error;
 
-            alert("クライアントを登録しました");
+            toast.success("クライアントを登録しました");
             router.push("/clients");
             router.refresh();
         } catch (error: any) {
             console.error("Error creating client:", error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

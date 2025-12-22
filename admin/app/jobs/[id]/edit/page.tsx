@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { updateJob } from "@/app/actions/job";
+import { toast } from "sonner";
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -127,35 +129,29 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         const supabase = createClient();
 
         try {
-            const { error } = await supabase
-                .from("jobs")
-                .update({
-                    ...formData,
-                    // Parse values
-                    reward_amount: Math.round(Number(formData.reward_amount)),
-                    billing_amount: Math.round(Number(formData.billing_amount)),
-                    max_workers: parseInt(String(formData.max_workers)),
+            const result = await updateJob(id!, {
+                ...formData,
+                reward_amount: Math.round(Number(formData.reward_amount)),
+                billing_amount: Math.round(Number(formData.billing_amount)),
+                max_workers: parseInt(String(formData.max_workers)),
+                reward_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null,
+                billing_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null,
+                reward_quantity: formData.reward_type === 'UNIT' ? parseInt(String(formData.reward_quantity)) : null,
+                start_time: new Date(formData.start_time).toISOString(),
+                end_time: new Date(formData.end_time).toISOString(),
+                work_period_start: formData.work_period_start ? new Date(formData.work_period_start).toISOString() : null,
+                work_period_end: formData.work_period_end ? new Date(formData.work_period_end).toISOString() : null,
+                report_template_id: formData.report_template_id || null,
+            });
 
-                    reward_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null,
-                    billing_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null,
-                    reward_quantity: formData.reward_type === 'UNIT' ? parseInt(String(formData.reward_quantity)) : null,
-
-                    start_time: new Date(formData.start_time).toISOString(),
-                    end_time: new Date(formData.end_time).toISOString(),
-                    work_period_start: formData.work_period_start ? new Date(formData.work_period_start).toISOString() : null,
-                    work_period_end: formData.work_period_end ? new Date(formData.work_period_end).toISOString() : null,
-                    report_template_id: formData.report_template_id || null,
-                })
-                .eq("id", id);
-
-            if (error) throw error;
+            if (!result.success) throw result.error;
 
             alert("保存しました");
             router.push(`/jobs/${id}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
