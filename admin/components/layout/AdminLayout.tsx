@@ -83,11 +83,11 @@ export default function AdminLayout({
         <div className="min-h-screen bg-muted/30 flex">
             {/* Sidebar */}
             <aside className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-border transition-transform duration-200 ease-in-out lg:translate-x-0",
+                "fixed inset-y-0 left-0 z-50 w-64 bg-primary border-r border-primary/20 transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-lg",
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                <div className="h-16 flex items-center px-6 border-b border-border">
-                    <h1 className="text-xl font-bold tracking-tight">Teo Admin</h1>
+                <div className="h-16 flex items-center px-6 border-b border-primary-foreground/10">
+                    <h1 className="text-xl font-bold tracking-tight text-primary-foreground">Teo Admin</h1>
                 </div>
 
                 <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -106,8 +106,8 @@ export default function AdminLayout({
                                                 className={cn(
                                                     "flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                                                     isActive
-                                                        ? "bg-primary text-primary-foreground"
-                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                        ? "bg-white text-primary shadow-sm"
+                                                        : "text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -129,7 +129,7 @@ export default function AdminLayout({
                                             {isExpanded && (
                                                 <div className="ml-8 mt-1 space-y-1">
                                                     {item.subItems.map((subItem) => {
-                                                        const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href + "/");
+                                                        const isSubActive = pathname === subItem.href;
                                                         return (
                                                             <Link
                                                                 key={subItem.href}
@@ -138,8 +138,8 @@ export default function AdminLayout({
                                                                 className={cn(
                                                                     "block px-3 py-2 rounded-lg text-sm transition-colors",
                                                                     isSubActive
-                                                                        ? "bg-slate-100 text-slate-900 font-medium"
-                                                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                                        ? "bg-white/20 text-white font-bold"
+                                                                        : "text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground"
                                                                 )}
                                                             >
                                                                 {subItem.label}
@@ -156,8 +156,8 @@ export default function AdminLayout({
                                             className={cn(
                                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                                                 isActive
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                    ? "bg-white text-primary shadow-sm"
+                                                    : "text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
                                             )}
                                         >
                                             <item.icon className="w-5 h-5" />
@@ -169,10 +169,10 @@ export default function AdminLayout({
                         })}
                     </nav>
 
-                    <div className="p-4 border-t border-border">
+                    <div className="p-4 border-t border-primary-foreground/10">
                         <button
                             onClick={() => logout()}
-                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-600 hover:bg-white/10 transition-colors"
                         >
                             <LogOut className="w-5 h-5" />
                             ログアウト
