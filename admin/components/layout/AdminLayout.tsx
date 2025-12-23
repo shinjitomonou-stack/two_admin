@@ -87,7 +87,7 @@ export default function AdminLayout({
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="h-16 flex items-center px-6 border-b border-primary-foreground/10">
-                    <h1 className="text-xl font-bold tracking-tight text-primary-foreground">Teo Admin</h1>
+                    <h1 className="text-xl font-extrabold tracking-tight text-primary-foreground">Teo Admin</h1>
                 </div>
 
                 <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -104,14 +104,14 @@ export default function AdminLayout({
                                             <button
                                                 onClick={() => toggleExpanded(item.href)}
                                                 className={cn(
-                                                    "flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                                                    "flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                                                     isActive
                                                         ? "bg-white text-primary shadow-sm"
-                                                        : "text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
+                                                        : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <item.icon className="w-5 h-5" />
+                                                    <item.icon className="w-5 h-5 stroke-[2.5]" />
                                                     {item.label}
                                                 </div>
                                                 <svg
@@ -123,7 +123,7 @@ export default function AdminLayout({
                                                     stroke="currentColor"
                                                     viewBox="0 0 24 24"
                                                 >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             </button>
                                             {isExpanded && (
@@ -139,7 +139,7 @@ export default function AdminLayout({
                                                                     "block px-3 py-2 rounded-lg text-sm transition-colors",
                                                                     isSubActive
                                                                         ? "bg-white/20 text-white font-bold"
-                                                                        : "text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground"
+                                                                        : "text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground font-medium"
                                                                 )}
                                                             >
                                                                 {subItem.label}
@@ -154,13 +154,13 @@ export default function AdminLayout({
                                             href={item.href}
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className={cn(
-                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                                                 isActive
                                                     ? "bg-white text-primary shadow-sm"
-                                                    : "text-primary-foreground/80 hover:bg-white/10 hover:text-primary-foreground"
+                                                    : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                             )}
                                         >
-                                            <item.icon className="w-5 h-5" />
+                                            <item.icon className="w-5 h-5 stroke-[2.5]" />
                                             {item.label}
                                         </Link>
                                     )}
@@ -172,7 +172,7 @@ export default function AdminLayout({
                     <div className="p-4 border-t border-primary-foreground/10">
                         <button
                             onClick={() => logout()}
-                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-600 hover:bg-white/10 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-bold text-red-600 hover:bg-white/10 transition-colors"
                         >
                             <LogOut className="w-5 h-5" />
                             ログアウト
