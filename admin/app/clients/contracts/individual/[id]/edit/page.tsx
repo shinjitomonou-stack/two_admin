@@ -29,6 +29,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
         contract_amount: "",
         payment_terms: "",
         delivery_deadline: "",
+        billing_cycle: "ONCE" as "ONCE" | "MONTHLY" | "QUARTERLY" | "YEARLY",
     });
 
     useEffect(() => {
@@ -72,6 +73,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         contract_amount: contract.contract_amount ? contract.contract_amount.toString() : "",
                         payment_terms: contract.payment_terms || "",
                         delivery_deadline: contract.delivery_deadline || "",
+                        billing_cycle: contract.billing_cycle || "ONCE",
                     });
 
                     if (contract.uploaded_files) {
@@ -174,7 +176,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                 .from("client_job_contracts")
                 .update({
                     client_id: formData.client_id,
-                    job_id: formData.job_id,
+                    job_id: formData.job_id || null,
                     trading_type: formData.trading_type,
                     template_id: formData.template_id || null,
                     title: formData.title,
@@ -182,6 +184,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     contract_amount: parseFloat(formData.contract_amount),
                     payment_terms: formData.payment_terms,
                     delivery_deadline: formData.delivery_deadline || null,
+                    billing_cycle: formData.billing_cycle,
                     uploaded_files: allFiles,
                     updated_at: new Date().toISOString(),
                 })
@@ -291,23 +294,41 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                            関連案件 <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            required
-                            value={formData.job_id}
-                            onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
-                            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        >
-                            <option value="">選択してください</option>
-                            {jobs.map((job) => (
-                                <option key={job.id} value={job.id}>
-                                    {job.title}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                関連案件
+                            </label>
+                            <select
+                                value={formData.job_id}
+                                onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            >
+                                <option value="">選択してください（任意）</option>
+                                {jobs.map((job) => (
+                                    <option key={job.id} value={job.id}>
+                                        {job.title}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                請求サイクル <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                required
+                                value={formData.billing_cycle}
+                                onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as any })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            >
+                                <option value="ONCE">都度 (単発)</option>
+                                <option value="MONTHLY">月次</option>
+                                <option value="QUARTERLY">四半期</option>
+                                <option value="YEARLY">年次</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="space-y-2">

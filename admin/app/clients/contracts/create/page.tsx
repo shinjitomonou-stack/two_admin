@@ -124,7 +124,7 @@ export default function CreateClientContractPage() {
                     .from("client_job_contracts")
                     .insert([{
                         client_id: formData.client_id,
-                        job_id: formData.job_id,
+                        job_id: formData.job_id || null,
                         trading_type: formData.trading_type,
                         template_id: formData.template_id || null,
                         title: formData.title,
@@ -132,6 +132,7 @@ export default function CreateClientContractPage() {
                         contract_amount: parseFloat(formData.contract_amount),
                         payment_terms: formData.payment_terms,
                         delivery_deadline: formData.delivery_deadline || null,
+                        billing_cycle: formData.billing_cycle,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -246,18 +247,35 @@ export default function CreateClientContractPage() {
                     </div>
 
                     {formData.contract_type === "INDIVIDUAL" && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                関連案件 <span className="text-red-500">*</span>
-                            </label>
-                            <SearchableSelect
-                                required
-                                value={formData.job_id}
-                                onChange={(value) => setFormData(prev => ({ ...prev, job_id: value }))}
-                                options={jobs.map(j => ({ value: j.id, label: j.title }))}
-                                placeholder="案件を選択してください"
-                                searchPlaceholder="案件名で検索"
-                            />
+                        <div className="grid sm:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    関連案件
+                                </label>
+                                <SearchableSelect
+                                    value={formData.job_id}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, job_id: value }))}
+                                    options={jobs.map(j => ({ value: j.id, label: j.title }))}
+                                    placeholder="案件を選択（任意）"
+                                    searchPlaceholder="案件名で検索"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    請求サイクル <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    required
+                                    value={formData.billing_cycle}
+                                    onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as any })}
+                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                >
+                                    <option value="ONCE">都度 (単発)</option>
+                                    <option value="MONTHLY">月次</option>
+                                    <option value="QUARTERLY">四半期</option>
+                                    <option value="YEARLY">年次</option>
+                                </select>
+                            </div>
                         </div>
                     )}
 

@@ -88,12 +88,20 @@ export default async function IndividualContractDetailPage({ params }: { params:
                             </div>
 
                             <div>
-                                <div className="text-xs text-muted-foreground mb-1">契約金額</div>
-                                <div className="flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-slate-400" />
-                                    <span className="font-medium text-lg">
-                                        ¥{contract.contract_amount?.toLocaleString() || '0'}
-                                    </span>
+                                <div className="text-xs text-muted-foreground mb-1">契約金額 / 請求サイクル</div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <DollarSign className="w-4 h-4 text-slate-400" />
+                                        <span className="font-medium text-lg">
+                                            ¥{contract.contract_amount?.toLocaleString() || '0'}
+                                        </span>
+                                    </div>
+                                    <div className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600 font-medium">
+                                        {contract.billing_cycle === 'ONCE' ? '都度' :
+                                            contract.billing_cycle === 'MONTHLY' ? '月次' :
+                                                contract.billing_cycle === 'QUARTERLY' ? '四半期' :
+                                                    contract.billing_cycle === 'YEARLY' ? '年次' : '不明'}
+                                    </div>
                                 </div>
                             </div>
                         </div>

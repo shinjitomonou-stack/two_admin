@@ -212,7 +212,15 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                         )}
                                         {currentTab === 'individual' && (
                                             <td className="px-6 py-4 text-slate-500">
-                                                ¥{contract.contract_amount?.toLocaleString() || '0'}
+                                                <div className="font-medium text-slate-900">
+                                                    ¥{contract.contract_amount?.toLocaleString() || '0'}
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                                                    {contract.billing_cycle === 'ONCE' ? '都度' :
+                                                        contract.billing_cycle === 'MONTHLY' ? '月次' :
+                                                            contract.billing_cycle === 'QUARTERLY' ? '四半期' :
+                                                                contract.billing_cycle === 'YEARLY' ? '年次' : '不明'}
+                                                </div>
                                             </td>
                                         )}
                                         <td className="px-6 py-4">
