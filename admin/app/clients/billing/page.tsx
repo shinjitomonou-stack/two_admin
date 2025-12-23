@@ -44,12 +44,11 @@ export default function ClientBillingPage() {
             .gte('end_time', startDate)
             .lte('end_time', endDate);
 
-        // Fetch monthly contract billing
+        // Fetch monthly contract billing (from INDIVIDUAL contracts where billing_cycle is not ONCE)
         const { data: contractBilling } = await supabase
-            .from('client_contracts')
-            .select('client_id, monthly_amount, clients(name)')
-            .eq('status', 'ACTIVE')
-            .not('monthly_amount', 'is', null)
+            .from('client_job_contracts')
+            .select('client_id, contract_amount, billing_cycle, clients(name)')
+            .neq('billing_cycle', 'ONCE')
             .lte('start_date', endDate)
             .or(`end_date.is.null,end_date.gte.${startDate}`);
 
@@ -86,7 +85,7 @@ export default function ClientBillingPage() {
                 });
             }
             const data = clientMap.get(clientId)!;
-            data.monthly_billing += parseFloat(contract.monthly_amount || 0);
+            data.monthly_billing += parseFloat(contract.contract_amount || 0);
         });
 
         // Calculate totals
@@ -114,13 +113,12 @@ export default function ClientBillingPage() {
             .gte('end_time', startDate)
             .lte('end_time', endDate);
 
-        // Fetch contracts
+        // Fetch contracts (from INDIVIDUAL contracts where billing_cycle is not ONCE)
         const { data: contracts } = await supabase
-            .from('client_contracts')
+            .from('client_job_contracts')
             .select('*')
             .eq('client_id', clientId)
-            .eq('status', 'ACTIVE')
-            .not('monthly_amount', 'is', null)
+            .neq('billing_cycle', 'ONCE')
             .lte('start_date', endDate)
             .or(`end_date.is.null,end_date.gte.${startDate}`);
 
@@ -311,8 +309,15 @@ export default function ClientBillingPage() {
                                         <div className="space-y-2">
                                             {clientDetails.contracts.map((contract: any) => (
                                                 <div key={contract.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                                    <div className="font-medium">{contract.title}</div>
-                                                    <div className="font-medium">¥{parseFloat(contract.monthly_amount || 0).toLocaleString()}</div>
+                                                    <div>
+                                                        <div className="font-medium">{contract.title}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {contract.billing_cycle === 'MONTHLY' ? '月次' :
+                                                                contract.billing_cycle === 'QUARTERLY' ? '四半期' :
+                                                                    contract.billing_cycle === 'YEARLY' ? '年次' : '継続'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="font-medium">¥{parseFloat(contract.contract_amount || 0).toLocaleString()}</div>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end pt-2 border-t border-border">
