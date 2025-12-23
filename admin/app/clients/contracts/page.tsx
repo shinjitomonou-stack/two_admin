@@ -151,7 +151,8 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                     <th className="px-6 py-3 font-medium">クライアント</th>
                                     <th className="px-6 py-3 font-medium">契約タイトル</th>
                                     {currentTab === 'individual' && <th className="px-6 py-3 font-medium">案件</th>}
-                                    {(currentTab === 'basic' || currentTab === 'nda') && <th className="px-6 py-3 font-medium">有効期間</th>}
+                                    <th className="px-6 py-3 font-medium">契約期間</th>
+                                    {currentTab === 'individual' && <th className="px-6 py-3 font-medium text-center">自動更新</th>}
                                     {(currentTab === 'basic' || currentTab === 'nda') && <th className="px-6 py-3 font-medium text-right">月額金額</th>}
                                     {currentTab === 'individual' && <th className="px-6 py-3 font-medium text-right">契約金額</th>}
                                     <th className="px-6 py-3 font-medium text-center">ステータス</th>
@@ -183,12 +184,21 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                                 {contract.jobs?.title || '-'}
                                             </td>
                                         )}
-                                        {(currentTab === 'basic' || currentTab === 'nda') && (
-                                            <td className="px-6 py-4 text-slate-500">
-                                                <div className="flex items-center gap-1 text-xs">
-                                                    <Calendar className="w-3 h-3" />
-                                                    {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
-                                                </div>
+                                        <td className="px-6 py-4 text-slate-500">
+                                            <div className="flex items-center gap-1 text-xs">
+                                                <Calendar className="w-3 h-3" />
+                                                {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
+                                            </div>
+                                        </td>
+                                        {currentTab === 'individual' && (
+                                            <td className="px-6 py-4 text-center">
+                                                {contract.is_auto_renew ? (
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600">
+                                                        あり
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">-</span>
+                                                )}
                                             </td>
                                         )}
                                         {(currentTab === 'basic' || currentTab === 'nda') && (
@@ -237,7 +247,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                 ))}
                                 {contracts.length === 0 && (
                                     <tr>
-                                        <td colSpan={currentTab === 'individual' ? 7 : 8} className="px-6 py-8 text-center text-muted-foreground">
+                                        <td colSpan={currentTab === 'individual' ? 9 : 8} className="px-6 py-8 text-center text-muted-foreground">
                                             契約がまだ登録されていません。
                                         </td>
                                     </tr>
