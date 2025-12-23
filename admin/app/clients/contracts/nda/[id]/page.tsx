@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Download, FileText, Calendar, Building2, User, DollarSign } from "lucide-react";
+import { ArrowLeft, Download, FileText, Calendar, Building2, User, DollarSign, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -74,7 +74,16 @@ export default async function NDAContractDetailPage({ params }: { params: Promis
                             </p>
                         </div>
                     </div>
-                    {getStatusBadge(contract.status)}
+                    <div className="flex items-center gap-2">
+                        {getStatusBadge(contract.status)}
+                        <Link
+                            href={`/clients/contracts/nda/${contract.id}/edit`}
+                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-slate-800 transition-colors text-xs font-medium"
+                        >
+                            <Edit className="w-3 h-3" />
+                            編集
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Contract Info */}

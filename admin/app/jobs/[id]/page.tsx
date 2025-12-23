@@ -67,7 +67,7 @@ export default async function JobDetailPage({
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
-                    <div>
+                    <div className="flex-1">
                         <h2 className="text-2xl font-bold tracking-tight">{job.title}</h2>
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">
@@ -75,6 +75,15 @@ export default async function JobDetailPage({
                             </span>
                             <span>ID: {job.id}</span>
                         </div>
+                    </div>
+                    <div>
+                        <Link
+                            href={`/jobs/${job.id}/edit`}
+                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
+                        >
+                            <Edit className="w-4 h-4" />
+                            編集する
+                        </Link>
                     </div>
                 </div>
 
