@@ -15,7 +15,7 @@ import {
     Calendar as CalendarIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { logout } from "@/app/actions/auth";
 
 const sidebarItems = [
@@ -78,6 +78,26 @@ export default function AdminLayout({
                 : [...prev, href]
         );
     };
+
+    // Automatically expand the menu item that contains the current path
+    useEffect(() => {
+        const activeParentHrefs = sidebarItems
+            .filter(item => {
+                const isActive = item.href === '/'
+                    ? pathname === '/'
+                    : (pathname === item.href || pathname.startsWith(item.href + "/"));
+                return isActive && item.subItems && (item.subItems.length > 0);
+            })
+            .map(item => item.href);
+
+        if (activeParentHrefs.length > 0) {
+            setExpandedItems(prev => {
+                const missing = activeParentHrefs.filter(href => !prev.includes(href));
+                if (missing.length === 0) return prev;
+                return [...prev, ...missing];
+            });
+        }
+    }, [pathname]);
 
     return (
         <div className="min-h-screen bg-muted/30 flex">
