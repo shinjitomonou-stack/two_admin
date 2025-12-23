@@ -70,12 +70,7 @@ export default async function Home() {
 
   const { data: jobContracts } = await supabase
     .from("client_job_contracts")
-    .select("contract_amount, created_at")
-    .gte("created_at", sixMonthsAgo.toISOString());
-
-  const { data: monthlyContracts } = await supabase
-    .from("client_contracts")
-    .select("monthly_amount, created_at")
+    .select("contract_amount, billing_cycle, created_at")
     .gte("created_at", sixMonthsAgo.toISOString());
 
   // Helper to format month Key (e.g., "2023-11")
@@ -93,13 +88,11 @@ export default async function Home() {
   jobContracts?.forEach(c => {
     const key = getMonthKey(c.created_at);
     if (salesMap.has(key)) {
-      salesMap.set(key, (salesMap.get(key) || 0) + Number(c.contract_amount));
-    }
-  });
-  monthlyContracts?.forEach(c => {
-    const key = getMonthKey(c.created_at);
-    if (salesMap.has(key)) {
-      salesMap.set(key, (salesMap.get(key) || 0) + Number(c.monthly_amount)); // Assuming initial value as monthly impact
+      // Aggregate if it's not a one-time contract (as per user request: "都度以外")
+      if (c.billing_cycle !== 'ONCE') {
+        const amount = Number(c.contract_amount) || 0;
+        salesMap.set(key, (salesMap.get(key) || 0) + amount);
+      }
     }
   });
 

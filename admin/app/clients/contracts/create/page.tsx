@@ -25,11 +25,11 @@ export default function CreateClientContractPage() {
         template_id: "",
         title: "",
         content_snapshot: "",
-        start_date: "",
+        start_date: new Date().toISOString().split('T')[0],
         end_date: "",
         auto_renew: false,
         monthly_amount: "",
-        billing_cycle: "MONTHLY" as "MONTHLY" | "QUARTERLY" | "YEARLY",
+        billing_cycle: "ONCE" as "ONCE" | "MONTHLY" | "QUARTERLY" | "YEARLY",
         contract_amount: "",
         payment_terms: "",
         delivery_deadline: "",
@@ -133,6 +133,8 @@ export default function CreateClientContractPage() {
                         payment_terms: formData.payment_terms,
                         delivery_deadline: formData.delivery_deadline || null,
                         billing_cycle: formData.billing_cycle,
+                        start_date: formData.start_date,
+                        end_date: formData.end_date || null,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -150,8 +152,6 @@ export default function CreateClientContractPage() {
                         start_date: formData.start_date,
                         end_date: formData.end_date || null,
                         auto_renew: formData.auto_renew,
-                        monthly_amount: formData.monthly_amount ? parseFloat(formData.monthly_amount) : null,
-                        billing_cycle: formData.billing_cycle,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -353,33 +353,6 @@ export default function CreateClientContractPage() {
                                 自動更新
                             </label>
                         </div>
-
-                        <div className="grid sm:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">月額金額</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.monthly_amount}
-                                    onChange={(e) => setFormData({ ...formData, monthly_amount: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                    placeholder="0"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">請求サイクル</label>
-                                <select
-                                    value={formData.billing_cycle}
-                                    onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as any })}
-                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                >
-                                    <option value="MONTHLY">月次</option>
-                                    <option value="QUARTERLY">四半期</option>
-                                    <option value="YEARLY">年次</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
                 )}
 
@@ -400,6 +373,32 @@ export default function CreateClientContractPage() {
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                 placeholder="0"
                             />
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                    開始日 <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">終了日</label>
+                                <input
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                />
+                                <p className="text-xs text-muted-foreground">空欄の場合は無期限</p>
+                            </div>
                         </div>
 
                         <div className="space-y-2">

@@ -129,6 +129,16 @@ export default async function IndividualContractDetailPage({ params }: { params:
                                 </>
                             )}
 
+                            <div>
+                                <div className="text-xs text-muted-foreground mb-1">契約期間</div>
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-slate-400" />
+                                    <span className="font-medium">
+                                        {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
+                                    </span>
+                                </div>
+                            </div>
+
                             {contract.delivery_deadline && (
                                 <div>
                                     <div className="text-xs text-muted-foreground mb-1">納品期限</div>

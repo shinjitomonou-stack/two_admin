@@ -30,6 +30,8 @@ export default function EditIndividualContractPage({ params }: { params: Promise
         payment_terms: "",
         delivery_deadline: "",
         billing_cycle: "ONCE" as "ONCE" | "MONTHLY" | "QUARTERLY" | "YEARLY",
+        start_date: "",
+        end_date: "",
     });
 
     useEffect(() => {
@@ -74,6 +76,8 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         payment_terms: contract.payment_terms || "",
                         delivery_deadline: contract.delivery_deadline || "",
                         billing_cycle: contract.billing_cycle || "ONCE",
+                        start_date: contract.start_date || "",
+                        end_date: contract.end_date || "",
                     });
 
                     if (contract.uploaded_files) {
@@ -185,6 +189,8 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     payment_terms: formData.payment_terms,
                     delivery_deadline: formData.delivery_deadline || null,
                     billing_cycle: formData.billing_cycle,
+                    start_date: formData.start_date,
+                    end_date: formData.end_date || null,
                     uploaded_files: allFiles,
                     updated_at: new Date().toISOString(),
                 })
@@ -378,6 +384,32 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             placeholder="0"
                         />
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                                開始日 <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                required
+                                value={formData.start_date}
+                                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">終了日</label>
+                            <input
+                                type="date"
+                                value={formData.end_date}
+                                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                            <p className="text-xs text-muted-foreground">空欄の場合は無期限</p>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
