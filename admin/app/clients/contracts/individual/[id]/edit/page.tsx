@@ -32,6 +32,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
         billing_cycle: "ONCE" as "ONCE" | "MONTHLY" | "QUARTERLY" | "YEARLY",
         start_date: "",
         end_date: "",
+        is_auto_renew: false,
     });
 
     useEffect(() => {
@@ -78,6 +79,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         billing_cycle: contract.billing_cycle || "ONCE",
                         start_date: contract.start_date || "",
                         end_date: contract.end_date || "",
+                        is_auto_renew: contract.is_auto_renew || false,
                     });
 
                     if (contract.uploaded_files) {
@@ -191,6 +193,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     billing_cycle: formData.billing_cycle,
                     start_date: formData.start_date,
                     end_date: formData.end_date || null,
+                    is_auto_renew: formData.is_auto_renew,
                     uploaded_files: allFiles,
                     updated_at: new Date().toISOString(),
                 })
@@ -410,6 +413,19 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             />
                             <p className="text-xs text-muted-foreground">空欄の場合は無期限</p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="is_auto_renew_edit"
+                            checked={formData.is_auto_renew}
+                            onChange={(e) => setFormData({ ...formData, is_auto_renew: e.target.checked })}
+                            className="w-4 h-4 rounded border-input"
+                        />
+                        <label htmlFor="is_auto_renew_edit" className="text-sm font-medium">
+                            自動更新
+                        </label>
                     </div>
 
                     <div className="space-y-2">

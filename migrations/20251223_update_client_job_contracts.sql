@@ -15,7 +15,8 @@ ADD COLUMN IF NOT EXISTS billing_cycle TEXT CHECK (billing_cycle IN ('ONCE', 'MO
 
 ALTER TABLE public.client_job_contracts
 ADD COLUMN IF NOT EXISTS start_date DATE,
-ADD COLUMN IF NOT EXISTS end_date DATE;
+ADD COLUMN IF NOT EXISTS end_date DATE,
+ADD COLUMN IF NOT EXISTS is_auto_renew BOOLEAN DEFAULT FALSE;
 
 -- Update individual contracts list for workers as well? 
 -- The request was specifically about "クライアントの契約の個別契約" (Client individual contracts).

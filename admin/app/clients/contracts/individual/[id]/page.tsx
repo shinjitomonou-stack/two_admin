@@ -131,11 +131,18 @@ export default async function IndividualContractDetailPage({ params }: { params:
 
                             <div>
                                 <div className="text-xs text-muted-foreground mb-1">契約期間</div>
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-slate-400" />
-                                    <span className="font-medium">
-                                        {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
-                                    </span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-slate-400" />
+                                        <span className="font-medium">
+                                            {formatDate(contract.start_date)} 〜 {contract.end_date ? formatDate(contract.end_date) : '無期限'}
+                                        </span>
+                                    </div>
+                                    {contract.is_auto_renew && (
+                                        <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                                            自動更新あり
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
