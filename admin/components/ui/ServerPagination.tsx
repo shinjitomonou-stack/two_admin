@@ -5,9 +5,10 @@ interface ServerPaginationProps {
     currentPage: number;
     totalPages: number;
     baseUrl: string;
+    searchParams?: Record<string, string | string[] | undefined>;
 }
 
-export default function ServerPagination({ currentPage, totalPages, baseUrl }: ServerPaginationProps) {
+export default function ServerPagination({ currentPage, totalPages, baseUrl, searchParams }: ServerPaginationProps) {
     const pages = [];
     const maxVisiblePages = 5;
 
@@ -22,6 +23,23 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
         pages.push(i);
     }
 
+    const createPageUrl = (pageNumber: number) => {
+        const params = new URLSearchParams();
+        if (searchParams) {
+            Object.entries(searchParams).forEach(([key, value]) => {
+                if (key !== "page" && value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => params.append(key, v));
+                    } else {
+                        params.append(key, String(value));
+                    }
+                }
+            });
+        }
+        params.set("page", String(pageNumber));
+        return `${baseUrl}?${params.toString()}`;
+    };
+
     return (
         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-white">
             <div className="text-sm text-muted-foreground">
@@ -29,7 +47,7 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
             </div>
             <div className="flex items-center gap-2">
                 <Link
-                    href={`${baseUrl}?page=${currentPage - 1}`}
+                    href={createPageUrl(currentPage - 1)}
                     className={`p-2 rounded-md border border-input hover:bg-slate-50 transition-colors ${currentPage === 1 ? "opacity-50 pointer-events-none" : ""
                         }`}
                 >
@@ -39,7 +57,7 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
                 {startPage > 1 && (
                     <>
                         <Link
-                            href={`${baseUrl}?page=1`}
+                            href={createPageUrl(1)}
                             className="px-3 py-1.5 rounded-md border border-input hover:bg-slate-50 text-sm transition-colors"
                         >
                             1
@@ -51,10 +69,10 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
                 {pages.map((page) => (
                     <Link
                         key={page}
-                        href={`${baseUrl}?page=${page}`}
+                        href={createPageUrl(page)}
                         className={`px-3 py-1.5 rounded-md text-sm transition-colors ${page === currentPage
-                                ? "bg-slate-900 text-white"
-                                : "border border-input hover:bg-slate-50"
+                            ? "bg-slate-900 text-white"
+                            : "border border-input hover:bg-slate-50"
                             }`}
                     >
                         {page}
@@ -65,7 +83,7 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
                     <>
                         {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
                         <Link
-                            href={`${baseUrl}?page=${totalPages}`}
+                            href={createPageUrl(totalPages)}
                             className="px-3 py-1.5 rounded-md border border-input hover:bg-slate-50 text-sm transition-colors"
                         >
                             {totalPages}
@@ -74,7 +92,7 @@ export default function ServerPagination({ currentPage, totalPages, baseUrl }: S
                 )}
 
                 <Link
-                    href={`${baseUrl}?page=${currentPage + 1}`}
+                    href={createPageUrl(currentPage + 1)}
                     className={`p-2 rounded-md border border-input hover:bg-slate-50 transition-colors ${currentPage === totalPages ? "opacity-50 pointer-events-none" : ""
                         }`}
                 >

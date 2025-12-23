@@ -112,7 +112,8 @@ export default function JobsPage() {
             filtered = filtered.filter(
                 (job) =>
                     job.title.toLowerCase().includes(searchLower) ||
-                    (job.clients?.name || "").toLowerCase().includes(searchLower)
+                    (job.clients?.name || "").toLowerCase().includes(searchLower) ||
+                    (job.address_text || "").toLowerCase().includes(searchLower)
             );
         }
 

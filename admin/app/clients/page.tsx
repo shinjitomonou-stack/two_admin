@@ -1,33 +1,52 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Building2, Search, Filter, Plus, MoreHorizontal, Eye, Edit } from "lucide-react";
+import { Building2, Plus, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import ServerPagination from "@/components/ui/ServerPagination";
+import SearchInput from "@/components/ui/SearchInput";
 
 const ITEMS_PER_PAGE = 100;
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-    const { page } = await searchParams;
-    const currentPage = Number(page) || 1;
+export default async function ClientsPage({
+    searchParams
+}: {
+    searchParams: Promise<{ page?: string; query?: string }>
+}) {
+    const params = await searchParams;
+    const currentPage = Number(params.page) || 1;
+    const search = params.query || "";
+
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
     const to = from + ITEMS_PER_PAGE - 1;
 
     const supabase = await createClient();
 
-    // Get total count
-    const { count } = await supabase
+    // Build query for total count
+    let countQuery = supabase
         .from("clients")
         .select("*", { count: "exact", head: true });
 
+    if (search) {
+        countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    const { count } = await countQuery;
+
     const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
 
-    // Get paginated data
-    const { data: clients, error } = await supabase
+    // Build query for paginated data
+    let dataQuery = supabase
         .from("clients")
         .select("*")
         .order("created_at", { ascending: false })
         .range(from, to);
+
+    if (search) {
+        dataQuery = dataQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    const { data: clients, error } = await dataQuery;
 
     if (error) {
         console.error("Error fetching clients:", error);
@@ -55,19 +74,20 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
                 {/* Filters */}
                 <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="会社名、メールアドレスで検索..."
-                            className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
-                    </div>
+                    <SearchInput
+                        placeholder="会社名、メールアドレスで検索..."
+                        className="flex-1 max-w-sm"
+                    />
                 </div>
 
                 {/* Results Count */}
                 <div className="text-sm text-slate-600">
                     {count || 0}件のクライアント
+                    {search && (
+                        <span className="ml-2 text-muted-foreground">
+                            「{search}」の検索結果
+                        </span>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -129,7 +149,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                                 {(!clients || clients.length === 0) && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                                            クライアントがまだ登録されていません。
+                                            {search ? "検索条件に一致するクライアントが見つかりませんでした。" : "クライアントがまだ登録されていません。"}
                                         </td>
                                     </tr>
                                 )}
@@ -141,6 +161,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                             currentPage={currentPage}
                             totalPages={totalPages}
                             baseUrl="/clients"
+                            searchParams={params}
                         />
                     )}
                 </div>

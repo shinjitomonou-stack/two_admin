@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Edit } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Edit, Search, X } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 
 const ITEMS_PER_PAGE = 100;
@@ -33,6 +33,7 @@ export default function ReportsPage() {
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
@@ -50,6 +51,15 @@ export default function ReportsPage() {
             filtered = filtered.filter(r => r.status === statusFilter);
         }
 
+        // Search query (worker name or job title)
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            filtered = filtered.filter(r =>
+                (r.job_applications?.jobs?.title || "").toLowerCase().includes(lowerQuery) ||
+                (r.job_applications?.workers?.full_name || "").toLowerCase().includes(lowerQuery)
+            );
+        }
+
         // Date range filter
         if (startDate) {
             const start = new Date(startDate);
@@ -64,7 +74,7 @@ export default function ReportsPage() {
 
         setFilteredReports(filtered);
         setCurrentPage(1); // Reset to first page when filters change
-    }, [statusFilter, startDate, endDate, reports]);
+    }, [statusFilter, startDate, endDate, searchQuery, reports]);
 
     // Update paginated reports when filteredReports or currentPage changes
     useEffect(() => {
@@ -152,7 +162,7 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 max-w-7xl mx-auto pb-20">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
                     <Link
@@ -167,93 +177,93 @@ export default function ReportsPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg border border-slate-200">
-                    <div className="text-sm text-slate-600 mb-1">全報告</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">全報告</div>
                     <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="text-sm text-blue-700 mb-1">提出済み</div>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                    <div className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-1">提出済み</div>
                     <div className="text-2xl font-bold text-blue-900">{stats.submitted}</div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <div className="text-sm text-green-700 mb-1">承認済み</div>
+                <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                    <div className="text-xs font-medium text-green-600 uppercase tracking-wider mb-1">承認済み</div>
                     <div className="text-2xl font-bold text-green-900">{stats.approved}</div>
                 </div>
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <div className="text-sm text-red-700 mb-1">差し戻し</div>
+                <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                    <div className="text-xs font-medium text-red-600 uppercase tracking-wider mb-1">差し戻し</div>
                     <div className="text-2xl font-bold text-red-900">{stats.rejected}</div>
                 </div>
             </div>
 
-            {/* Filter */}
-            <div className="bg-white p-4 rounded-lg border border-slate-200 mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                    <Filter className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm font-medium text-slate-700">フィルター</span>
-                </div>
+            {/* Filters */}
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-6">
+                <div className="flex flex-wrap items-end gap-6">
+                    {/* Search */}
+                    <div className="flex-1 min-w-[300px]">
+                        <label className="text-xs font-bold text-slate-700 mb-2 block uppercase tracking-tight">検索</label>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="案件名、ワーカー名で検索..."
+                                className="w-full pl-9 pr-9 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-slate-200 rounded-full transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5 text-slate-400" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-                {/* Status Filter */}
-                <div className="mb-4">
-                    <label className="text-xs font-medium text-slate-600 mb-2 block">ステータス</label>
-                    <div className="flex gap-2 flex-wrap">
-                        <button
-                            onClick={() => setStatusFilter("ALL")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${statusFilter === "ALL"
-                                ? "bg-slate-900 text-white"
-                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                }`}
-                        >
-                            すべて
-                        </button>
-                        <button
-                            onClick={() => setStatusFilter("SUBMITTED")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${statusFilter === "SUBMITTED"
-                                ? "bg-blue-600 text-white"
-                                : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                                }`}
-                        >
-                            提出済み
-                        </button>
-                        <button
-                            onClick={() => setStatusFilter("APPROVED")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${statusFilter === "APPROVED"
-                                ? "bg-green-600 text-white"
-                                : "bg-green-50 text-green-700 hover:bg-green-100"
-                                }`}
-                        >
-                            承認済み
-                        </button>
-                        <button
-                            onClick={() => setStatusFilter("REJECTED")}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${statusFilter === "REJECTED"
-                                ? "bg-red-600 text-white"
-                                : "bg-red-50 text-red-700 hover:bg-red-100"
-                                }`}
-                        >
-                            差し戻し
-                        </button>
+                    {/* Status Filter */}
+                    <div>
+                        <label className="text-xs font-bold text-slate-700 mb-2 block uppercase tracking-tight">ステータス</label>
+                        <div className="flex p-1 bg-slate-100 rounded-lg gap-1 border border-slate-200">
+                            {[
+                                { id: "ALL", label: "すべて", color: "bg-white text-slate-900 shadow-sm" },
+                                { id: "SUBMITTED", label: "提出済", color: "bg-blue-600 text-white" },
+                                { id: "APPROVED", label: "承認済", color: "bg-green-600 text-white" },
+                                { id: "REJECTED", label: "回答済", color: "bg-red-600 text-white" }
+                            ].map((s) => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => setStatusFilter(s.id)}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${statusFilter === s.id ? s.color : "text-slate-500 hover:text-slate-900"}`}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Date Range Filter */}
-                <div>
-                    <label className="text-xs font-medium text-slate-600 mb-2 block">提出期間</label>
-                    <div className="flex gap-3 items-center flex-wrap">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-slate-500">〜</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                    {/* Date Range */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-tight">提出期間</label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                                />
+                                <span className="text-slate-400 text-sm font-medium">〜</span>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                                />
+                            </div>
                         </div>
                         {(startDate || endDate) && (
                             <button
@@ -261,85 +271,146 @@ export default function ReportsPage() {
                                     setStartDate("");
                                     setEndDate("");
                                 }}
-                                className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 underline"
+                                className="mt-6 px-3 py-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-tight"
                             >
                                 期間クリア
                             </button>
                         )}
                     </div>
+
+                    {(statusFilter !== "ALL" || searchQuery || startDate || endDate) && (
+                        <button
+                            onClick={() => {
+                                setStatusFilter("ALL");
+                                setSearchQuery("");
+                                setStartDate("");
+                                setEndDate("");
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            すべての条件をリセット
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Reports Table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            {/* Reports List */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
                 {isLoading ? (
-                    <div className="p-8 text-center text-slate-500">読み込み中...</div>
+                    <div className="flex flex-col items-center justify-center p-20 space-y-4">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm font-medium text-slate-500 italic">報告を読み込み中...</p>
+                    </div>
                 ) : filteredReports.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500">
-                        {statusFilter === "ALL" ? "報告がありません" : `${statusFilter === "SUBMITTED" ? "提出済み" : statusFilter === "APPROVED" ? "承認済み" : "差し戻し"}の報告がありません`}
+                    <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
+                        <div className="p-4 bg-slate-100 rounded-full">
+                            <FileText className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <div>
+                            <p className="text-slate-900 font-bold">報告が見つかりませんでした</p>
+                            <p className="text-sm text-slate-500">条件を変えて再度お試しください。</p>
+                        </div>
+                        {(statusFilter !== "ALL" || searchQuery || startDate || endDate) && (
+                            <button
+                                onClick={() => {
+                                    setStatusFilter("ALL");
+                                    setSearchQuery("");
+                                    setStartDate("");
+                                    setEndDate("");
+                                }}
+                                className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all"
+                            >
+                                フィルターを解除
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <>
-                        <table className="w-full">
-                            <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">案件名</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ワーカー</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">作業日時</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">提出日時</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">ステータス</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                                {paginatedReports.map((report) => (
-                                    <tr key={report.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-4 py-3 text-sm text-slate-900">
-                                            {report.job_applications?.jobs?.title || "-"}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-900">
-                                            {report.job_applications?.workers?.full_name || "-"}
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">
-                                            {formatDateTime(report.work_start_at)}
-                                            <br />
-                                            <span className="text-xs">〜 {formatDateTime(report.work_end_at)}</span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">
-                                            {formatDateTime(report.created_at)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {getStatusBadge(report.status)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <Link
-                                                    href={`/reports/${report.id}`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
-                                                    title="詳細"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Link>
-                                                <Link
-                                                    href={`/reports/${report.id}/edit`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
-                                                    title="編集"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Link>
-                                            </div>
-                                        </td>
+                        <div className="overflow-x-auto max-h-[calc(100vh-25rem)]">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">案件名 / クライアント</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ワーカー</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">作業日時</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">提出日時</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ステータス</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">操作</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {totalPages > 1 && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
-                        )}
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {paginatedReports.map((report) => (
+                                        <tr key={report.id} className="hover:bg-slate-50/80 transition-all group">
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                                    {report.job_applications?.jobs?.title || "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500 border border-slate-200">
+                                                        {report.job_applications?.workers?.full_name?.charAt(0) || "W"}
+                                                    </div>
+                                                    <span className="text-sm font-medium text-slate-700">
+                                                        {report.job_applications?.workers?.full_name || "ワーカー不明"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-medium text-slate-900">
+                                                    {formatDateTime(report.work_start_at)}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                                                    〜 {formatDateTime(report.work_end_at).split(" ")[1]}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-xs font-medium text-slate-600">
+                                                    {formatDateTime(report.created_at)}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {getStatusBadge(report.status)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                    <Link
+                                                        href={`/reports/${report.id}`}
+                                                        className="p-2 hover:bg-white hover:shadow-sm hover:text-blue-600 rounded-lg transition-all"
+                                                        title="詳細を確認"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                    <Link
+                                                        href={`/reports/${report.id}/edit`}
+                                                        className="p-2 hover:bg-white hover:shadow-sm hover:text-green-600 rounded-lg transition-all"
+                                                        title="編集"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="border-t border-slate-100 p-4 bg-slate-50/50">
+                            {totalPages > 1 && (
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            )}
+                            <div className="mt-4 text-center">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    全 {filteredReports.length} 件を表示中
+                                </p>
+                            </div>
+                        </div>
                     </>
                 )}
             </div>

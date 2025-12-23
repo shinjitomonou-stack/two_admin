@@ -76,7 +76,7 @@ export function JobFilters({ onFilterChange, clients }: JobFiltersProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                         type="text"
-                        placeholder="案件名、クライアント名で検索..."
+                        placeholder="案件名、クライアント名、住所で検索..."
                         value={filters.search}
                         onChange={(e) => updateFilters({ search: e.target.value })}
                         className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -85,8 +85,8 @@ export function JobFilters({ onFilterChange, clients }: JobFiltersProps) {
                 <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex items-center gap-2 px-3 py-2 border rounded-md text-sm font-medium transition-colors ${showFilters || hasActiveFilters
-                            ? "bg-slate-900 text-white border-slate-900"
-                            : "border-input hover:bg-slate-50"
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "border-input hover:bg-slate-50"
                         }`}
                 >
                     フィルター
@@ -125,8 +125,8 @@ export function JobFilters({ onFilterChange, clients }: JobFiltersProps) {
                                     key={option.value}
                                     onClick={() => toggleStatus(option.value)}
                                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filters.status.includes(option.value)
-                                            ? "bg-slate-900 text-white"
-                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                         }`}
                                 >
                                     {option.label}

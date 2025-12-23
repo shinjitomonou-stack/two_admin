@@ -1,33 +1,86 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Search, Filter, MoreHorizontal, ShieldCheck, ShieldAlert, Eye, Edit, Plus, Mail, Phone, MapPin } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Eye, Edit } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import ServerPagination from "@/components/ui/ServerPagination";
+import WorkerFilters from "@/components/WorkerFilters";
 
 const ITEMS_PER_PAGE = 100;
 
-export default async function WorkersPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-    const { page } = await searchParams;
-    const currentPage = Number(page) || 1;
+// Helper to calculate age from birth_date
+function calculateAge(birthDateStr: string | null) {
+    if (!birthDateStr) return "不明";
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return `${age}歳`;
+}
+
+// Helper to truncate address
+function formatShortAddress(postalCode: string | null, address: string | null) {
+    if (!address) return "-";
+    // Get city part (simplified: up to the first '市' or '郡' if possible, otherwise first few chars)
+    const match = address.match(/.*?[市郡]/);
+    const short = match ? match[0] : address.substring(0, 10);
+    return (
+        <div className="text-xs">
+            {postalCode && <div className="text-slate-400">〒{postalCode}</div>}
+            <div className="line-clamp-1">{short}</div>
+        </div>
+    );
+}
+
+export default async function WorkersPage({
+    searchParams
+}: {
+    searchParams: Promise<{ page?: string; query?: string; rank?: string }>
+}) {
+    const params = await searchParams;
+    const currentPage = Number(params.page) || 1;
+    const search = params.query || "";
+    const rank = params.rank || "";
+
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
     const to = from + ITEMS_PER_PAGE - 1;
 
     const supabase = await createClient();
 
-    // Get total count
-    const { count } = await supabase
+    // Build query for total count
+    let countQuery = supabase
         .from("workers")
         .select("*", { count: "exact", head: true });
 
+    if (search) {
+        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+    if (rank) {
+        countQuery = countQuery.eq("rank", rank);
+    }
+
+    const { count } = await countQuery;
+
     const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
 
-    // Get paginated data
-    const { data: workers, error } = await supabase
+    // Build query for paginated data
+    let dataQuery = supabase
         .from("workers")
         .select("*")
         .order("created_at", { ascending: false })
         .range(from, to);
+
+    if (search) {
+        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+    if (rank) {
+        dataQuery = dataQuery.eq("rank", rank);
+    }
+
+    const { data: workers, error } = await dataQuery;
 
     if (error) {
         console.error("Error fetching workers:", error);
@@ -58,24 +111,18 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="名前、メールアドレスで検索..."
-                            className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-3 py-2 border border-input rounded-md hover:bg-slate-50 text-sm font-medium">
-                        <Filter className="w-4 h-4" />
-                        フィルター
-                    </button>
-                </div>
+                <WorkerFilters />
 
                 {/* Results Count */}
                 <div className="text-sm text-slate-600">
                     {count || 0}件のワーカー
+                    {(search || rank) && (
+                        <span className="ml-2 text-muted-foreground">
+                            {search && `「${search}」`}
+                            {rank && `${rank}ランク`}
+                            の表示中
+                        </span>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -84,8 +131,11 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-3 font-medium">氏名 / メール</th>
-                                    <th className="px-6 py-3 font-medium">ランク</th>
+                                    <th className="px-6 py-3 font-medium">氏名 / フリガナ</th>
+                                    <th className="px-6 py-3 font-medium">基本情報</th>
+                                    <th className="px-6 py-3 font-medium">連絡先</th>
+                                    <th className="px-6 py-3 font-medium">住所</th>
+                                    <th className="px-6 py-3 font-medium text-center">ランク</th>
                                     <th className="px-6 py-3 font-medium">本人確認</th>
                                     <th className="px-6 py-3 font-medium">登録日</th>
                                     <th className="px-6 py-3 font-medium text-right">操作</th>
@@ -96,41 +146,63 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
                                     <tr key={worker.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{worker.full_name}</div>
-                                            <div className="text-xs text-muted-foreground">{worker.email}</div>
+                                            <div className="text-[10px] text-muted-foreground uppercase opacity-70 leading-none mt-0.5">
+                                                {worker.name_kana || "-"}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs px-1.5 py-0.5 rounded ${worker.gender === 'male' ? 'bg-blue-50 text-blue-600' :
+                                                    worker.gender === 'female' ? 'bg-pink-50 text-pink-600' :
+                                                        'bg-slate-50 text-slate-600'
+                                                    }`}>
+                                                    {worker.gender === 'male' ? '男' : worker.gender === 'female' ? '女' : '不明'}
+                                                </span>
+                                                <span className="text-slate-900 font-medium">
+                                                    {calculateAge(worker.birth_date)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-xs font-medium text-slate-900">{worker.email}</div>
+                                            <div className="text-xs text-muted-foreground mt-0.5">{worker.phone || "-"}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {formatShortAddress(worker.postal_code, worker.address)}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 uppercase">
                                                 {worker.rank || 'Bronze'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             {worker.email_confirmed_at ? (
-                                                <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium">
-                                                    <ShieldCheck className="w-4 h-4" />
-                                                    確認済み
+                                                <div className="flex items-center gap-1 text-green-600 text-[11px] font-bold">
+                                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                                    OK
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-1.5 text-orange-500 text-xs font-medium">
-                                                    <ShieldAlert className="w-4 h-4" />
-                                                    未確認
+                                                <div className="flex items-center gap-1 text-orange-500 text-[11px] font-bold">
+                                                    <ShieldAlert className="w-3.5 h-3.5" />
+                                                    待機
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500">
+                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap text-xs">
                                             {formatDate(worker.created_at)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-1">
                                                 <Link
                                                     href={`/workers/${worker.id}`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
+                                                    className="p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-400 hover:text-blue-600"
                                                     title="詳細"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Link>
                                                 <Link
                                                     href={`/workers/${worker.id}/edit`}
-                                                    className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
+                                                    className="p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-400 hover:text-green-600"
                                                     title="編集"
                                                 >
                                                     <Edit className="w-4 h-4" />
@@ -139,16 +211,14 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
                                         </td>
                                     </tr>
                                 ))}
-                                {
-                                    (!workersWithVerification || workersWithVerification.length === 0) && (
-                                        <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                                                ワーカーがまだ登録されていません。
-                                            </td>
-                                        </tr>
-                                    )
-                                }
-                            </tbody >
+                                {(!workersWithVerification || workersWithVerification.length === 0) && (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                                            {search || rank ? "検索条件に一致するワーカーが見つかりませんでした。" : "ワーカーがまだ登録されていません。"}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
                         </table>
                     </div>
                     {totalPages > 1 && (
@@ -156,6 +226,7 @@ export default async function WorkersPage({ searchParams }: { searchParams: Prom
                             currentPage={currentPage}
                             totalPages={totalPages}
                             baseUrl="/workers"
+                            searchParams={params}
                         />
                     )}
                 </div>
