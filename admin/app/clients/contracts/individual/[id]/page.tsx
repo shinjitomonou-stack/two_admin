@@ -60,7 +60,12 @@ export default async function IndividualContractDetailPage({ params }: { params:
                     </Link>
                     <div className="flex-1">
                         <h2 className="text-2xl font-bold tracking-tight">{contract.title}</h2>
-                        <p className="text-muted-foreground text-sm">個別契約</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${contract.trading_type === 'RECEIVING' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                                {contract.trading_type === 'RECEIVING' ? '受注' : '発注'}
+                            </span>
+                            <p className="text-muted-foreground text-sm">個別契約</p>
+                        </div>
                     </div>
                     {getStatusBadge(contract.status)}
                 </div>
@@ -83,7 +88,16 @@ export default async function IndividualContractDetailPage({ params }: { params:
                                 <div className="flex items-center gap-2">
                                     <Briefcase className="w-4 h-4 text-slate-400" />
                                     {/* @ts-ignore */}
-                                    <span className="font-medium">{contract.jobs?.title || '-'}</span>
+                                    {contract.jobs ? (
+                                        <Link
+                                            href={`/jobs/${contract.job_id}`}
+                                            className="font-medium text-blue-600 hover:underline"
+                                        >
+                                            {contract.jobs.title}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-medium">-</span>
+                                    )}
                                 </div>
                             </div>
 

@@ -4,11 +4,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import ServerPagination from "@/components/ui/ServerPagination";
+import ClientContractFilters from "@/components/ClientContractFilters";
 
 const ITEMS_PER_PAGE = 100;
 
-export default async function ClientContractsPage({ searchParams }: { searchParams: Promise<{ tab?: string; page?: string }> }) {
-    const { tab, page } = await searchParams;
+export default async function ClientContractsPage({ searchParams }: { searchParams: Promise<{ tab?: string; page?: string; status?: string; trading_type?: string; search?: string }> }) {
+    const { tab, page, status, trading_type, search } = await searchParams;
     const currentTab = tab || 'basic';
     const currentPage = Number(page) || 1;
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -20,46 +21,38 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
     let contracts: any[] = [];
     let totalPages = 0;
 
+    const table = currentTab === 'individual' ? 'client_job_contracts' : 'client_contracts';
+
+    let query = supabase
+        .from(table)
+        .select(`
+            *,
+            clients(name)${currentTab === 'individual' ? ', jobs(title)' : ''}
+        `, { count: "exact" });
+
     if (currentTab === 'basic' || currentTab === 'nda') {
-        // Get count
-        const { count } = await supabase
-            .from("client_contracts")
-            .select("*", { count: "exact", head: true })
-            .eq("contract_type", currentTab.toUpperCase());
-
-        totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
-
-        // Get paginated data
-        const { data } = await supabase
-            .from("client_contracts")
-            .select(`
-                *,
-                clients(name)
-            `)
-            .eq("contract_type", currentTab.toUpperCase())
-            .order("created_at", { ascending: false })
-            .range(from, to);
-        contracts = data || [];
-    } else if (currentTab === 'individual') {
-        // Get count
-        const { count } = await supabase
-            .from("client_job_contracts")
-            .select("*", { count: "exact", head: true });
-
-        totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
-
-        // Get paginated data
-        const { data } = await supabase
-            .from("client_job_contracts")
-            .select(`
-                *,
-                clients(name),
-                jobs(title)
-            `)
-            .order("created_at", { ascending: false })
-            .range(from, to);
-        contracts = data || [];
+        query = query.eq("contract_type", currentTab.toUpperCase());
     }
+
+    if (status) {
+        query = query.eq("status", status);
+    }
+
+    if (trading_type) {
+        query = query.eq("trading_type", trading_type);
+    }
+
+    if (search) {
+        // Simple search on title. For complex client name search, might need a view or join filter.
+        query = query.ilike("title", `%${search}%`);
+    }
+
+    const { data, count } = await query
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+    contracts = data || [];
+    totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -141,20 +134,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="クライアント名、契約タイトルで検索..."
-                            className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-3 py-2 border border-input rounded-md hover:bg-slate-50 text-sm font-medium">
-                        <Filter className="w-4 h-4" />
-                        フィルター
-                    </button>
-                </div>
+                <ClientContractFilters />
 
                 {/* Results Count */}
                 <div className="text-sm text-slate-600">
@@ -167,20 +147,26 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
+                                    <th className="px-6 py-3 font-medium text-center">種別</th>
                                     <th className="px-6 py-3 font-medium">クライアント</th>
                                     <th className="px-6 py-3 font-medium">契約タイトル</th>
                                     {currentTab === 'individual' && <th className="px-6 py-3 font-medium">案件</th>}
                                     {(currentTab === 'basic' || currentTab === 'nda') && <th className="px-6 py-3 font-medium">有効期間</th>}
-                                    {(currentTab === 'basic' || currentTab === 'nda') && <th className="px-6 py-3 font-medium">月額金額</th>}
-                                    {currentTab === 'individual' && <th className="px-6 py-3 font-medium">契約金額</th>}
-                                    <th className="px-6 py-3 font-medium">ステータス</th>
-                                    <th className="px-6 py-3 font-medium">締結日</th>
+                                    {(currentTab === 'basic' || currentTab === 'nda') && <th className="px-6 py-3 font-medium text-right">月額金額</th>}
+                                    {currentTab === 'individual' && <th className="px-6 py-3 font-medium text-right">契約金額</th>}
+                                    <th className="px-6 py-3 font-medium text-center">ステータス</th>
+                                    <th className="px-6 py-3 font-medium text-center">締結日</th>
                                     <th className="px-6 py-3 font-medium text-right">操作</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {contracts.map((contract) => (
                                     <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${contract.trading_type === 'RECEIVING' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                {contract.trading_type === 'RECEIVING' ? '受注' : '発注'}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <Building2 className="w-4 h-4 text-slate-400" />
@@ -206,12 +192,12 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                             </td>
                                         )}
                                         {(currentTab === 'basic' || currentTab === 'nda') && (
-                                            <td className="px-6 py-4 text-slate-500">
+                                            <td className="px-6 py-4 text-slate-500 text-right">
                                                 {contract.monthly_amount ? `¥${contract.monthly_amount.toLocaleString()}` : '-'}
                                             </td>
                                         )}
                                         {currentTab === 'individual' && (
-                                            <td className="px-6 py-4 text-slate-500">
+                                            <td className="px-6 py-4 text-slate-500 text-right">
                                                 <div className="font-medium text-slate-900">
                                                     ¥{contract.contract_amount?.toLocaleString() || '0'}
                                                 </div>
@@ -223,10 +209,10 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                                                 </div>
                                             </td>
                                         )}
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 text-center">
                                             {getStatusBadge(contract.status)}
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500">
+                                        <td className="px-6 py-4 text-slate-500 text-center">
                                             {formatDate(contract.signed_at)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -264,6 +250,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             currentPage={currentPage}
                             totalPages={totalPages}
                             baseUrl={`/clients/contracts?tab=${currentTab}`}
+                            searchParams={{ status, trading_type, search }}
                         />
                     )}
                 </div>
