@@ -192,7 +192,7 @@ export default async function JobDetailPage({
                                     </p>
                                 </div>
                                 <Link
-                                    href={`/clients/contracts/individual/create?job_id=${id}`}
+                                    href={`/clients/contracts/create?job_id=${id}`}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -225,8 +225,8 @@ export default async function JobDetailPage({
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-700' :
-                                                                contract.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                                    'bg-orange-100 text-orange-700'
+                                                            contract.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                                'bg-orange-100 text-orange-700'
                                                             }`}>
                                                             {contract.status === 'SIGNED' ? '締結済' :
                                                                 contract.status === 'REJECTED' ? '却下' : '未締結'}
