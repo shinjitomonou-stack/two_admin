@@ -76,7 +76,6 @@ function CreateClientContractForm() {
                         ...prev,
                         contract_type: "INDIVIDUAL",
                         trading_type: "PLACING",
-                        client_id: job.client_id,
                         job_id: jobIdFromUrl,
                     }));
                 }
@@ -103,17 +102,21 @@ function CreateClientContractForm() {
 
     // Fetch job details when job_id is set (for pre-population)
     useEffect(() => {
-        if (formData.job_id && formData.contract_type === "INDIVIDUAL") {
-            const fetchJobForList = async () => {
+        if (formData.job_id && formData.contract_type === "INDIVIDUAL" && !formData.client_id) {
+            // When job_id is set from URL, fetch that specific job for the dropdown
+            const fetchSpecificJob = async () => {
                 const supabase = createClient();
-                const { data } = await supabase
+                const { data: job } = await supabase
                     .from("jobs")
                     .select("*")
-                    .eq("client_id", formData.client_id)
-                    .order("created_at", { ascending: false });
-                setJobs(data || []);
+                    .eq("id", formData.job_id)
+                    .single();
+
+                if (job) {
+                    setJobs([job]);
+                }
             };
-            fetchJobForList();
+            fetchSpecificJob();
         }
     }, [formData.job_id, formData.contract_type, formData.client_id]);
 
