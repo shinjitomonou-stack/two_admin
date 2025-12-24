@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, MapPin, Calendar, Clock, Users, DollarSign, Building2, Edit, Banknote } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Clock, Users, DollarSign, Building2, Edit, Banknote, Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -49,6 +49,14 @@ export default async function JobDetailPage({
         .from("job_applications")
         .select("*, workers(*), reports(id, status)")
         .eq("job_id", id)
+        .order("created_at", { ascending: false });
+
+    // Fetch Placement Contracts (toB) for this Job
+    const { data: placementContracts } = await supabase
+        .from("client_job_contracts")
+        .select("*, clients(name)")
+        .eq("job_id", id)
+        .eq("trading_type", "PLACING")
         .order("created_at", { ascending: false });
 
     // Determine back link based on return parameter
@@ -162,7 +170,7 @@ export default async function JobDetailPage({
                         </div>
                     </div>
 
-                    {/* Right Column: Applications */}
+                    {/* Right Column: Applications & Placement Contracts */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* @ts-ignore */}
                         <ApplicationList
@@ -171,6 +179,81 @@ export default async function JobDetailPage({
                             // @ts-ignore
                             job={job}
                         />
+
+                        {/* Placement Contracts (toB) */}
+                        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                                        外部業者への発注 ({placementContracts?.length || 0})
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        この案件に対する外部業者への発注契約
+                                    </p>
+                                </div>
+                                <Link
+                                    href={`/clients/contracts/individual/create?job_id=${id}`}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    外部業者に発注
+                                </Link>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 border-b border-border text-slate-500">
+                                        <tr>
+                                            <th className="px-6 py-3 font-medium">クライアント（業者）</th>
+                                            <th className="px-6 py-3 font-medium text-right">契約金額</th>
+                                            <th className="px-6 py-3 font-medium">ステータス</th>
+                                            <th className="px-6 py-3 font-medium text-right">アクション</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {placementContracts && placementContracts.length > 0 ? (
+                                            placementContracts.map((contract: any) => (
+                                                <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 className="w-4 h-4 text-slate-400" />
+                                                            <span className="font-medium">{contract.clients?.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-medium">
+                                                        ¥{parseFloat(contract.contract_amount || 0).toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-700' :
+                                                                contract.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                                    'bg-orange-100 text-orange-700'
+                                                            }`}>
+                                                            {contract.status === 'SIGNED' ? '締結済' :
+                                                                contract.status === 'REJECTED' ? '却下' : '未締結'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <Link
+                                                            href={`/clients/contracts/individual/${contract.id}`}
+                                                            className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                            詳細
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                                                    発注契約はありません
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

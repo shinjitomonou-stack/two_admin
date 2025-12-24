@@ -3,7 +3,7 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, Save, Loader2, Upload, X, FileText } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,8 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 export default function CreateClientContractPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const jobIdFromUrl = searchParams.get('job_id');
     const [isLoading, setIsLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [jobs, setJobs] = useState<any[]>([]);
@@ -58,6 +60,31 @@ export default function CreateClientContractPage() {
         fetchData();
     }, []);
 
+    // Handle job_id from URL parameter
+    useEffect(() => {
+        if (jobIdFromUrl) {
+            const fetchJobAndSetup = async () => {
+                const supabase = createClient();
+                const { data: job } = await supabase
+                    .from("jobs")
+                    .select("*, clients(id, name)")
+                    .eq("id", jobIdFromUrl)
+                    .single();
+
+                if (job) {
+                    setFormData(prev => ({
+                        ...prev,
+                        contract_type: "INDIVIDUAL",
+                        trading_type: "PLACING",
+                        client_id: job.client_id,
+                        job_id: jobIdFromUrl,
+                    }));
+                }
+            };
+            fetchJobAndSetup();
+        }
+    }, [jobIdFromUrl]);
+
     useEffect(() => {
         // Fetch jobs when client is selected
         if (formData.client_id && formData.contract_type === "INDIVIDUAL") {
@@ -73,6 +100,22 @@ export default function CreateClientContractPage() {
             fetchJobs();
         }
     }, [formData.client_id, formData.contract_type]);
+
+    // Fetch job details when job_id is set (for pre-population)
+    useEffect(() => {
+        if (formData.job_id && formData.contract_type === "INDIVIDUAL") {
+            const fetchJobForList = async () => {
+                const supabase = createClient();
+                const { data } = await supabase
+                    .from("jobs")
+                    .select("*")
+                    .eq("client_id", formData.client_id)
+                    .order("created_at", { ascending: false });
+                setJobs(data || []);
+            };
+            fetchJobForList();
+        }
+    }, [formData.job_id, formData.contract_type, formData.client_id]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
