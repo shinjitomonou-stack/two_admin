@@ -47,3 +47,83 @@ export async function updateJob(id: string, payload: any) {
         return { success: false, error };
     }
 }
+
+export async function bulkCreateJobs(jobs: any[]) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        // Resolve client names to IDs
+        const clientNames = Array.from(new Set(jobs.map(j => j.client_name).filter(Boolean)));
+        const { data: clients } = await supabase
+            .from("clients")
+            .select("id, name")
+            .in("name", clientNames);
+
+        const clientMap = new Map(clients?.map(c => [c.name, c.id]));
+
+        // Resolve template names to IDs
+        const templateNames = Array.from(new Set(jobs.map(j => j.template_name).filter(Boolean)));
+        let templateMap = new Map<string, string>();
+        if (templateNames.length > 0) {
+            const { data: templates } = await supabase
+                .from("report_templates")
+                .select("id, name")
+                .in("name", templateNames);
+            templateMap = new Map(templates?.map(t => [t.name, t.id]));
+        }
+
+        const payloads = jobs.map(job => {
+            const clientId = clientMap.get(job.client_name);
+            if (!clientId) throw new Error(`クライアントが見つかりません: ${job.client_name}`);
+
+            const reportTemplateId = job.template_name ? templateMap.get(job.template_name) : null;
+
+            let startDateTime: Date;
+            let endDateTime: Date;
+            let workPeriodStart: string | null = null;
+            let workPeriodEnd: string | null = null;
+
+            if (job.is_flexible === "はい" || job.is_flexible === true) {
+                startDateTime = new Date(`${job.period_start}T00:00:00`);
+                endDateTime = new Date(`${job.period_end}T23:59:59`);
+                workPeriodStart = startDateTime.toISOString();
+                workPeriodEnd = endDateTime.toISOString();
+            } else {
+                startDateTime = new Date(`${job.date}T${job.start_time || "00:00"}`);
+                endDateTime = new Date(`${job.date}T${job.end_time || "23:59"}`);
+            }
+
+            return {
+                title: job.title,
+                client_id: clientId,
+                description: job.description || null,
+                address_text: job.address_text,
+                reward_amount: parseInt(job.reward_amount),
+                billing_amount: job.billing_amount ? parseInt(job.billing_amount) : null,
+                max_workers: parseInt(job.max_workers),
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                is_flexible: job.is_flexible === "はい" || job.is_flexible === true,
+                work_period_start: workPeriodStart,
+                work_period_end: workPeriodEnd,
+                report_template_id: reportTemplateId,
+                status: "OPEN", // Default to OPEN for bulk import as requested usually
+                reward_type: "FIXED",
+            };
+        });
+
+        const { data, error } = await supabase
+            .from("jobs")
+            .insert(payloads)
+            .select();
+
+        if (error) throw error;
+
+        revalidatePath("/jobs");
+        return { success: true, count: data.length };
+    } catch (error: any) {
+        console.error("Error bulk creating jobs:", error);
+        return { success: false, error: error.message || "一括登録中にエラーが発生しました" };
+    }
+}

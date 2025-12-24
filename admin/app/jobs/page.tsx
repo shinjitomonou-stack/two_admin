@@ -8,6 +8,8 @@ import { JobFilters, FilterState } from "@/components/JobFilters";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Pagination from "@/components/ui/Pagination";
+import BulkJobCreateModal from "@/components/BulkJobCreateModal";
+import { FileUp } from "lucide-react";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -56,6 +58,7 @@ export default function JobsPage() {
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
     useEffect(() => {
@@ -184,13 +187,22 @@ export default function JobsPage() {
                             登録されている案件の確認・編集・新規作成を行います。
                         </p>
                     </div>
-                    <Link
-                        href="/jobs/create"
-                        className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium"
-                    >
-                        <Plus className="w-4 h-4" />
-                        新規案件作成
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsBulkModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm"
+                        >
+                            <FileUp className="w-4 h-4" />
+                            一括登録
+                        </button>
+                        <Link
+                            href="/jobs/create"
+                            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            新規案件作成
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -369,6 +381,13 @@ export default function JobsPage() {
                         />
                     )}
                 </div>
+                <BulkJobCreateModal
+                    isOpen={isBulkModalOpen}
+                    onClose={() => {
+                        setIsBulkModalOpen(false);
+                        fetchData();
+                    }}
+                />
             </div>
         </AdminLayout>
     );
