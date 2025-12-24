@@ -5,11 +5,11 @@ import { ArrowLeft, Save, Loader2, Upload, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
-export default function CreateClientContractPage() {
+function CreateClientContractForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const jobIdFromUrl = searchParams.get('job_id');
@@ -547,5 +547,19 @@ export default function CreateClientContractPage() {
                 </div>
             </form>
         </AdminLayout>
+    );
+}
+
+export default function CreateClientContractPage() {
+    return (
+        <Suspense fallback={
+            <AdminLayout>
+                <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                </div>
+            </AdminLayout>
+        }>
+            <CreateClientContractForm />
+        </Suspense>
     );
 }
