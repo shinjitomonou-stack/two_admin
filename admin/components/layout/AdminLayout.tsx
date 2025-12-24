@@ -50,6 +50,7 @@ const sidebarItems = [
             { label: "クライアント管理", href: "/clients" },
             { label: "契約管理", href: "/clients/contracts" },
             { label: "請求金額集計", href: "/clients/billing" },
+            { label: "支払金額集計", href: "/clients/payment" },
         ]
     },
     {
