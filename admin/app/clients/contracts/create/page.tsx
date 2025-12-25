@@ -253,7 +253,7 @@ function CreateClientContractForm() {
                             </label>
                             <select
                                 required
-                                value={formData.contract_type}
+                                value={formData.contract_type || "BASIC"}
                                 onChange={(e) => setFormData({ ...formData, contract_type: e.target.value as any })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             >
@@ -269,7 +269,7 @@ function CreateClientContractForm() {
                             </label>
                             <select
                                 required
-                                value={formData.trading_type}
+                                value={formData.trading_type || "RECEIVING"}
                                 onChange={(e) => setFormData({ ...formData, trading_type: e.target.value as any })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             >
@@ -313,7 +313,7 @@ function CreateClientContractForm() {
                                 </label>
                                 <select
                                     required
-                                    value={formData.billing_cycle}
+                                    value={formData.billing_cycle || "ONCE"}
                                     onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as any })}
                                     className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                 >
@@ -343,7 +343,7 @@ function CreateClientContractForm() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium">テンプレート</label>
                         <select
-                            value={formData.template_id}
+                            value={formData.template_id || ""}
                             onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
                             className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                         >

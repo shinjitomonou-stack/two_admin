@@ -119,7 +119,7 @@ export function SearchableSelect({
                 <input
                     type="text"
                     required
-                    value={value}
+                    value={value || ""}
                     onChange={() => { }}
                     className="absolute inset-0 w-full h-full opacity-0 pointer-events-none -z-10"
                     tabIndex={-1}

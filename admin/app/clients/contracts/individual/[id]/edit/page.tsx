@@ -69,7 +69,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         contract_type: "INDIVIDUAL",
                         trading_type: contract.trading_type,
                         client_id: contract.client_id,
-                        job_id: contract.job_id,
+                        job_id: contract.job_id || "",
                         template_id: contract.template_id || "",
                         title: contract.title,
                         content_snapshot: contract.content_snapshot || "",
@@ -289,7 +289,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             </label>
                             <select
                                 required
-                                value={formData.client_id}
+                                value={formData.client_id || ""}
                                 onChange={(e) => handleClientChange(e.target.value)}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             >
@@ -309,7 +309,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                                 関連案件
                             </label>
                             <select
-                                value={formData.job_id}
+                                value={formData.job_id || ""}
                                 onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             >
@@ -328,7 +328,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             </label>
                             <select
                                 required
-                                value={formData.billing_cycle}
+                                value={formData.billing_cycle || "ONCE"}
                                 onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as any })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             >
@@ -357,7 +357,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     <div className="space-y-2">
                         <label className="text-sm font-medium">テンプレート</label>
                         <select
-                            value={formData.template_id}
+                            value={formData.template_id || ""}
                             onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
                             className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                         >
