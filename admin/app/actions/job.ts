@@ -79,19 +79,25 @@ export async function bulkCreateJobs(jobs: any[]) {
 
             const reportTemplateId = job.template_name ? templateMap.get(job.template_name) : null;
 
+            // Normalize date strings (allow / and -)
+            const normalizeDate = (d: string) => d?.replace(/\//g, "-") || "";
+            const normalizedDate = normalizeDate(job.date);
+            const normalizedPeriodStart = normalizeDate(job.period_start);
+            const normalizedPeriodEnd = normalizeDate(job.period_end);
+
             let startDateTime: Date;
             let endDateTime: Date;
             let workPeriodStart: string | null = null;
             let workPeriodEnd: string | null = null;
 
             if (job.is_flexible === "はい" || job.is_flexible === true) {
-                startDateTime = new Date(`${job.period_start}T00:00:00`);
-                endDateTime = new Date(`${job.period_end}T23:59:59`);
+                startDateTime = new Date(`${normalizedPeriodStart}T00:00:00`);
+                endDateTime = new Date(`${normalizedPeriodEnd}T23:59:59`);
                 workPeriodStart = startDateTime.toISOString();
                 workPeriodEnd = endDateTime.toISOString();
             } else {
-                startDateTime = new Date(`${job.date}T${job.start_time || "00:00"}`);
-                endDateTime = new Date(`${job.date}T${job.end_time || "23:59"}`);
+                startDateTime = new Date(`${normalizedDate}T${job.start_time || "00:00"}`);
+                endDateTime = new Date(`${normalizedDate}T${job.end_time || "23:59"}`);
             }
 
             return {
