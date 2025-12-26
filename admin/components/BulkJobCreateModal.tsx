@@ -23,16 +23,37 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
         const lines = text.split(/\r?\n/).filter(line => line.trim());
         if (lines.length < 2) return [];
 
-        const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ""));
+        const parseLine = (line: string) => {
+            const result = [];
+            let cell = "";
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        cell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(cell.trim());
+                    cell = "";
+                } else {
+                    cell += char;
+                }
+            }
+            result.push(cell.trim());
+            return result;
+        };
+
+        const headers = parseLine(lines[0]);
 
         return lines.slice(1).map(line => {
-            // Simple split logic, doesn't handle commas inside quotes perfectly but works for basic cases
-            // A more robust regex for CSV split
-            const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(",");
+            const values = parseLine(line);
             const obj: any = {};
             headers.forEach((header, index) => {
-                let val = values[index]?.trim().replace(/^"|"$/g, "") || "";
-                obj[header] = val;
+                obj[header] = values[index] || "";
             });
             return obj;
         });
