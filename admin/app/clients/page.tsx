@@ -28,7 +28,7 @@ export default async function ClientsPage({
         .select("*", { count: "exact", head: true });
 
     if (search) {
-        countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+        countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,client_number.ilike.%${search}%`);
     }
 
     const { count } = await countQuery;
@@ -43,7 +43,7 @@ export default async function ClientsPage({
         .range(from, to);
 
     if (search) {
-        dataQuery = dataQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+        dataQuery = dataQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%,client_number.ilike.%${search}%`);
     }
 
     const { data: clients, error } = await dataQuery;
@@ -96,6 +96,7 @@ export default async function ClientsPage({
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
+                                    <th className="px-6 py-3 font-medium">管理番号</th>
                                     <th className="px-6 py-3 font-medium">会社名</th>
                                     <th className="px-6 py-3 font-medium">連絡先</th>
                                     <th className="px-6 py-3 font-medium">住所</th>
@@ -106,6 +107,11 @@ export default async function ClientsPage({
                             <tbody className="divide-y divide-border">
                                 {clients?.map((client) => (
                                     <tr key={client.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                                                {client.client_number || "-"}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-slate-100 rounded-lg">

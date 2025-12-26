@@ -56,7 +56,7 @@ export default async function WorkersPage({
         .select("*", { count: "exact", head: true });
 
     if (search) {
-        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%`);
     }
     if (rank) {
         countQuery = countQuery.eq("rank", rank);
@@ -74,7 +74,7 @@ export default async function WorkersPage({
         .range(from, to);
 
     if (search) {
-        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%`);
     }
     if (rank) {
         dataQuery = dataQuery.eq("rank", rank);
@@ -131,6 +131,7 @@ export default async function WorkersPage({
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
+                                    <th className="px-6 py-3 font-medium">管理番号</th>
                                     <th className="px-6 py-3 font-medium">氏名 / フリガナ</th>
                                     <th className="px-6 py-3 font-medium">基本情報</th>
                                     <th className="px-6 py-3 font-medium">連絡先</th>
@@ -144,6 +145,11 @@ export default async function WorkersPage({
                             <tbody className="divide-y divide-border">
                                 {workersWithVerification?.map((worker) => (
                                     <tr key={worker.id} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                                                {worker.worker_number || "-"}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{worker.full_name}</div>
                                             <div className="text-[10px] text-muted-foreground uppercase opacity-70 leading-none mt-0.5">

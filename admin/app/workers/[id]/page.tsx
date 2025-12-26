@@ -66,8 +66,13 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">{worker.full_name}</h2>
-                        <p className="text-muted-foreground text-xs font-mono">ID: {worker.id}</p>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-bold tracking-tight">{worker.full_name}</h2>
+                            <span className="text-xs font-mono bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">
+                                {worker.worker_number || "-"}
+                            </span>
+                        </div>
+                        <p className="text-muted-foreground text-[10px] font-mono mt-1 opacity-50">System ID: {worker.id}</p>
                     </div>
                     <div className="ml-auto">
                         <Link

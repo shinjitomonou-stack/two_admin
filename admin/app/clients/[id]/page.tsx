@@ -68,8 +68,13 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                             <ArrowLeft className="w-5 h-5 text-slate-500" />
                         </Link>
                         <div>
-                            <h2 className="text-2xl font-bold tracking-tight">{client.name}</h2>
-                            <p className="text-muted-foreground text-xs font-mono">ID: {client.id}</p>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-2xl font-bold tracking-tight">{client.name}</h2>
+                                <span className="text-xs font-mono bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">
+                                    {client.client_number || "-"}
+                                </span>
+                            </div>
+                            <p className="text-muted-foreground text-[10px] font-mono mt-1 opacity-50">System ID: {client.id}</p>
                         </div>
                     </div>
                     <Link
