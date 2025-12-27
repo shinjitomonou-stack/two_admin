@@ -20,40 +20,60 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
     if (!isOpen) return null;
 
     const parseCSV = (text: string) => {
-        const lines = text.split(/\r?\n/).filter(line => line.trim());
-        if (lines.length < 2) return [];
+        if (!text.trim()) return [];
 
-        const parseLine = (line: string) => {
-            const result = [];
-            let cell = "";
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        cell += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    result.push(cell.trim());
-                    cell = "";
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
+        let currentCell = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    // Handle escaped quotes ("")
+                    currentCell += '"';
+                    i++;
                 } else {
-                    cell += char;
+                    // Toggle quote state
+                    inQuotes = !inQuotes;
                 }
+            } else if (char === ',' && !inQuotes) {
+                // End of cell
+                currentRow.push(currentCell.trim());
+                currentCell = "";
+            } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                // End of row
+                if (currentCell || currentRow.length > 0) {
+                    currentRow.push(currentCell.trim());
+                    rows.push(currentRow);
+                    currentCell = "";
+                    currentRow = [];
+                }
+                // Skip next \n if this was \r\n
+                if (char === '\r' && nextChar === '\n') {
+                    i++;
+                }
+            } else {
+                currentCell += char;
             }
-            result.push(cell.trim());
-            return result;
-        };
+        }
 
-        const headers = parseLine(lines[0]);
+        // Handle last cell/row
+        if (currentCell || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            rows.push(currentRow);
+        }
 
-        return lines.slice(1).map(line => {
-            const values = parseLine(line);
+        if (rows.length < 2) return [];
+
+        const headers = rows[0];
+        return rows.slice(1).map(row => {
             const obj: any = {};
             headers.forEach((header, index) => {
-                obj[header] = values[index] || "";
+                obj[header] = row[index] || "";
             });
             return obj;
         });
