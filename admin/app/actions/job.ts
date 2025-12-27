@@ -87,11 +87,29 @@ export async function bulkCreateJobs(jobs: any[]) {
 
             const reportTemplateId = job.template_name ? templateMap.get(job.template_name) : null;
 
-            // Normalize date strings (allow / and -)
-            const normalizeDate = (d: string) => d?.replace(/\//g, "-") || "";
-            let normalizedDate = normalizeDate(job.date);
-            let normalizedPeriodStart = normalizeDate(job.period_start);
-            let normalizedPeriodEnd = normalizeDate(job.period_end);
+            // Robust Date/Time Normalization
+            const formatISOColorDate = (d: string) => {
+                if (!d) return "";
+                const parts = d.replace(/\//g, "-").split("-");
+                if (parts.length !== 3) return d;
+                const y = parts[0];
+                const m = parts[1].padStart(2, "0");
+                const day = parts[2].padStart(2, "0");
+                return `${y}-${m}-${day}`;
+            };
+
+            const formatISOTime = (t: string, defaultTime: string) => {
+                const time = (t || defaultTime).trim();
+                const parts = time.split(":");
+                const h = parts[0].padStart(2, "0");
+                const m = (parts[1] || "00").padStart(2, "0");
+                const s = (parts[2] || "00").padStart(2, "0");
+                return `${h}:${m}:${s}`;
+            };
+
+            let normalizedDate = formatISOColorDate(job.date);
+            let normalizedPeriodStart = formatISOColorDate(job.period_start);
+            let normalizedPeriodEnd = formatISOColorDate(job.period_end);
 
             const isFlexible = job.is_flexible === "はい" || job.is_flexible === true;
 
@@ -112,12 +130,30 @@ export async function bulkCreateJobs(jobs: any[]) {
                 if (!normalizedPeriodStart) throw new Error(`期間開始日が未入力です: ${job.title || "不明な案件"}`);
                 startDateTime = new Date(`${normalizedPeriodStart}T00:00:00`);
                 endDateTime = new Date(`${normalizedPeriodEnd || normalizedPeriodStart}T23:59:59`);
+
+                if (isNaN(startDateTime.getTime())) {
+                    throw new Error(`期間開始日が正しくありません: ${job.title} (${normalizedPeriodStart})`);
+                }
+                if (isNaN(endDateTime.getTime())) {
+                    throw new Error(`期間終了日が正しくありません: ${job.title} (${normalizedPeriodEnd || normalizedPeriodStart})`);
+                }
+
                 workPeriodStart = startDateTime.toISOString();
                 workPeriodEnd = endDateTime.toISOString();
             } else {
                 if (!normalizedDate) throw new Error(`日付が未入力です: ${job.title || "不明な案件"}`);
-                startDateTime = new Date(`${normalizedDate}T${job.start_time || "00:00"}`);
-                endDateTime = new Date(`${normalizedDate}T${job.end_time || "23:59"}`);
+                const startTime = formatISOTime(job.start_time, "00:00");
+                const endTime = formatISOTime(job.end_time, "23:59");
+
+                startDateTime = new Date(`${normalizedDate}T${startTime}`);
+                endDateTime = new Date(`${normalizedDate}T${endTime}`);
+
+                if (isNaN(startDateTime.getTime())) {
+                    throw new Error(`開始時間が正しくありません: ${job.title} (${normalizedDate}T${startTime})`);
+                }
+                if (isNaN(endDateTime.getTime())) {
+                    throw new Error(`終了時間が正しくありません: ${job.title} (${normalizedDate}T${endTime})`);
+                }
             }
 
             // Robust number parsing
