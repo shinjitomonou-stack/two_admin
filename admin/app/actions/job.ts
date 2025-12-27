@@ -81,21 +81,32 @@ export async function bulkCreateJobs(jobs: any[]) {
 
             // Normalize date strings (allow / and -)
             const normalizeDate = (d: string) => d?.replace(/\//g, "-") || "";
-            const normalizedDate = normalizeDate(job.date);
-            const normalizedPeriodStart = normalizeDate(job.period_start);
-            const normalizedPeriodEnd = normalizeDate(job.period_end);
+            let normalizedDate = normalizeDate(job.date);
+            let normalizedPeriodStart = normalizeDate(job.period_start);
+            let normalizedPeriodEnd = normalizeDate(job.period_end);
+
+            const isFlexible = job.is_flexible === "はい" || job.is_flexible === true;
+
+            // Fallback logic
+            if (!isFlexible && !normalizedDate && normalizedPeriodStart) {
+                normalizedDate = normalizedPeriodStart;
+            }
+            if (isFlexible && !normalizedPeriodEnd && normalizedPeriodStart) {
+                normalizedPeriodEnd = normalizedPeriodStart;
+            }
 
             let startDateTime: Date;
             let endDateTime: Date;
             let workPeriodStart: string | null = null;
             let workPeriodEnd: string | null = null;
 
-            if (job.is_flexible === "はい" || job.is_flexible === true) {
+            if (isFlexible) {
                 startDateTime = new Date(`${normalizedPeriodStart}T00:00:00`);
                 endDateTime = new Date(`${normalizedPeriodEnd}T23:59:59`);
                 workPeriodStart = startDateTime.toISOString();
                 workPeriodEnd = endDateTime.toISOString();
             } else {
+                if (!normalizedDate) throw new Error(`日付が未入力です: ${job.title}`);
                 startDateTime = new Date(`${normalizedDate}T${job.start_time || "00:00"}`);
                 endDateTime = new Date(`${normalizedDate}T${job.end_time || "23:59"}`);
             }

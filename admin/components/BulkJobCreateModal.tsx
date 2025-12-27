@@ -230,7 +230,9 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-600">
-                                                        {row.is_flexible === "はい" ? `${row.period_start} ~ ${row.period_end}` : row.date}
+                                                        {row.is_flexible === "はい"
+                                                            ? `${row.period_start}${row.period_end && row.period_end !== row.period_start ? ` ~ ${row.period_end}` : ""}`
+                                                            : (row.date || row.period_start)}
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-600">¥{(parseInt(row.reward_amount) || 0).toLocaleString()}</td>
                                                     <td className="px-4 py-3 text-slate-600">{row.max_workers}人</td>
