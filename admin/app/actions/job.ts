@@ -53,12 +53,20 @@ export async function bulkCreateJobs(jobs: any[]) {
     const supabase = await createClient();
 
     try {
-        // Resolve client names to IDs
-        const clientNames = Array.from(new Set(jobs.map(j => j.client_name).filter(Boolean)));
-        const { data: clients } = await supabase
+        // Pre-validate client names and collect unique names for bulk lookup
+        const clientNames = Array.from(new Set(jobs.map(j => {
+            if (!j.client_name) {
+                throw new Error(`クライアント名が未入力です: ${j.title || "不明な案件"}`);
+            }
+            return j.client_name.trim();
+        }).filter(Boolean)));
+
+        const { data: clients, error: clientFetchError } = await supabase
             .from("clients")
             .select("id, name")
             .in("name", clientNames);
+
+        if (clientFetchError) throw clientFetchError;
 
         const clientMap = new Map(clients?.map(c => [c.name, c.id]));
 
@@ -66,7 +74,7 @@ export async function bulkCreateJobs(jobs: any[]) {
         const templateNames = Array.from(new Set(jobs.map(j => j.template_name).filter(Boolean)));
         let templateMap = new Map<string, string>();
         if (templateNames.length > 0) {
-            const { data: templates } = await supabase
+            const { data: templates, error: templateFetchError } = await supabase
                 .from("report_templates")
                 .select("id, name")
                 .in("name", templateNames);
@@ -74,7 +82,7 @@ export async function bulkCreateJobs(jobs: any[]) {
         }
 
         const payloads = jobs.map(job => {
-            const clientId = clientMap.get(job.client_name);
+            const clientId = clientMap.get(job.client_name?.trim());
             if (!clientId) throw new Error(`クライアントが見つかりません: ${job.client_name}`);
 
             const reportTemplateId = job.template_name ? templateMap.get(job.template_name) : null;
@@ -101,31 +109,46 @@ export async function bulkCreateJobs(jobs: any[]) {
             let workPeriodEnd: string | null = null;
 
             if (isFlexible) {
+                if (!normalizedPeriodStart) throw new Error(`期間開始日が未入力です: ${job.title || "不明な案件"}`);
                 startDateTime = new Date(`${normalizedPeriodStart}T00:00:00`);
-                endDateTime = new Date(`${normalizedPeriodEnd}T23:59:59`);
+                endDateTime = new Date(`${normalizedPeriodEnd || normalizedPeriodStart}T23:59:59`);
                 workPeriodStart = startDateTime.toISOString();
                 workPeriodEnd = endDateTime.toISOString();
             } else {
-                if (!normalizedDate) throw new Error(`日付が未入力です: ${job.title}`);
+                if (!normalizedDate) throw new Error(`日付が未入力です: ${job.title || "不明な案件"}`);
                 startDateTime = new Date(`${normalizedDate}T${job.start_time || "00:00"}`);
                 endDateTime = new Date(`${normalizedDate}T${job.end_time || "23:59"}`);
             }
+
+            // Robust number parsing
+            const parseNumber = (val: any) => {
+                if (typeof val === 'number') return val;
+                if (!val) return 0;
+                const clean = String(val).replace(/[^\d]/g, '');
+                return parseInt(clean) || 0;
+            };
+
+            if (!job.title) throw new Error("案件タイトルが未入力の行があります。");
+            if (!job.address_text) throw new Error(`住所が未入力です: ${job.title}`);
+
+            const maxWorkers = parseNumber(job.max_workers);
+            if (maxWorkers <= 0) throw new Error(`募集人数は1人以上に設定してください: ${job.title}`);
 
             return {
                 title: job.title,
                 client_id: clientId,
                 description: job.description || null,
                 address_text: job.address_text,
-                reward_amount: parseInt(job.reward_amount),
-                billing_amount: job.billing_amount ? parseInt(job.billing_amount) : null,
-                max_workers: parseInt(job.max_workers),
+                reward_amount: parseNumber(job.reward_amount),
+                billing_amount: job.billing_amount ? parseNumber(job.billing_amount) : null,
+                max_workers: maxWorkers,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
-                is_flexible: job.is_flexible === "はい" || job.is_flexible === true,
+                is_flexible: isFlexible,
                 work_period_start: workPeriodStart,
                 work_period_end: workPeriodEnd,
                 report_template_id: reportTemplateId,
-                status: "OPEN", // Default to OPEN for bulk import as requested usually
+                status: "OPEN",
                 reward_type: "FIXED",
             };
         });
