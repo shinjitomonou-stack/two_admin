@@ -18,7 +18,7 @@ type Application = {
     actual_work_end?: string | null;
     workers: {
         full_name: string;
-        rank: string;
+        tags: string[];
     };
     reports?: {
         id: string;
@@ -120,7 +120,17 @@ export function ApplicationRow({
                     <div className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
                         {app.workers?.full_name}
                     </div>
-                    <div className="text-xs text-muted-foreground">{app.workers?.rank || 'Bronze'}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {app.workers?.tags && app.workers.tags.length > 0 ? (
+                            app.workers.tags.map((tag, i) => (
+                                <span key={i} className="px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] border border-blue-100 font-medium">
+                                    {tag}
+                                </span>
+                            ))
+                        ) : (
+                            <div className="text-[10px] text-muted-foreground opacity-50">-</div>
+                        )}
+                    </div>
                 </Link>
             </td>
             <td className="px-6 py-4">

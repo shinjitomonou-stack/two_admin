@@ -26,7 +26,7 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
         address: "",
         gender: "",
         birth_date: "",
-        rank: "Bronze",
+        tags: [] as string[],
         is_verified: false,
     });
 
@@ -61,7 +61,7 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
                     address: data.address || "",
                     gender: data.gender || "",
                     birth_date: data.birth_date || "",
-                    rank: data.rank || "Bronze",
+                    tags: data.tags || [],
                     is_verified: data.is_verified || false,
                 });
             }
@@ -238,16 +238,15 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
 
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">ランク</label>
-                            <select
-                                value={formData.rank}
-                                onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
+                            <label className="text-sm font-medium text-slate-700">タグ (カンマ区切り)</label>
+                            <input
+                                type="text"
+                                placeholder="例: 早朝対応可, 運転免許, 経験者"
+                                value={formData.tags.join(", ")}
+                                onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(/[,，]/).map(s => s.trim()).filter(Boolean) })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="Bronze">Bronze</option>
-                                <option value="Silver">Silver</option>
-                                <option value="Gold">Gold</option>
-                            </select>
+                            />
+                            <p className="text-[10px] text-slate-400">複数のタグを入力する場合はカンマ（,）で区切ってください。</p>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">本人確認ステータス</label>

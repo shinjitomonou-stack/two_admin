@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, ShieldCheck, ShieldAlert, Mail, Phone, Calendar, CreditCard, Edit, FileText } from "lucide-react";
+import { ArrowLeft, ShieldCheck, ShieldAlert, Mail, Phone, Calendar, CreditCard, Edit, FileText, Tag } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -137,11 +137,19 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                         {formatDate(worker.birth_date)}
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">登録日</label>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Calendar className="w-4 h-4 text-slate-400" />
-                                        {formatDateTime(worker.created_at)}
+                                <div className="space-y-1 sm:col-span-2">
+                                    <label className="text-xs font-medium text-muted-foreground">タグ</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {worker.tags && worker.tags.length > 0 ? (
+                                            worker.tags.map((tag: string, i: number) => (
+                                                <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                    <Tag className="w-3 h-3" />
+                                                    {tag}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-slate-400">タグなし</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -225,9 +233,9 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                     )}
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                                    <span className="text-sm font-medium">ランク</span>
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                        {worker.rank || 'Bronze'}
+                                    <span className="text-sm font-medium">登録日</span>
+                                    <span className="text-xs text-slate-500">
+                                        {formatDate(worker.created_at)}
                                     </span>
                                 </div>
 
@@ -256,7 +264,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </AdminLayout >
     );
 }
 

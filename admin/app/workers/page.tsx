@@ -38,12 +38,11 @@ function formatShortAddress(postalCode: string | null, address: string | null) {
 export default async function WorkersPage({
     searchParams
 }: {
-    searchParams: Promise<{ page?: string; query?: string; rank?: string }>
+    searchParams: Promise<{ page?: string; query?: string }>
 }) {
     const params = await searchParams;
     const currentPage = Number(params.page) || 1;
     const search = params.query || "";
-    const rank = params.rank || "";
 
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
     const to = from + ITEMS_PER_PAGE - 1;
@@ -56,10 +55,7 @@ export default async function WorkersPage({
         .select("*", { count: "exact", head: true });
 
     if (search) {
-        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%`);
-    }
-    if (rank) {
-        countQuery = countQuery.eq("rank", rank);
+        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%,tags.cs.{${search}}`);
     }
 
     const { count } = await countQuery;
@@ -74,10 +70,7 @@ export default async function WorkersPage({
         .range(from, to);
 
     if (search) {
-        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%`);
-    }
-    if (rank) {
-        dataQuery = dataQuery.eq("rank", rank);
+        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%,tags.cs.{${search}}`);
     }
 
     const { data: workers, error } = await dataQuery;
@@ -116,11 +109,9 @@ export default async function WorkersPage({
                 {/* Results Count */}
                 <div className="text-sm text-slate-600">
                     {count || 0}件のワーカー
-                    {(search || rank) && (
+                    {search && (
                         <span className="ml-2 text-muted-foreground">
-                            {search && `「${search}」`}
-                            {rank && `${rank}ランク`}
-                            の表示中
+                            「${search}」の検索結果
                         </span>
                     )}
                 </div>
@@ -136,7 +127,7 @@ export default async function WorkersPage({
                                     <th className="px-6 py-3 font-medium">基本情報</th>
                                     <th className="px-6 py-3 font-medium">連絡先</th>
                                     <th className="px-6 py-3 font-medium">住所</th>
-                                    <th className="px-6 py-3 font-medium text-center">ランク</th>
+                                    <th className="px-6 py-3 font-medium">タグ</th>
                                     <th className="px-6 py-3 font-medium">本人確認</th>
                                     <th className="px-6 py-3 font-medium">登録日</th>
                                     <th className="px-6 py-3 font-medium text-right">操作</th>
@@ -176,10 +167,18 @@ export default async function WorkersPage({
                                         <td className="px-6 py-4">
                                             {formatShortAddress(worker.postal_code, worker.address)}
                                         </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 uppercase">
-                                                {worker.rank || 'Bronze'}
-                                            </span>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {worker.tags && worker.tags.length > 0 ? (
+                                                    worker.tags.map((tag: string, i: number) => (
+                                                        <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                            {tag}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-slate-400 text-[10px]">-</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {worker.email_confirmed_at ? (
@@ -219,8 +218,8 @@ export default async function WorkersPage({
                                 ))}
                                 {(!workersWithVerification || workersWithVerification.length === 0) && (
                                     <tr>
-                                        <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                                            {search || rank ? "検索条件に一致するワーカーが見つかりませんでした。" : "ワーカーがまだ登録されていません。"}
+                                        <td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">
+                                            {search ? "検索条件に一致するワーカーが見つかりませんでした。" : "ワーカーがまだ登録されていません。"}
                                         </td>
                                     </tr>
                                 )}

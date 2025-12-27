@@ -19,7 +19,7 @@ type Application = {
     workers: {
         id: string;
         full_name: string;
-        rank: string;
+        tags: string[];
         line_user_id?: string | null;
     };
     reports?: {
