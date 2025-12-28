@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ShieldCheck, ShieldAlert, Eye, Edit } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Eye, Edit, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
@@ -101,6 +101,13 @@ export default async function WorkersPage({
                             登録ワーカーの確認・ステータス管理を行います。
                         </p>
                     </div>
+                    <Link
+                        href="/workers/new"
+                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
+                    >
+                        <Plus className="w-4 h-4" />
+                        新規登録
+                    </Link>
                 </div>
 
                 {/* Filters */}
