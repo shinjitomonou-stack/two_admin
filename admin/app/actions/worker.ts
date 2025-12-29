@@ -9,9 +9,17 @@ export async function updateWorkerAction(id: string, payload: any) {
     const supabase = await createClient();
 
     try {
+        // Sanitize payload: convert empty strings to null
+        const sanitizedPayload = Object.fromEntries(
+            Object.entries(payload).map(([key, value]) => [
+                key,
+                value === "" ? null : value
+            ])
+        );
+
         const { data, error } = await supabase
             .from("workers")
-            .update(payload)
+            .update(sanitizedPayload)
             .eq("id", id)
             .select()
             .single();
@@ -21,9 +29,12 @@ export async function updateWorkerAction(id: string, payload: any) {
         revalidatePath("/workers");
         revalidatePath(`/workers/${id}`);
         return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating worker:", error);
-        return { success: false, error };
+        return {
+            success: false,
+            error: error.message || "更新に失敗しました。入力内容を確認してください。"
+        };
     }
 }
 

@@ -87,7 +87,8 @@ export default function EditWorkerPage({ params }: { params: Promise<{ id: strin
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            toast.error(`エラーが発生しました: ${error.message}`);
+            const message = typeof error === 'string' ? error : (error.message || "不明なエラー");
+            toast.error(`エラーが発生しました: ${message}`);
         } finally {
             setIsLoading(false);
         }
