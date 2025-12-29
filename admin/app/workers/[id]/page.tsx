@@ -76,7 +76,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                     </div>
                     <div className="ml-auto">
                         <Link
-                            href={`/workers/${worker.id}/edit`}
+                            href={`/workers/${worker.id}/edit?returnTo=/workers/${worker.id}`}
                             className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
                         >
                             <Edit className="w-4 h-4" />

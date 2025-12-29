@@ -3,13 +3,15 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import { createWorkerAction } from "@/app/actions/worker";
 import { toast } from "sonner";
 
-export default function NewWorkerPage() {
+function NewWorkerForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get("returnTo");
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -30,7 +32,7 @@ export default function NewWorkerPage() {
             if (!result.success) throw result.error;
 
             toast.success("ワーカーを登録しました");
-            router.push(`/workers/${result.data.id}`);
+            router.push(returnTo || `/workers/${result.data.id}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
@@ -46,7 +48,7 @@ export default function NewWorkerPage() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href="/workers"
+                            href={returnTo || "/workers"}
                             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-500" />
@@ -129,5 +131,13 @@ export default function NewWorkerPage() {
                 </div>
             </form>
         </AdminLayout>
+    );
+}
+
+export default function NewWorkerPage() {
+    return (
+        <Suspense fallback={<AdminLayout><div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div></AdminLayout>}>
+            <NewWorkerForm />
+        </Suspense>
     );
 }

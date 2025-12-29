@@ -86,7 +86,7 @@ export default async function JobDetailPage({
                     </div>
                     <div>
                         <Link
-                            href={`/jobs/${job.id}/edit`}
+                            href={`/jobs/${job.id}/edit?returnTo=/jobs/${job.id}`}
                             className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
                         >
                             <Edit className="w-4 h-4" />
@@ -192,7 +192,7 @@ export default async function JobDetailPage({
                                     </p>
                                 </div>
                                 <Link
-                                    href={`/clients/contracts/create?job_id=${id}`}
+                                    href={`/clients/contracts/create?job_id=${id}&returnTo=/jobs/${id}`}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                 >
                                     <Plus className="w-4 h-4" />

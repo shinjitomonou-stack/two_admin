@@ -78,7 +78,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
                     <Link
-                        href={`/clients/${client.id}/edit`}
+                        href={`/clients/${client.id}/edit?returnTo=/clients/${client.id}`}
                         className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
                     >
                         <Edit className="w-4 h-4" />

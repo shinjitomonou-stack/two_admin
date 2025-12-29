@@ -1,17 +1,19 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Save, Building2, Mail, Phone, MapPin, User, CreditCard, Banknote } from "lucide-react";
+import { ArrowLeft, Save, Building2, Mail, Phone, MapPin, User, CreditCard, Banknote, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClientAction } from "@/app/actions/client";
 import { toast } from "sonner";
 
-export default function CreateClientPage() {
+function CreateClientForm() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get("returnTo");
     const supabase = createClient();
 
     const [formData, setFormData] = useState({
@@ -47,7 +49,7 @@ export default function CreateClientPage() {
             if (!result.success) throw result.error;
 
             toast.success("クライアントを登録しました");
-            router.push("/clients");
+            router.push(returnTo || "/clients");
             router.refresh();
         } catch (error: any) {
             console.error("Error creating client:", error);
@@ -63,7 +65,7 @@ export default function CreateClientPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <Link
-                        href="/clients"
+                        href={returnTo || "/clients"}
                         className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
@@ -316,5 +318,13 @@ export default function CreateClientPage() {
                 </div>
             </form>
         </AdminLayout>
+    );
+}
+
+export default function CreateClientPage() {
+    return (
+        <Suspense fallback={<AdminLayout><div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div></AdminLayout>}>
+            <CreateClientForm />
+        </Suspense>
     );
 }

@@ -13,6 +13,7 @@ function CreateClientContractForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const jobIdFromUrl = searchParams.get('job_id');
+    const returnTo = searchParams.get('returnTo');
     const [isLoading, setIsLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [jobs, setJobs] = useState<any[]>([]);
@@ -206,7 +207,7 @@ function CreateClientContractForm() {
             }
 
             toast.success("契約を作成しました");
-            router.push(`/clients/contracts?tab=${formData.contract_type.toLowerCase()}`);
+            router.push(returnTo || `/clients/contracts?tab=${formData.contract_type.toLowerCase()}`);
         } catch (error: any) {
             console.error(error);
             toast.error(`エラーが発生しました: ${error.message}`);
@@ -221,7 +222,7 @@ function CreateClientContractForm() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href="/clients/contracts"
+                            href={returnTo || "/clients/contracts"}
                             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-500" />

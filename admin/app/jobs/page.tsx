@@ -196,7 +196,7 @@ export default function JobsPage() {
                             一括登録
                         </button>
                         <Link
-                            href="/jobs/create"
+                            href="/jobs/create?returnTo=/jobs"
                             className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
@@ -350,7 +350,7 @@ export default function JobsPage() {
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
                                                     <Link
-                                                        href={`/jobs/${job.id}/edit`}
+                                                        href={`/jobs/${job.id}/edit?returnTo=/jobs`}
                                                         className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
                                                         title="編集"
                                                     >

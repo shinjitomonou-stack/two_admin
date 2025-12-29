@@ -64,7 +64,7 @@ export default async function ClientsPage({
                         </p>
                     </div>
                     <Link
-                        href="/clients/create"
+                        href="/clients/create?returnTo=/clients"
                         className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium"
                     >
                         <Plus className="w-4 h-4" />
@@ -142,7 +142,7 @@ export default async function ClientsPage({
                                                     <Eye className="w-4 h-4" />
                                                 </Link>
                                                 <Link
-                                                    href={`/clients/${client.id}/edit`}
+                                                    href={`/clients/${client.id}/edit?returnTo=/clients`}
                                                     className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
                                                     title="編集"
                                                 >

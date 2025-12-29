@@ -3,18 +3,21 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, Save, MapPin, Calendar, Clock, Banknote, Building2, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { createJob } from "@/app/actions/job";
 
-export default function CreateJobPage() {
+function CreateJobForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
     const [templates, setTemplates] = useState<any[]>([]);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get("returnTo");
     const supabase = createClient();
 
     // Form States
@@ -174,7 +177,7 @@ export default function CreateJobPage() {
             }
 
             toast.success("案件を作成しました！");
-            router.push("/jobs");
+            router.push(returnTo || "/jobs");
             router.refresh();
         } catch (error: any) {
             console.error("Error creating job:", error);
@@ -192,7 +195,7 @@ export default function CreateJobPage() {
                 {/* Header */}
                 <div className="flex items-center gap-4">
                     <Link
-                        href="/jobs"
+                        href={returnTo || "/jobs"}
                         className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
@@ -231,7 +234,11 @@ export default function CreateJobPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium">クライアント <span className="text-red-500">*</span></label>
-                                    <Link href="/clients/create" target="_blank" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                                    <Link
+                                        href={`/clients/create?returnTo=/jobs/create${returnTo ? `&returnToParam=${encodeURIComponent(returnTo)}` : ""}`}
+                                        target="_blank"
+                                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                    >
                                         <Plus className="w-3 h-3" />
                                         新規登録
                                     </Link>
@@ -685,5 +692,13 @@ export default function CreateJobPage() {
                 </div>
             </form>
         </AdminLayout>
+    );
+}
+
+export default function CreateJobPage() {
+    return (
+        <Suspense fallback={<AdminLayout><div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div></AdminLayout>}>
+            <CreateJobForm />
+        </Suspense>
     );
 }
