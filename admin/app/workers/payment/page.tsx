@@ -31,19 +31,19 @@ export default function WorkerPaymentPage() {
         const supabase = createClient();
 
         const [year, month] = selectedMonth.split('-');
-        const startDate = `${year}-${month}-01`;
-        // Get last day of the month: new Date(year, month, 0) gives last day of PREVIOUS month
-        // So we need new Date(year, month + 1, 0) to get last day of current month
-        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-        const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+        const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        // 1. Fetch completed jobs in the period
+        // Fetch jobs for a wider range to account for date shifts
+        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
+        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+
         const { data: jobs, error: jobsError } = await supabase
             .from('jobs')
-            .select('id, title, reward_amount, end_time, status')
+            .select('id, title, reward_amount, end_time, is_flexible, work_period_end, status, job_applications(worker_id, status, workers(full_name), actual_work_start, scheduled_work_start)')
             .eq('status', 'COMPLETED')
-            .gte('end_time', `${startDate}T00:00:00`)
-            .lte('end_time', `${endDate}T23:59:59`);
+            .gte('end_time', queryStartDate)
+            .lte('end_time', queryEndDate);
 
         if (jobsError) {
             console.error('Error fetching jobs:', jobsError);
@@ -51,52 +51,38 @@ export default function WorkerPaymentPage() {
             return;
         }
 
-        if (!jobs || jobs.length === 0) {
-            setPaymentData([]);
-            setIsLoading(false);
-            return;
-        }
-
-        const jobIds = jobs.map(j => j.id);
-
-        // 2. Fetch assigned applications for these jobs
-        const { data: applications, error: appsError } = await supabase
-            .from('job_applications')
-            .select(`
-                job_id,
-                worker_id,
-                status,
-                workers(full_name)
-            `)
-            .in('job_id', jobIds)
-            .eq('status', 'ASSIGNED');
-
-        console.log('Worker Payment Debug:', {
-            selectedMonth,
-            jobsCount: jobs.length,
-            appsCount: applications?.length,
-            appsError
-        });
+        // Helper to determine the effective date
+        const getEffectiveDate = (job: any, app: any) => {
+            if (app.actual_work_start) return new Date(app.actual_work_start);
+            if (app.scheduled_work_start) return new Date(app.scheduled_work_start);
+            if (job.is_flexible && job.work_period_end) return new Date(job.work_period_end);
+            return new Date(job.end_time);
+        };
 
         // Aggregate data by worker
         const workerMap = new Map<string, PaymentData>();
 
-        applications?.forEach((app: any) => {
-            const job = jobs.find(j => j.id === app.job_id);
-            if (!job) return;
+        jobs?.forEach((job: any) => {
+            job.job_applications?.forEach((app: any) => {
+                // Only consider assigned/confirmed workers for payment
+                if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
 
-            const workerId = app.worker_id;
-            if (!workerMap.has(workerId)) {
-                workerMap.set(workerId, {
-                    worker_id: workerId,
-                    worker_name: app.workers?.full_name || '',
-                    total_payment: 0,
-                    job_count: 0,
-                });
-            }
-            const data = workerMap.get(workerId)!;
-            data.total_payment += parseFloat(job.reward_amount || 0);
-            data.job_count += 1;
+                const effectiveDate = getEffectiveDate(job, app);
+                if (effectiveDate < startDate || effectiveDate > endDate) return;
+
+                const workerId = app.worker_id;
+                if (!workerMap.has(workerId)) {
+                    workerMap.set(workerId, {
+                        worker_id: workerId,
+                        worker_name: app.workers?.full_name || '',
+                        total_payment: 0,
+                        job_count: 0,
+                    });
+                }
+                const data = workerMap.get(workerId)!;
+                data.total_payment += parseFloat(job.reward_amount || 0);
+                data.job_count += 1;
+            });
         });
 
         const result = Array.from(workerMap.values());
@@ -107,39 +93,46 @@ export default function WorkerPaymentPage() {
     const fetchWorkerDetails = async (workerId: string) => {
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
-        const startDate = `${year}-${month}-01`;
-        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-        const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+        const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        // 1. Fetch completed jobs for the period
+        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
+        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+
+        // Fetch jobs and apps
         const { data: jobs } = await supabase
             .from('jobs')
-            .select('*')
+            .select('*, job_applications(*)')
             .eq('status', 'COMPLETED')
-            .gte('end_time', `${startDate}T00:00:00`)
-            .lte('end_time', `${endDate}T23:59:59`);
+            .gte('end_time', queryStartDate)
+            .lte('end_time', queryEndDate);
 
-        if (!jobs || jobs.length === 0) {
-            setWorkerDetails({ applications: [] });
-            return;
-        }
+        // Helper to determine the effective date
+        const getEffectiveDate = (job: any, app: any) => {
+            if (app.actual_work_start) return new Date(app.actual_work_start);
+            if (app.scheduled_work_start) return new Date(app.scheduled_work_start);
+            if (job.is_flexible && job.work_period_end) return new Date(job.work_period_end);
+            return new Date(job.end_time);
+        };
 
-        const jobIds = jobs.map(j => j.id);
+        const details: any[] = [];
+        jobs?.forEach((job: any) => {
+            job.job_applications?.forEach((app: any) => {
+                if (app.worker_id !== workerId) return;
+                if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
 
-        // 2. Fetch assigned applications for this worker and these jobs
-        const { data: apps } = await supabase
-            .from('job_applications')
-            .select('*')
-            .eq('worker_id', workerId)
-            .eq('status', 'ASSIGNED')
-            .in('job_id', jobIds);
+                const effectiveDate = getEffectiveDate(job, app);
+                if (effectiveDate >= startDate && effectiveDate <= endDate) {
+                    details.push({
+                        ...app,
+                        jobs: job,
+                        effective_date: effectiveDate
+                    });
+                }
+            });
+        });
 
-        const applications = apps?.map((app: any) => ({
-            ...app,
-            jobs: jobs.find(j => j.id === app.job_id)
-        })) || [];
-
-        setWorkerDetails({ applications });
+        setWorkerDetails({ applications: details });
     };
 
     const handleWorkerClick = (worker: PaymentData) => {
@@ -286,7 +279,10 @@ export default function WorkerPaymentPage() {
                                                     <div>
                                                         <div className="font-medium">{app.jobs?.title}</div>
                                                         <div className="text-xs text-muted-foreground">
-                                                            {new Date(app.jobs?.end_time).toLocaleDateString('ja-JP')}
+                                                            {app.actual_work_start ? `実施日: ${new Date(app.actual_work_start).toLocaleDateString('ja-JP')}` :
+                                                                app.scheduled_work_start ? `予定日: ${new Date(app.scheduled_work_start).toLocaleDateString('ja-JP')}` :
+                                                                    app.jobs?.is_flexible && app.jobs?.work_period_end ? `期間終了: ${new Date(app.jobs.work_period_end).toLocaleDateString('ja-JP')}` :
+                                                                        `終了日時: ${new Date(app.jobs?.end_time).toLocaleDateString('ja-JP')}`}
                                                         </div>
                                                     </div>
                                                     <div className="font-medium">¥{parseFloat(app.jobs?.reward_amount || 0).toLocaleString()}</div>

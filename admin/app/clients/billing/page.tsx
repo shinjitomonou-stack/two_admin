@@ -33,29 +33,57 @@ export default function ClientBillingPage() {
         const supabase = createClient();
 
         const [year, month] = selectedMonth.split('-');
-        const startDate = `${year}-${month}-01`;
-        const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+        const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        // Fetch job-based billing
-        const { data: jobBilling } = await supabase
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        // Fetch jobs with applications to check actual/scheduled dates
+        // We fetch a wider range of jobs to account for dates shifting between months
+        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
+        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+
+        const { data: jobs } = await supabase
             .from('jobs')
-            .select('client_id, billing_amount, clients(name)')
+            .select('*, clients(name), job_applications(actual_work_start, scheduled_work_start)')
             .eq('status', 'COMPLETED')
-            .gte('end_time', startDate)
-            .lte('end_time', endDate);
+            .gte('end_time', queryStartDate)
+            .lte('end_time', queryEndDate);
 
-        // Fetch monthly contract billing (from INDIVIDUAL contracts where billing_cycle is not ONCE)
+        // Fetch monthly contract billing
         const { data: contractBilling } = await supabase
             .from('client_job_contracts')
             .select('client_id, contract_amount, billing_cycle, clients(name)')
             .neq('billing_cycle', 'ONCE')
-            .lte('start_date', endDate)
-            .or(`end_date.is.null,end_date.gte.${startDate}`);
+            .lte('start_date', endDateStr)
+            .or(`end_date.is.null,end_date.gte.${startDateStr}`);
+
+        // Helper to determine the effective billing date for a job
+        const getEffectiveDate = (job: any) => {
+            const apps = job.job_applications || [];
+            // Priority 1: Actual Work Date
+            const actual = apps.find((a: any) => a.actual_work_start)?.actual_work_start;
+            if (actual) return new Date(actual);
+
+            // Priority 2: Scheduled Work Date
+            const scheduled = apps.find((a: any) => a.scheduled_work_start)?.scheduled_work_start;
+            if (scheduled) return new Date(scheduled);
+
+            // Priority 3: Job Period End or End Time
+            if (job.is_flexible && job.work_period_end) return new Date(job.work_period_end);
+            return new Date(job.end_time);
+        };
 
         // Aggregate data by client
         const clientMap = new Map<string, BillingData>();
 
-        jobBilling?.forEach((job: any) => {
+        jobs?.forEach((job: any) => {
+            const effectiveDate = getEffectiveDate(job);
+
+            // Filter by selected month using the effective date
+            if (effectiveDate < startDate || effectiveDate > endDate) return;
+
             const clientId = job.client_id;
             if (!clientMap.has(clientId)) {
                 clientMap.set(clientId, {
@@ -101,28 +129,50 @@ export default function ClientBillingPage() {
     const fetchClientDetails = async (clientId: string) => {
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
-        const startDate = `${year}-${month}-01`;
-        const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+        const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        // Fetch jobs
-        const { data: jobs } = await supabase
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        // Fetch jobs for this client (wider range for shifts)
+        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
+        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+
+        const { data: allJobs } = await supabase
             .from('jobs')
-            .select('*')
+            .select('*, job_applications(actual_work_start, scheduled_work_start)')
             .eq('client_id', clientId)
             .eq('status', 'COMPLETED')
-            .gte('end_time', startDate)
-            .lte('end_time', endDate);
+            .gte('end_time', queryStartDate)
+            .lte('end_time', queryEndDate);
 
-        // Fetch contracts (from INDIVIDUAL contracts where billing_cycle is not ONCE)
+        // Helper to determine the effective billing date for a job
+        const getEffectiveDate = (job: any) => {
+            const apps = job.job_applications || [];
+            const actual = apps.find((a: any) => a.actual_work_start)?.actual_work_start;
+            if (actual) return new Date(actual);
+            const scheduled = apps.find((a: any) => a.scheduled_work_start)?.scheduled_work_start;
+            if (scheduled) return new Date(scheduled);
+            if (job.is_flexible && job.work_period_end) return new Date(job.work_period_end);
+            return new Date(job.end_time);
+        };
+
+        const filteredJobs = allJobs?.filter(job => {
+            const effectiveDate = getEffectiveDate(job);
+            return effectiveDate >= startDate && effectiveDate <= endDate;
+        }) || [];
+
+        // Fetch contracts
         const { data: contracts } = await supabase
             .from('client_job_contracts')
             .select('*')
             .eq('client_id', clientId)
             .neq('billing_cycle', 'ONCE')
-            .lte('start_date', endDate)
-            .or(`end_date.is.null,end_date.gte.${startDate}`);
+            .lte('start_date', endDateStr)
+            .or(`end_date.is.null,end_date.gte.${startDateStr}`);
 
-        setClientDetails({ jobs, contracts });
+        setClientDetails({ jobs: filteredJobs, contracts });
     };
 
     const handleClientClick = (client: BillingData) => {
@@ -289,7 +339,15 @@ export default function ClientBillingPage() {
                                                     <div>
                                                         <div className="font-medium">{job.title}</div>
                                                         <div className="text-xs text-muted-foreground">
-                                                            {new Date(job.end_time).toLocaleDateString('ja-JP')}
+                                                            {(() => {
+                                                                const apps = job.job_applications || [];
+                                                                const actual = apps.find((a: any) => a.actual_work_start)?.actual_work_start;
+                                                                if (actual) return `実施日: ${new Date(actual).toLocaleDateString('ja-JP')}`;
+                                                                const scheduled = apps.find((a: any) => a.scheduled_work_start)?.scheduled_work_start;
+                                                                if (scheduled) return `予定日: ${new Date(scheduled).toLocaleDateString('ja-JP')}`;
+                                                                if (job.is_flexible && job.work_period_end) return `期間終了: ${new Date(job.work_period_end).toLocaleDateString('ja-JP')}`;
+                                                                return `終了日時: ${new Date(job.end_time).toLocaleDateString('ja-JP')}`;
+                                                            })()}
                                                         </div>
                                                     </div>
                                                     <div className="font-medium">¥{parseFloat(job.billing_amount || 0).toLocaleString()}</div>
