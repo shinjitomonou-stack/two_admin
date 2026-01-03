@@ -51,11 +51,10 @@ export default function ClientBillingPage() {
             .gte('end_time', queryStartDate)
             .lte('end_time', queryEndDate);
 
-        // Fetch monthly contract billing
+        // Fetch monthly and one-time independent contract billing
         const { data: contractBilling } = await supabase
             .from('client_job_contracts')
-            .select('client_id, contract_amount, billing_cycle, clients(name)')
-            .neq('billing_cycle', 'ONCE')
+            .select('client_id, contract_amount, billing_cycle, start_date, clients(name)')
             .lte('start_date', endDateStr)
             .or(`end_date.is.null,end_date.gte.${startDateStr}`);
 
@@ -113,6 +112,13 @@ export default function ClientBillingPage() {
                 });
             }
             const data = clientMap.get(clientId)!;
+
+            // For 'ONCE' contracts, only include if start_date is in the currently selected month
+            if (contract.billing_cycle === 'ONCE') {
+                const contractStartDate = new Date(contract.start_date);
+                if (contractStartDate < startDate || contractStartDate > endDate) return;
+            }
+
             data.monthly_billing += parseFloat(contract.contract_amount || 0);
         });
 
@@ -163,16 +169,23 @@ export default function ClientBillingPage() {
             return effectiveDate >= startDate && effectiveDate <= endDate;
         }) || [];
 
-        // Fetch contracts
-        const { data: contracts } = await supabase
+        // Fetch contracts (both recurring active and one-time in this month)
+        const { data: allContracts } = await supabase
             .from('client_job_contracts')
             .select('*')
             .eq('client_id', clientId)
-            .neq('billing_cycle', 'ONCE')
             .lte('start_date', endDateStr)
             .or(`end_date.is.null,end_date.gte.${startDateStr}`);
 
-        setClientDetails({ jobs: filteredJobs, contracts });
+        const filteredContracts = allContracts?.filter(contract => {
+            if (contract.billing_cycle === 'ONCE') {
+                const contractStartDate = new Date(contract.start_date);
+                return contractStartDate >= startDate && contractStartDate <= endDate;
+            }
+            return true; // Recurring active contracts are already filtered by SQL query
+        }) || [];
+
+        setClientDetails({ jobs: filteredJobs, contracts: filteredContracts });
     };
 
     const handleClientClick = (client: BillingData) => {
