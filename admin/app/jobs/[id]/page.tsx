@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatTime } from "@/lib/utils";
 import { ApplicationList } from "@/components/ApplicationList";
+import { JobStatusSelect } from "@/components/JobStatusSelect";
 
 const STATUS_STYLES = {
     APPLIED: "bg-blue-100 text-blue-700",
@@ -78,9 +79,7 @@ export default async function JobDetailPage({
                     <div className="flex-1">
                         <h2 className="text-2xl font-bold tracking-tight">{job.title}</h2>
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-medium">
-                                {job.status}
-                            </span>
+                            <JobStatusSelect jobId={job.id} currentStatus={job.status} />
                             <span>ID: {job.id}</span>
                         </div>
                     </div>
