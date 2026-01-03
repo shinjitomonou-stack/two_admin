@@ -15,6 +15,7 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [isParsing, setIsParsing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [publish, setPublish] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
@@ -109,7 +110,7 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
         if (previewData.length === 0) return;
         setIsSubmitting(true);
         try {
-            const result = await bulkCreateJobs(previewData);
+            const result = await bulkCreateJobs(previewData, publish);
             if (result.success) {
                 toast.success(`${result.count}件の案件を一括登録しました。`);
                 onClose();
@@ -124,9 +125,9 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
     };
 
     const downloadSampleCSV = () => {
-        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,billing_amount,max_workers,address_text,description,template_name";
-        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,8000,1,東京都渋谷区...,現場の清掃です,清掃報告書";
-        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,,2,東京都世田谷区...,巡回清掃です,";
+        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,billing_amount,max_workers,address_text,description,template_name,status";
+        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,8000,1,東京都渋谷区...,現場の清掃です,清掃報告書,OPEN";
+        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,,2,東京都世田谷区...,巡回清掃です,,DRAFT";
         const csvContent = `${headers}\n${sample1}\n${sample2}`;
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -247,6 +248,23 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                         ほか {previewData.length - 50} 件を表示...
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${publish ? 'bg-green-500' : 'bg-slate-300'}`} onClick={() => setPublish(!publish)}>
+                                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${publish ? 'translate-x-4' : 'translate-x-0'}`} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">登録と同時に募集を開始する</p>
+                                        <p className="text-xs text-slate-500">
+                                            {publish ? '「募集中」ステータスで登録されます。' : '「下書き」ステータスで登録されます。後から手動で公開できます。'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded text-[10px] font-bold ${publish ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}`}>
+                                    {publish ? '公開設定: ON' : '公開設定: OFF'}
+                                </span>
                             </div>
                         </div>
                     )}

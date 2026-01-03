@@ -13,15 +13,25 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
     const [isOpen, setIsOpen] = useState(false);
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [selectedWorkerId, setSelectedWorkerId] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const openModal = async () => {
         setIsOpen(true);
+        setSearchTerm("");
+        setSelectedWorkerId("");
         // Fetch available workers
         const response = await fetch(`/api/workers/available?jobId=${jobId}`);
         const data = await response.json();
         setWorkers(data.workers || []);
     };
+
+    const filteredWorkers = workers
+        .filter(w => !existingWorkerIds.includes(w.id))
+        .filter(w =>
+            w.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            w.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     const handleAssign = async () => {
         if (!selectedWorkerId) return;
@@ -73,22 +83,39 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                             </button>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">ワーカーを選択</label>
+                        <div className="space-y-3">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium">ワーカーを検索・選択</label>
+                                <input
+                                    type="text"
+                                    placeholder="名前やメールアドレスで絞り込み..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    autoFocus
+                                />
+                            </div>
+
                             <select
+                                size={5}
                                 value={selectedWorkerId}
                                 onChange={(e) => setSelectedWorkerId(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[120px]"
                             >
-                                <option value="">選択してください</option>
-                                {workers
-                                    .filter(w => !existingWorkerIds.includes(w.id))
-                                    .map((worker) => (
-                                        <option key={worker.id} value={worker.id}>
-                                            {worker.full_name} ({worker.email})
-                                        </option>
-                                    ))}
+                                <option value="" disabled className="text-slate-400">
+                                    {filteredWorkers.length === 0 ? "候補が見つかりません" : "選択してください"}
+                                </option>
+                                {filteredWorkers.map((worker) => (
+                                    <option key={worker.id} value={worker.id}>
+                                        {worker.full_name} ({worker.email})
+                                    </option>
+                                ))}
                             </select>
+                            {searchTerm && filteredWorkers.length > 0 && (
+                                <p className="text-[10px] text-muted-foreground">
+                                    {filteredWorkers.length}件見つかりました
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex gap-3 pt-2">

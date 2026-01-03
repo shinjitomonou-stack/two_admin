@@ -48,7 +48,7 @@ export async function updateJob(id: string, payload: any) {
     }
 }
 
-export async function bulkCreateJobs(jobs: any[]) {
+export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true) {
     await verifyAdmin();
     const supabase = await createClient();
 
@@ -184,7 +184,7 @@ export async function bulkCreateJobs(jobs: any[]) {
                 work_period_start: workPeriodStart,
                 work_period_end: workPeriodEnd,
                 report_template_id: reportTemplateId,
-                status: "OPEN",
+                status: job.status || (defaultPublish ? "OPEN" : "DRAFT"),
                 reward_type: "FIXED",
             };
         });
