@@ -39,8 +39,8 @@ function CreateJobForm() {
         // Date settings
         isFlexible: false,
         date: "", // For fixed date
-        startTime: "",
-        endTime: "",
+        startTime: "09:00",
+        endTime: "18:00",
         // Flexible settings
         periodStartDate: "",
         periodEndDate: "",

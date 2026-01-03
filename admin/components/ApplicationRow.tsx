@@ -95,6 +95,10 @@ export function ApplicationRow({
             setScheduleDate(start.toISOString().split('T')[0]);
             setScheduleStartTime(start.toTimeString().slice(0, 5));
             setScheduleEndTime(end.toTimeString().slice(0, 5));
+        } else {
+            // Default to 09:00 - 10:00 with :00 minutes
+            setScheduleStartTime("09:00");
+            setScheduleEndTime("10:00");
         }
         setIsEditingSchedule(true);
     };

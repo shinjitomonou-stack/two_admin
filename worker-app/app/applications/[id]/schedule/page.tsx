@@ -12,8 +12,8 @@ export default function SchedulePage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [scheduleDate, setScheduleDate] = useState("");
-    const [scheduleStartTime, setScheduleStartTime] = useState("");
-    const [scheduleEndTime, setScheduleEndTime] = useState("");
+    const [scheduleStartTime, setScheduleStartTime] = useState("09:00");
+    const [scheduleEndTime, setScheduleEndTime] = useState("10:00");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
