@@ -36,6 +36,7 @@ function CreateClientContractForm() {
         contract_amount: "",
         payment_terms: "",
         delivery_deadline: "",
+        amountTaxMode: "EXCL" as "EXCL" | "INCL",
     });
 
     useEffect(() => {
@@ -176,7 +177,7 @@ function CreateClientContractForm() {
                         template_id: formData.template_id || null,
                         title: formData.title,
                         content_snapshot: formData.content_snapshot,
-                        contract_amount: parseFloat(formData.contract_amount),
+                        contract_amount: formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.contract_amount) / 1.1) : parseFloat(formData.contract_amount),
                         payment_terms: formData.payment_terms,
                         delivery_deadline: formData.delivery_deadline || null,
                         billing_cycle: formData.billing_cycle,
@@ -200,6 +201,7 @@ function CreateClientContractForm() {
                         start_date: formData.start_date,
                         end_date: formData.end_date || null,
                         auto_renew: formData.auto_renew,
+                        monthly_amount: formData.monthly_amount ? (formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.monthly_amount) / 1.1) : parseFloat(formData.monthly_amount)) : null,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -409,18 +411,44 @@ function CreateClientContractForm() {
                         <h3 className="font-bold text-lg border-b border-border pb-3">契約条件</h3>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                                契約金額 <span className="text-red-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium">
+                                    契約金額 <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, amountTaxMode: 'EXCL' }))}
+                                        className={`px-2 py-0.5 rounded ${formData.amountTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                    >
+                                        税抜
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, amountTaxMode: 'INCL' }))}
+                                        className={`px-2 py-0.5 rounded ${formData.amountTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                    >
+                                        税込
+                                    </button>
+                                </div>
+                            </div>
                             <input
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 required
                                 value={formData.contract_amount}
                                 onChange={(e) => setFormData({ ...formData, contract_amount: e.target.value })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                 placeholder="0"
                             />
+                            {formData.contract_amount && (
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                    {formData.amountTaxMode === 'INCL'
+                                        ? `税抜金額: ¥${Math.round(parseFloat(formData.contract_amount) / 1.1).toLocaleString()}`
+                                        : `税込金額: ¥${Math.round(parseFloat(formData.contract_amount) * 1.1).toLocaleString()}`
+                                    }
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid sm:grid-cols-2 gap-6">

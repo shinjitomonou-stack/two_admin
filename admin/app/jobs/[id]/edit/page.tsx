@@ -38,6 +38,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
         reward_unit_price: 0,
         billing_unit_price: 0,
         reward_quantity: 0,
+        rewardTaxMode: "EXCL", // 'EXCL' | 'INCL'
+        billingTaxMode: "EXCL", // 'EXCL' | 'INCL'
     });
 
     useEffect(() => {
@@ -95,6 +97,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     reward_unit_price: data.reward_unit_price || 0,
                     billing_unit_price: data.billing_unit_price || 0,
                     reward_quantity: data.reward_quantity || 0,
+                    rewardTaxMode: "EXCL",
+                    billingTaxMode: "EXCL",
                 });
             }
             setIsFetching(false);
@@ -121,8 +125,27 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     billing_amount: newBilling > 0 ? newBilling : prev.billing_amount
                 }));
             }
+        } else if (!isFetching && formData.reward_type === 'UNIT') {
+            // Unit price calculation with Tax Mode
+            let unitPrice = parseFloat(formData.reward_unit_price.toString()) || 0;
+            let billingUnitPrice = parseFloat(formData.billing_unit_price.toString()) || 0;
+            const quantity = parseInt(formData.reward_quantity.toString()) || 0;
+
+            if (formData.rewardTaxMode === 'INCL') unitPrice = unitPrice / 1.1;
+            if (formData.billingTaxMode === 'INCL') billingUnitPrice = billingUnitPrice / 1.1;
+
+            const newReward = Math.round(unitPrice * quantity);
+            const newBilling = Math.round(billingUnitPrice * quantity);
+
+            if (newReward !== formData.reward_amount || (newBilling > 0 && newBilling !== formData.billing_amount)) {
+                setFormData(prev => ({
+                    ...prev,
+                    reward_amount: newReward,
+                    billing_amount: newBilling > 0 ? newBilling : prev.billing_amount
+                }));
+            }
         }
-    }, [formData.reward_type, formData.reward_unit_price, formData.billing_unit_price, formData.reward_quantity, isFetching]);
+    }, [formData.reward_type, formData.reward_unit_price, formData.billing_unit_price, formData.reward_quantity, formData.rewardTaxMode, formData.billingTaxMode, isFetching]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,13 +154,32 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
         const supabase = createClient();
 
         try {
+            let reward_amount = Number(formData.reward_amount);
+            let billing_amount = Number(formData.billing_amount);
+            let reward_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null;
+            let billing_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null;
+
+            // Handle Tax Mode Conversions
+            if (formData.reward_type === 'FIXED' && formData.rewardTaxMode === 'INCL') {
+                reward_amount = reward_amount / 1.1;
+            }
+            if (formData.reward_type === 'FIXED' && formData.billing_amount && formData.billingTaxMode === 'INCL') {
+                billing_amount = billing_amount / 1.1;
+            }
+            if (formData.reward_type === 'UNIT' && reward_unit_price !== null && formData.rewardTaxMode === 'INCL') {
+                reward_unit_price = reward_unit_price / 1.1;
+            }
+            if (formData.reward_type === 'UNIT' && billing_unit_price !== null && formData.billingTaxMode === 'INCL') {
+                billing_unit_price = billing_unit_price / 1.1;
+            }
+
             const result = await updateJob(id!, {
                 ...formData,
-                reward_amount: Math.round(Number(formData.reward_amount)),
-                billing_amount: Math.round(Number(formData.billing_amount)),
+                reward_amount: Math.round(reward_amount),
+                billing_amount: billing_amount ? Math.round(billing_amount) : null,
                 max_workers: parseInt(String(formData.max_workers)),
-                reward_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null,
-                billing_unit_price: formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null,
+                reward_unit_price: reward_unit_price,
+                billing_unit_price: billing_unit_price,
                 reward_quantity: formData.reward_type === 'UNIT' ? parseInt(String(formData.reward_quantity)) : null,
                 start_time: new Date(formData.start_time).toISOString(),
                 end_time: new Date(formData.end_time).toISOString(),
@@ -269,7 +311,25 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">報酬単価 <span className="text-red-500">*</span></label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-medium">報酬単価 <span className="text-red-500">*</span></label>
+                                                <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, rewardTaxMode: 'EXCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.rewardTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税抜
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, rewardTaxMode: 'INCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.rewardTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税込
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <input
                                                 type="number"
                                                 step="any"
@@ -278,9 +338,35 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                                 onChange={(e) => setFormData({ ...formData, reward_unit_price: Number(e.target.value) })}
                                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             />
+                                            {formData.reward_unit_price > 0 && (
+                                                <p className="text-[10px] text-muted-foreground mt-1">
+                                                    {formData.rewardTaxMode === 'INCL'
+                                                        ? `税抜金額: ¥${(formData.reward_unit_price / 1.1).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                        : `税込金額: ¥${(formData.reward_unit_price * 1.1).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                    }
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">請求単価</label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-medium">請求単価</label>
+                                                <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, billingTaxMode: 'EXCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.billingTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税抜
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, billingTaxMode: 'INCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.billingTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税込
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <input
                                                 type="number"
                                                 step="any"
@@ -288,12 +374,38 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                                 onChange={(e) => setFormData({ ...formData, billing_unit_price: Number(e.target.value) })}
                                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             />
+                                            {formData.billing_unit_price > 0 && (
+                                                <p className="text-[10px] text-muted-foreground mt-1">
+                                                    {formData.billingTaxMode === 'INCL'
+                                                        ? `税抜金額: ¥${(formData.billing_unit_price / 1.1).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                        : `税込金額: ¥${(formData.billing_unit_price * 1.1).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                    }
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">報酬金額（1人あたり・円） <span className="text-red-500">*</span></label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-medium">報酬金額（1人あたり・円） <span className="text-red-500">*</span></label>
+                                                <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, rewardTaxMode: 'EXCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.rewardTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税抜
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, rewardTaxMode: 'INCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.rewardTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税込
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <input
                                                 type="number"
                                                 required
@@ -302,9 +414,35 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                                 onChange={(e) => setFormData({ ...formData, reward_amount: Number(e.target.value) })}
                                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             />
+                                            {formData.reward_amount > 0 && (
+                                                <p className="text-[10px] text-muted-foreground mt-1">
+                                                    {formData.rewardTaxMode === 'INCL'
+                                                        ? `税抜金額: ¥${Math.round(formData.reward_amount / 1.1).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(formData.reward_amount * 1.1).toLocaleString()}`
+                                                    }
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-medium">請求金額（1人あたり・円）</label>
+                                                <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, billingTaxMode: 'EXCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.billingTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税抜
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(p => ({ ...p, billingTaxMode: 'INCL' }))}
+                                                        className={`px-2 py-0.5 rounded ${formData.billingTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                                    >
+                                                        税込
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -312,6 +450,14 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                                 onChange={(e) => setFormData({ ...formData, billing_amount: Number(e.target.value) })}
                                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                             />
+                                            {formData.billing_amount > 0 && (
+                                                <p className="text-[10px] text-muted-foreground mt-1">
+                                                    {formData.billingTaxMode === 'INCL'
+                                                        ? `税抜金額: ¥${Math.round(formData.billing_amount / 1.1).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(formData.billing_amount * 1.1).toLocaleString()}`
+                                                    }
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 )}
