@@ -174,17 +174,23 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
             }
 
             const result = await updateJob(id!, {
-                ...formData,
+                title: formData.title,
+                description: formData.description,
                 reward_amount: Math.round(reward_amount),
                 billing_amount: billing_amount ? Math.round(billing_amount) : null,
                 max_workers: parseInt(String(formData.max_workers)),
+                reward_type: formData.reward_type,
                 reward_unit_price: reward_unit_price,
                 billing_unit_price: billing_unit_price,
                 reward_quantity: formData.reward_type === 'UNIT' ? parseInt(String(formData.reward_quantity)) : null,
                 start_time: new Date(formData.start_time).toISOString(),
                 end_time: new Date(formData.end_time).toISOString(),
+                address_text: formData.address_text,
+                status: formData.status,
+                is_flexible: formData.is_flexible,
                 work_period_start: formData.work_period_start ? new Date(formData.work_period_start).toISOString() : null,
                 work_period_end: formData.work_period_end ? new Date(formData.work_period_end).toISOString() : null,
+                schedule_notes: formData.schedule_notes,
                 report_template_id: formData.report_template_id || null,
             });
 
