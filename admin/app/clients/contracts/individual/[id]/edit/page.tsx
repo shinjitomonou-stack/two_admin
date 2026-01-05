@@ -88,13 +88,17 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         setExistingFiles(contract.uploaded_files);
                     }
 
-                    // Fetch jobs for this client
-                    if (contract.client_id) {
-                        const { data: jobsData } = await supabase
+                    // Fetch jobs for this client (or all jobs for PLACING)
+                    if (contract.client_id || contract.trading_type === "PLACING") {
+                        let query = supabase
                             .from("jobs")
-                            .select("*")
-                            .eq("client_id", contract.client_id)
-                            .order("created_at", { ascending: false });
+                            .select("*");
+
+                        if (contract.trading_type === "RECEIVING" && contract.client_id) {
+                            query = query.eq("client_id", contract.client_id);
+                        }
+
+                        const { data: jobsData } = await query.order("created_at", { ascending: false });
                         setJobs(jobsData || []);
                     }
                 }
@@ -113,13 +117,17 @@ export default function EditIndividualContractPage({ params }: { params: Promise
     const handleClientChange = async (clientId: string) => {
         setFormData({ ...formData, client_id: clientId, job_id: "" });
 
-        if (clientId) {
+        if (clientId || formData.trading_type === "PLACING") {
             const supabase = createClient();
-            const { data } = await supabase
+            let query = supabase
                 .from("jobs")
-                .select("*")
-                .eq("client_id", clientId)
-                .order("created_at", { ascending: false });
+                .select("*");
+
+            if (formData.trading_type === "RECEIVING" && clientId) {
+                query = query.eq("client_id", clientId);
+            }
+
+            const { data } = await query.order("created_at", { ascending: false });
             setJobs(data || []);
         } else {
             setJobs([]);

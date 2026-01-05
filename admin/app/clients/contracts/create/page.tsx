@@ -87,20 +87,28 @@ function CreateClientContractForm() {
     }, [jobIdFromUrl]);
 
     useEffect(() => {
-        // Fetch jobs when client is selected
-        if (formData.client_id && formData.contract_type === "INDIVIDUAL") {
+        // Fetch jobs when client is selected, or fetch all jobs if it's a PLACING contract
+        const shouldFetch = (formData.client_id && formData.contract_type === "INDIVIDUAL") ||
+            (formData.trading_type === "PLACING" && formData.contract_type === "INDIVIDUAL");
+
+        if (shouldFetch) {
             const fetchJobs = async () => {
                 const supabase = createClient();
-                const { data } = await supabase
+                let query = supabase
                     .from("jobs")
-                    .select("*")
-                    .eq("client_id", formData.client_id)
-                    .order("created_at", { ascending: false });
+                    .select("*");
+
+                // Only filter by client if it's a RECEIVING contract
+                if (formData.trading_type === "RECEIVING" && formData.client_id) {
+                    query = query.eq("client_id", formData.client_id);
+                }
+
+                const { data } = await query.order("created_at", { ascending: false });
                 setJobs(data || []);
             };
             fetchJobs();
         }
-    }, [formData.client_id, formData.contract_type]);
+    }, [formData.client_id, formData.contract_type, formData.trading_type]);
 
     // Fetch job details when job_id is set (for pre-population)
     useEffect(() => {
