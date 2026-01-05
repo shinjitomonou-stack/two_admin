@@ -80,6 +80,12 @@ export default function JobsPage() {
                     scheduled_work_start,
                     actual_work_start,
                     workers(full_name)
+                ),
+                client_job_contracts(
+                    id,
+                    status,
+                    trading_type,
+                    clients(name)
                 )
             `)
             .order("created_at", { ascending: false });
@@ -232,11 +238,18 @@ export default function JobsPage() {
                             <tbody className="divide-y divide-border">
                                 {paginatedJobs.map((job) => {
                                     const applications = job.job_applications || [];
+                                    const placementContracts = (job as any).client_job_contracts?.filter((c: any) => c.trading_type === 'PLACING') || [];
+
                                     const assignedApps = applications.filter(
-                                        (app) => app.status === "ASSIGNED" || app.status === "CONFIRMED"
+                                        (app: any) => app.status === "ASSIGNED" || app.status === "CONFIRMED"
                                     );
+
+                                    const activePlacements = placementContracts.filter(
+                                        (c: any) => c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT'
+                                    );
+
                                     const totalApps = applications.length;
-                                    const assignedCount = assignedApps.length;
+                                    const assignedCount = assignedApps.length + activePlacements.length;
 
                                     // Get scheduled and actual dates
                                     const scheduledDates = applications
@@ -316,14 +329,19 @@ export default function JobsPage() {
                                                 {assignedCount > 0 ? (
                                                     <div className="space-y-1">
                                                         <div className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-block">
-                                                            {assignedCount}名
+                                                            {assignedCount}名 / 社
                                                         </div>
                                                         <div className="text-xs text-slate-600">
-                                                            {assignedApps.slice(0, 2).map((app, idx) => (
-                                                                <div key={idx}>{app.workers?.full_name}</div>
+                                                            {/* Show workers */}
+                                                            {assignedApps.slice(0, 2).map((app: any, idx: number) => (
+                                                                <div key={`worker-${idx}`}>{app.workers?.full_name}</div>
+                                                            ))}
+                                                            {/* Show companies */}
+                                                            {activePlacements.slice(0, 2).map((c: any, idx: number) => (
+                                                                <div key={`client-${idx}`} className="text-blue-600">{c.clients?.name} (業者)</div>
                                                             ))}
                                                             {assignedCount > 2 && (
-                                                                <div className="text-slate-400">他{assignedCount - 2}名</div>
+                                                                <div className="text-slate-400">他{assignedCount - 2}</div>
                                                             )}
                                                         </div>
                                                     </div>

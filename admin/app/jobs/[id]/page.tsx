@@ -223,12 +223,13 @@ export default async function JobDetailPage({
                                                         ¥{parseFloat(contract.contract_amount || 0).toLocaleString()}
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-700' :
-                                                            contract.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                                                            contract.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
                                                                 'bg-orange-100 text-orange-700'
                                                             }`}>
-                                                            {contract.status === 'SIGNED' ? '締結済' :
-                                                                contract.status === 'REJECTED' ? '却下' : '未締結'}
+                                                            {contract.status === 'ACTIVE' ? '締結済' :
+                                                                contract.status === 'CANCELLED' ? '取消' :
+                                                                    contract.status === 'PENDING' ? '未締結 (申請中)' : '下書き'}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
