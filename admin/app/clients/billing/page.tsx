@@ -55,6 +55,7 @@ export default function ClientBillingPage() {
         const { data: contractBilling } = await supabase
             .from('client_job_contracts')
             .select('client_id, contract_amount, billing_cycle, start_date, clients(name)')
+            .eq('trading_type', 'RECEIVING')
             .lte('start_date', endDateStr)
             .or(`end_date.is.null,end_date.gte.${startDateStr}`);
 
@@ -174,6 +175,7 @@ export default function ClientBillingPage() {
             .from('client_job_contracts')
             .select('*')
             .eq('client_id', clientId)
+            .eq('trading_type', 'RECEIVING')
             .lte('start_date', endDateStr)
             .or(`end_date.is.null,end_date.gte.${startDateStr}`);
 
