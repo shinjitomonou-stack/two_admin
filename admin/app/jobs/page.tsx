@@ -86,6 +86,12 @@ export default function JobsPage() {
                     status,
                     trading_type,
                     clients(name)
+                ),
+                linked_contract: client_job_contracts!assigned_contract_id (
+                    id,
+                    status,
+                    trading_type,
+                    clients(name)
                 )
             `)
             .order("created_at", { ascending: false });
@@ -239,6 +245,7 @@ export default function JobsPage() {
                                 {paginatedJobs.map((job) => {
                                     const applications = job.job_applications || [];
                                     const placementContracts = (job as any).client_job_contracts?.filter((c: any) => c.trading_type === 'PLACING') || [];
+                                    const linkedContract = (job as any).linked_contract;
 
                                     const assignedApps = applications.filter(
                                         (app: any) => app.status === "ASSIGNED" || app.status === "CONFIRMED"
@@ -247,6 +254,11 @@ export default function JobsPage() {
                                     const activePlacements = placementContracts.filter(
                                         (c: any) => c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT'
                                     );
+
+                                    // Add linked contract if it exists and is active
+                                    if (linkedContract && (linkedContract.status === 'ACTIVE' || linkedContract.status === 'PENDING' || linkedContract.status === 'DRAFT')) {
+                                        activePlacements.push(linkedContract);
+                                    }
 
                                     const totalApps = applications.length;
                                     const assignedCount = assignedApps.length + activePlacements.length;

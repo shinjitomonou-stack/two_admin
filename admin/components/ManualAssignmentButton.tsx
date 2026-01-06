@@ -12,7 +12,10 @@ type Worker = {
 export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: string; existingWorkerIds: string[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [workers, setWorkers] = useState<Worker[]>([]);
+    const [contracts, setContracts] = useState<any[]>([]);
     const [selectedWorkerId, setSelectedWorkerId] = useState("");
+    const [selectedContractId, setSelectedContractId] = useState("");
+    const [assignmentMode, setAssignmentMode] = useState<"NEW" | "EXISTING">("NEW");
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -20,10 +23,18 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
         setIsOpen(true);
         setSearchTerm("");
         setSelectedWorkerId("");
+        setSelectedContractId("");
+        setAssignmentMode("NEW");
+
         // Fetch available workers
-        const response = await fetch(`/api/workers/available?jobId=${jobId}`);
-        const data = await response.json();
-        setWorkers(data.workers || []);
+        const workerRes = await fetch(`/api/workers/available?jobId=${jobId}`);
+        const workerData = await workerRes.json();
+        setWorkers(workerData.workers || []);
+
+        // Fetch existing active individual contracts
+        const contractRes = await fetch(`/api/contracts/available?jobId=${jobId}`);
+        const contractData = await contractRes.json();
+        setContracts(contractData.contracts || []);
     };
 
     const filteredWorkers = workers
@@ -44,6 +55,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                 body: JSON.stringify({
                     jobId,
                     workerId: selectedWorkerId,
+                    contractId: assignmentMode === "EXISTING" ? selectedContractId : undefined,
                 }),
             });
 
@@ -103,7 +115,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[120px]"
                             >
                                 <option value="" disabled className="text-slate-400">
-                                    {filteredWorkers.length === 0 ? "候補が見つかりません" : "選択してください"}
+                                    {filteredWorkers.length === 0 ? "候補が見つかりません" : "ワーカーを選択してください"}
                                 </option>
                                 {filteredWorkers.map((worker) => (
                                     <option key={worker.id} value={worker.id}>
@@ -111,6 +123,43 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                                     </option>
                                 ))}
                             </select>
+
+                            <div className="space-y-1.5 pt-2">
+                                <label className="text-sm font-medium">契約の紐付け</label>
+                                <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => setAssignmentMode("NEW")}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded ${assignmentMode === "NEW" ? "bg-white shadow-sm text-blue-600" : "text-slate-500"}`}
+                                    >
+                                        新規契約を作成
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={contracts.length === 0}
+                                        onClick={() => setAssignmentMode("EXISTING")}
+                                        className={`flex-1 py-1.5 text-xs font-bold rounded ${assignmentMode === "EXISTING" ? "bg-white shadow-sm text-blue-600" : "text-slate-500 disabled:opacity-50"}`}
+                                    >
+                                        既存契約に紐付け ({contracts.length})
+                                    </button>
+                                </div>
+                            </div>
+
+                            {assignmentMode === "EXISTING" && (
+                                <select
+                                    value={selectedContractId}
+                                    onChange={(e) => setSelectedContractId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                >
+                                    <option value="" disabled>契約を選択してください</option>
+                                    {contracts.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.title} (¥{c.contract_amount?.toLocaleString()})
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
                             {searchTerm && filteredWorkers.length > 0 && (
                                 <p className="text-[10px] text-muted-foreground">
                                     {filteredWorkers.length}件見つかりました
@@ -127,10 +176,10 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                             </button>
                             <button
                                 onClick={handleAssign}
-                                disabled={!selectedWorkerId || isLoading}
+                                disabled={!selectedWorkerId || (assignmentMode === "EXISTING" && !selectedContractId) || isLoading}
                                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? "処理中..." : "アサイン"}
+                                {isLoading ? "処理中..." : (assignmentMode === "EXISTING" ? "紐付けてアサイン" : "アサイン")}
                             </button>
                         </div>
                     </div>

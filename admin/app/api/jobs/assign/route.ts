@@ -7,7 +7,7 @@ import { verifyAdmin } from "@/lib/auth";
 export async function POST(request: Request) {
     try {
         await verifyAdmin();
-        const { jobId, workerId } = await request.json();
+        const { jobId, workerId, contractId } = await request.json();
 
         if (!jobId || !workerId) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -38,6 +38,20 @@ export async function POST(request: Request) {
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        // If contractId is provided, link the job to it
+        if (contractId) {
+            const { error: jobUpdateError } = await supabase
+                .from("jobs")
+                .update({ assigned_contract_id: contractId })
+                .eq("id", jobId);
+
+            if (jobUpdateError) {
+                console.error("Job update error:", jobUpdateError);
+                // We don't necessarily fail the whole request if the link fails, 
+                // but it's better to log it.
+            }
         }
 
         revalidatePath(`/jobs/${jobId}`);

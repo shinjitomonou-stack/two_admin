@@ -36,19 +36,21 @@ type Job = {
 
 export function ApplicationList({
     applications,
-    job
+    job,
+    placementCount = 0
 }: {
     applications: Application[];
     job: Job;
+    placementCount?: number;
 }) {
     const router = useRouter();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isAssigning, setIsAssigning] = useState(false);
 
-    // Calculate current confirmed/assigned count
+    // Calculate current confirmed/assigned count (workers + placement contracts)
     const confirmedCount = applications.filter(
         app => app.status === 'ASSIGNED' || app.status === 'CONFIRMED'
-    ).length;
+    ).length + placementCount;
 
     const remainingSlots = Math.max(0, job.max_workers - confirmedCount);
 

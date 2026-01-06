@@ -37,7 +37,14 @@ export default async function JobDetailPage({
     // Fetch Job Details
     const { data: job, error: jobError } = await supabase
         .from("jobs")
-        .select("*, clients(name)")
+        .select(`
+            *, 
+            clients(name),
+            linked_contract: client_job_contracts!assigned_contract_id (
+                *,
+                clients(name)
+            )
+        `)
         .eq("id", id)
         .single();
 
@@ -46,19 +53,28 @@ export default async function JobDetailPage({
     }
 
     // Fetch Applications for this Job
-    const { data: applications, error: appError } = await supabase
+    const { data: dbApplications, error: appError } = await supabase
         .from("job_applications")
         .select("*, workers(*), reports(id, status)")
         .eq("job_id", id)
         .order("created_at", { ascending: false });
 
     // Fetch Placement Contracts (toB) for this Job
-    const { data: placementContracts } = await supabase
+    const { data: dbPlacementContracts } = await supabase
         .from("client_job_contracts")
         .select("*, clients(name)")
         .eq("job_id", id)
         .eq("trading_type", "PLACING")
         .order("created_at", { ascending: false });
+
+    const applications = dbApplications || [];
+    const placementContracts = dbPlacementContracts ? [...dbPlacementContracts] : [];
+    const linkedContract = (job as any).linked_contract;
+
+    // Add linked contract to the list of placement contracts if it exists and is not already there
+    if (linkedContract && !placementContracts.some((c: any) => c.id === linkedContract.id)) {
+        placementContracts.push(linkedContract);
+    }
 
     // Determine back link based on return parameter
     const backLink = returnTo === 'calendar' ? '/calendar' : '/jobs';
@@ -177,6 +193,7 @@ export default async function JobDetailPage({
                             applications={applications || []}
                             // @ts-ignore
                             job={job}
+                            placementCount={placementContracts.length}
                         />
 
                         {/* Placement Contracts (toB) */}
