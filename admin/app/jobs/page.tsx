@@ -81,7 +81,7 @@ export default function JobsPage() {
                     actual_work_start,
                     workers(full_name)
                 ),
-                client_job_contracts(
+                client_job_contracts!job_id (
                     id,
                     status,
                     trading_type,
