@@ -19,8 +19,8 @@ export default function StatusChanger({ contractId, currentStatus, contractType 
         if (contractType === "client_contracts") {
             return [
                 { value: "DRAFT", label: "下書き" },
-                { value: "PENDING", label: "承認待ち" },
-                { value: "ACTIVE", label: "有効" },
+                { value: "PENDING", label: "未締結 (申請中)" },
+                { value: "ACTIVE", label: "締結済" },
                 { value: "EXPIRED", label: "期限切れ" },
                 { value: "TERMINATED", label: "解約" },
             ];
@@ -28,10 +28,10 @@ export default function StatusChanger({ contractId, currentStatus, contractType 
         if (contractType === "client_job_contracts") {
             return [
                 { value: "DRAFT", label: "下書き" },
-                { value: "PENDING", label: "承認待ち" },
-                { value: "ACTIVE", label: "有効" },
+                { value: "PENDING", label: "未締結 (申請中)" },
+                { value: "ACTIVE", label: "締結済" },
                 { value: "COMPLETED", label: "完了" },
-                { value: "CANCELLED", label: "キャンセル" },
+                { value: "CANCELLED", label: "取消" },
             ];
         }
         // Worker contracts (worker_basic_contracts, job_individual_contracts)

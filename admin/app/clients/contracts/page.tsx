@@ -27,7 +27,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
         .from(table)
         .select(`
             *,
-            clients(name)${currentTab === 'individual' ? ', jobs(title)' : ''}
+            clients(name)${currentTab === 'individual' ? ', jobs!job_id(title)' : ''}
         `, { count: "exact" });
 
     if (currentTab === 'basic' || currentTab === 'nda') {
@@ -66,12 +66,12 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
         };
         const labels = {
             DRAFT: "下書き",
-            PENDING: "承認待ち",
-            ACTIVE: "有効",
+            PENDING: "未締結 (申請中)",
+            ACTIVE: "締結済",
             EXPIRED: "期限切れ",
             TERMINATED: "解約",
             COMPLETED: "完了",
-            CANCELLED: "キャンセル",
+            CANCELLED: "取消",
         };
         return (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles]}`}>

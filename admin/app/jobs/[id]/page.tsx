@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatDate, formatTime } from "@/lib/utils";
 import { ApplicationList } from "@/components/ApplicationList";
 import { JobStatusSelect } from "@/components/JobStatusSelect";
+import { LinkExistingContractButton } from "@/components/LinkExistingContractButton";
 
 const STATUS_STYLES = {
     APPLIED: "bg-blue-100 text-blue-700",
@@ -207,13 +208,19 @@ export default async function JobDetailPage({
                                         この案件に対する外部業者への発注契約
                                     </p>
                                 </div>
-                                <Link
-                                    href={`/clients/contracts/create?job_id=${id}&returnTo=/jobs/${id}`}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    外部業者に発注
-                                </Link>
+                                <div className="flex items-center gap-2">
+                                    <LinkExistingContractButton
+                                        jobId={id}
+                                        currentContractId={(job as any).assigned_contract_id}
+                                    />
+                                    <Link
+                                        href={`/clients/contracts/create?job_id=${id}&returnTo=/jobs/${id}`}
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        外部業者に発注
+                                    </Link>
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto">

@@ -37,7 +37,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         .from("client_job_contracts")
         .select(`
             *,
-            jobs(title)
+            jobs!job_id(title)
         `)
         .eq("client_id", id)
         .order("created_at", { ascending: false });

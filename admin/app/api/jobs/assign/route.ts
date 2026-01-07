@@ -9,35 +9,38 @@ export async function POST(request: Request) {
         await verifyAdmin();
         const { jobId, workerId, contractId } = await request.json();
 
-        if (!jobId || !workerId) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        if (!jobId) {
+            return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
         }
 
         const supabase = await createClient();
 
-        // Check if application already exists
-        const { data: existing } = await supabase
-            .from("job_applications")
-            .select("id")
-            .eq("job_id", jobId)
-            .eq("worker_id", workerId)
-            .single();
+        // If workerId is provided, handle the application as before
+        if (workerId) {
+            // Check if application already exists
+            const { data: existing } = await supabase
+                .from("job_applications")
+                .select("id")
+                .eq("job_id", jobId)
+                .eq("worker_id", workerId)
+                .single();
 
-        if (existing) {
-            return NextResponse.json({ error: "このワーカーは既に応募しています" }, { status: 400 });
-        }
+            if (existing) {
+                return NextResponse.json({ error: "このワーカーは既に応募しています" }, { status: 400 });
+            }
 
-        // Create new application with ASSIGNED status
-        const { error } = await supabase
-            .from("job_applications")
-            .insert({
-                job_id: jobId,
-                worker_id: workerId,
-                status: "ASSIGNED",
-            });
+            // Create new application with ASSIGNED status
+            const { error } = await supabase
+                .from("job_applications")
+                .insert({
+                    job_id: jobId,
+                    worker_id: workerId,
+                    status: "ASSIGNED",
+                });
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            if (error) {
+                return NextResponse.json({ error: error.message }, { status: 500 });
+            }
         }
 
         // If contractId is provided, link the job to it

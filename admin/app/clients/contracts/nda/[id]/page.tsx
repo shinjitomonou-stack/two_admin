@@ -34,8 +34,8 @@ export default async function NDAContractDetailPage({ params }: { params: Promis
         };
         const labels = {
             DRAFT: "下書き",
-            PENDING: "承認待ち",
-            ACTIVE: "有効",
+            PENDING: "未締結 (申請中)",
+            ACTIVE: "締結済",
             EXPIRED: "期限切れ",
             TERMINATED: "解約",
         };

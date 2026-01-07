@@ -26,11 +26,10 @@ export async function GET(request: Request) {
         }
 
         // 2. Fetch active individual contracts for this client
-        // We look for contracts in client_job_contracts that are ACTIVE
+        // We look for all active 'PLACING' contracts (cross-client allowed)
         const { data: contracts, error: contractError } = await supabase
             .from("client_job_contracts")
-            .select("id, title, contract_amount, status")
-            .eq("client_id", job.client_id)
+            .select("id, title, contract_amount, status, clients(name)")
             .eq("trading_type", "PLACING") // Only placement contracts for now
             .in("status", ["ACTIVE", "PENDING", "DRAFT"]) // Including pending/draft for assignment
             .order("created_at", { ascending: false });

@@ -17,7 +17,7 @@ export default async function IndividualContractDetailPage({ params }: { params:
         .select(`
             *,
             clients(name, email),
-            jobs(title, report_template_id),
+            jobs!job_id(title, report_template_id),
             contract_templates(title, version)
         `)
         .eq("id", id)
@@ -26,6 +26,13 @@ export default async function IndividualContractDetailPage({ params }: { params:
     if (error || !contract) {
         notFound();
     }
+
+    // Fetch all jobs linked to this contract (via assigned_contract_id)
+    const { data: linkedJobs } = await supabase
+        .from("jobs")
+        .select("id, title, status, start_time, end_time")
+        .eq("assigned_contract_id", id)
+        .order("created_at", { ascending: false });
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -37,10 +44,10 @@ export default async function IndividualContractDetailPage({ params }: { params:
         };
         const labels = {
             DRAFT: "下書き",
-            PENDING: "承認待ち",
-            ACTIVE: "有効",
+            PENDING: "未締結 (申請中)",
+            ACTIVE: "締結済",
             COMPLETED: "完了",
-            CANCELLED: "キャンセル",
+            CANCELLED: "取消",
         };
         return (
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status as keyof typeof styles]}`}>
@@ -96,18 +103,42 @@ export default async function IndividualContractDetailPage({ params }: { params:
 
                             <div>
                                 <div className="text-xs text-muted-foreground mb-1">関連案件</div>
-                                <div className="flex items-center gap-2">
-                                    <Briefcase className="w-4 h-4 text-slate-400" />
-                                    {/* @ts-ignore */}
-                                    {contract.jobs ? (
-                                        <Link
-                                            href={`/jobs/${contract.job_id}`}
-                                            className="font-medium text-blue-600 hover:underline"
-                                        >
-                                            {contract.jobs.title}
-                                        </Link>
-                                    ) : (
-                                        <span className="font-medium">-</span>
+                                <div className="space-y-2">
+                                    {/* Primary Job */}
+                                    {contract.jobs && (
+                                        <div className="flex items-center gap-2">
+                                            <Briefcase className="w-4 h-4 text-blue-500" />
+                                            <Link
+                                                href={`/jobs/${contract.job_id}`}
+                                                className="font-medium text-blue-600 hover:underline text-sm"
+                                            >
+                                                {contract.jobs.title} (メイン)
+                                            </Link>
+                                        </div>
+                                    )}
+                                    {/* Linked Jobs */}
+                                    {linkedJobs && linkedJobs
+                                        .filter(lj => lj.id !== contract.job_id) // Exclude if it's already shown as primary
+                                        .map(lj => (
+                                            <div key={lj.id} className="flex items-center gap-2">
+                                                <Briefcase className="w-4 h-4 text-slate-400" />
+                                                <Link
+                                                    href={`/jobs/${lj.id}`}
+                                                    className="font-medium text-slate-700 hover:underline text-sm"
+                                                >
+                                                    {lj.title}
+                                                </Link>
+                                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                                                    {lj.status}
+                                                </span>
+                                            </div>
+                                        ))
+                                    }
+                                    {!contract.jobs && (!linkedJobs || linkedJobs.length === 0) && (
+                                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                                            <Briefcase className="w-4 h-4 opacity-50" />
+                                            <span>紐付けされた案件なし</span>
+                                        </div>
                                     )}
                                 </div>
                             </div>

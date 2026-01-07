@@ -154,7 +154,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                                     <option value="" disabled>契約を選択してください</option>
                                     {contracts.map((c) => (
                                         <option key={c.id} value={c.id}>
-                                            {c.title} (¥{c.contract_amount?.toLocaleString()})
+                                            {c.title} - {c.clients?.name} (¥{c.contract_amount?.toLocaleString()})
                                         </option>
                                     ))}
                                 </select>
