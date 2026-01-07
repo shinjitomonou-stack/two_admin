@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import ServerPagination from "@/components/ui/ServerPagination";
 import WorkerFilters from "@/components/WorkerFilters";
+import WorkerHeaderActions from "@/components/WorkerHeaderActions";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -101,13 +102,7 @@ export default async function WorkersPage({
                             登録ワーカーの確認・ステータス管理を行います。
                         </p>
                     </div>
-                    <Link
-                        href="/workers/new?returnTo=/workers"
-                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
-                    >
-                        <Plus className="w-4 h-4" />
-                        新規登録
-                    </Link>
+                    <WorkerHeaderActions />
                 </div>
 
                 {/* Filters */}
