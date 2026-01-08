@@ -8,6 +8,13 @@ import { useState, useEffect, use } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function EditIndividualContractPage({ params }: { params: Promise<{ id: string }> }) {
+    const cleanNumericInput = (value: string) => {
+        if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+            const cleaned = value.replace(/^0+/, '');
+            return cleaned === '' ? '0' : cleaned;
+        }
+        return value;
+    };
     const { id } = use(params);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -145,9 +152,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
     };
 
     const removeExistingFile = (index: number) => {
-        if (confirm("このファイルを削除してもよろしいですか？保存するまで反映されません。")) {
-            setExistingFiles(existingFiles.filter((_, i) => i !== index));
-        }
+        setExistingFiles(existingFiles.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -197,7 +202,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     template_id: formData.template_id || null,
                     title: formData.title,
                     content_snapshot: formData.content_snapshot,
-                    contract_amount: formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.contract_amount) / 1.1) : parseFloat(formData.contract_amount),
+                    contract_amount: formData.amountTaxMode === 'INCL' ? parseFloat(formData.contract_amount) / 1.1 : parseFloat(formData.contract_amount),
                     payment_terms: formData.payment_terms,
                     delivery_deadline: formData.delivery_deadline || null,
                     billing_cycle: formData.billing_cycle,
@@ -411,7 +416,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             step="any"
                             required
                             value={formData.contract_amount}
-                            onChange={(e) => setFormData({ ...formData, contract_amount: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, contract_amount: cleanNumericInput(e.target.value) })}
                             className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             placeholder="0"
                         />

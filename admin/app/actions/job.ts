@@ -160,8 +160,8 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
             const parseNumber = (val: any) => {
                 if (typeof val === 'number') return val;
                 if (!val) return 0;
-                const clean = String(val).replace(/[^\d]/g, '');
-                return parseInt(clean) || 0;
+                const clean = String(val).replace(/[^\d.]/g, ''); // Allow decimal point
+                return parseFloat(clean) || 0;
             };
 
             if (!job.title) throw new Error("案件タイトルが未入力の行があります。");

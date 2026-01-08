@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Download, FileText, Building2, Calendar, ChevronRight } from "lucide-react";
+import { Download, FileText, Building2, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,6 +23,12 @@ export default function ClientBillingPage() {
     });
     const [selectedClient, setSelectedClient] = useState<BillingData | null>(null);
     const [clientDetails, setClientDetails] = useState<any>(null);
+
+    const handleMoveMonth = (delta: number) => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const date = new Date(year, month - 1 + delta, 1);
+        setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    };
 
     useEffect(() => {
         fetchBillingData();
@@ -202,8 +208,8 @@ export default function ClientBillingPage() {
             data.job_billing.toLocaleString(),
             data.monthly_billing.toLocaleString(),
             data.total_billing.toLocaleString(),
-            Math.floor(data.total_billing * 0.1).toLocaleString(),
-            Math.floor(data.total_billing * 1.1).toLocaleString(),
+            Math.round(data.total_billing * 0.1).toLocaleString(),
+            Math.round(data.total_billing * 1.1).toLocaleString(),
         ]);
 
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -230,12 +236,28 @@ export default function ClientBillingPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <input
-                            type="month"
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
+                        <div className="flex items-center bg-white border border-input rounded-md overflow-hidden shadow-sm">
+                            <button
+                                onClick={() => handleMoveMonth(-1)}
+                                className="p-2 hover:bg-slate-50 transition-colors border-r border-input"
+                                title="前月"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <input
+                                type="month"
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="px-3 py-2 bg-transparent text-sm focus:outline-none w-[150px]"
+                            />
+                            <button
+                                onClick={() => handleMoveMonth(1)}
+                                className="p-2 hover:bg-slate-50 transition-colors border-l border-input"
+                                title="翌月"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                         <button
                             onClick={exportToCSV}
                             className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
@@ -260,7 +282,7 @@ export default function ClientBillingPage() {
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
                         <div className="text-2xl font-bold text-blue-600">¥{grandTotal.toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                            税込: ¥{Math.floor(grandTotal * 1.1).toLocaleString()}
+                            税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
                         </div>
                     </div>
                 </div>
@@ -316,7 +338,7 @@ export default function ClientBillingPage() {
                                                 ¥{data.total_billing.toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right text-blue-600 font-medium">
-                                                ¥{Math.floor(data.total_billing * 1.1).toLocaleString()}
+                                                ¥{Math.round(data.total_billing * 1.1).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -408,11 +430,11 @@ export default function ClientBillingPage() {
                                     </div>
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>消費税(10%)</span>
-                                        <span>¥{Math.floor(selectedClient.total_billing * 0.1).toLocaleString()}</span>
+                                        <span>¥{Math.round(selectedClient.total_billing * 0.1).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-xl text-blue-600">
                                         <span className="font-bold">税込合計</span>
-                                        <span className="font-bold">¥{Math.floor(selectedClient.total_billing * 1.1).toLocaleString()}</span>
+                                        <span className="font-bold">¥{Math.round(selectedClient.total_billing * 1.1).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>

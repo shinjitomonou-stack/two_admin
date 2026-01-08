@@ -8,9 +8,11 @@ export function DeleteAdminButton({ adminId, adminEmail }: { adminId: string; ad
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async () => {
+        /*
         if (!confirm(`管理者「${adminEmail}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) {
             return;
         }
+        */
 
         setIsDeleting(true);
         const result = await deleteAdminUser(adminId);

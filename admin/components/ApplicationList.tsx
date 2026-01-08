@@ -83,7 +83,7 @@ export function ApplicationList({
             return;
         }
 
-        if (!confirm(`${selectedIds.length}名のワーカーを採用しますか？`)) return;
+        // if (!confirm(`${selectedIds.length}名のワーカーを採用しますか？`)) return;
 
         setIsAssigning(true);
         try {

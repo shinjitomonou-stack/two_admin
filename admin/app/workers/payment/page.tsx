@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Download, User, Calendar, ChevronRight } from "lucide-react";
+import { Download, User, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,6 +21,12 @@ export default function WorkerPaymentPage() {
     });
     const [selectedWorker, setSelectedWorker] = useState<PaymentData | null>(null);
     const [workerDetails, setWorkerDetails] = useState<any>(null);
+
+    const handleMoveMonth = (delta: number) => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const date = new Date(year, month - 1 + delta, 1);
+        setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    };
 
     useEffect(() => {
         fetchPaymentData();
@@ -141,11 +147,13 @@ export default function WorkerPaymentPage() {
     };
 
     const exportToCSV = () => {
-        const headers = ['ワーカー名', '案件数', '支払金額'];
+        const headers = ['ワーカー名', '案件数', '支払金額(税抜)', '消費税(10%)', '税込合計'];
         const rows = paymentData.map(data => [
             data.worker_name,
             data.job_count,
-            data.total_payment.toLocaleString(),
+            data.total_payment,
+            Math.round(data.total_payment * 0.1),
+            Math.round(data.total_payment * 1.1),
         ]);
 
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -171,12 +179,28 @@ export default function WorkerPaymentPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <input
-                            type="month"
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                        />
+                        <div className="flex items-center bg-white border border-input rounded-md overflow-hidden shadow-sm">
+                            <button
+                                onClick={() => handleMoveMonth(-1)}
+                                className="p-2 hover:bg-slate-50 transition-colors border-r border-input"
+                                title="前月"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <input
+                                type="month"
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="px-3 py-2 bg-transparent text-sm focus:outline-none w-[150px]"
+                            />
+                            <button
+                                onClick={() => handleMoveMonth(1)}
+                                className="p-2 hover:bg-slate-50 transition-colors border-l border-input"
+                                title="翌月"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                         <button
                             onClick={exportToCSV}
                             className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
@@ -198,8 +222,11 @@ export default function WorkerPaymentPage() {
                         <div className="text-2xl font-bold">{totalJobs}件</div>
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
-                        <div className="text-sm text-muted-foreground mb-1">支払総額</div>
+                        <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
                         <div className="text-2xl font-bold text-blue-600">¥{grandTotal.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                            税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
+                        </div>
                     </div>
                 </div>
 
@@ -211,8 +238,9 @@ export default function WorkerPaymentPage() {
                                 <tr>
                                     <th className="px-6 py-3 font-medium">ワーカー名</th>
                                     <th className="px-6 py-3 font-medium text-right">完了案件数</th>
-                                    <th className="px-6 py-3 font-medium text-right">支払金額</th>
-                                    <th className="px-6 py-3 font-medium text-right">操作</th>
+                                    <th className="px-6 py-3 font-medium text-right">合計(税抜)</th>
+                                    <th className="px-6 py-3 font-medium text-right font-bold text-slate-900">税込合計</th>
+                                    <th className="px-6 py-3 font-medium text-right text-slate-400">操作</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -240,8 +268,11 @@ export default function WorkerPaymentPage() {
                                             <td className="px-6 py-4 text-right">
                                                 {data.job_count}件
                                             </td>
-                                            <td className="px-6 py-4 text-right font-medium text-blue-600">
+                                            <td className="px-6 py-4 text-right">
                                                 ¥{data.total_payment.toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-bold text-blue-600">
+                                                ¥{Math.round(data.total_payment * 1.1).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -288,8 +319,19 @@ export default function WorkerPaymentPage() {
                                                     <div className="font-medium">¥{parseFloat(app.jobs?.reward_amount || 0).toLocaleString()}</div>
                                                 </div>
                                             ))}
-                                            <div className="flex justify-end pt-2 border-t border-border">
-                                                <span className="font-medium">合計: ¥{selectedWorker.total_payment.toLocaleString()}</span>
+                                            <div className="flex flex-col items-end pt-4 border-t-2 border-slate-900 space-y-1">
+                                                <div className="flex justify-between w-full text-sm">
+                                                    <span className="text-muted-foreground">税抜合計</span>
+                                                    <span>¥{selectedWorker.total_payment.toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between w-full text-sm font-medium">
+                                                    <span className="text-muted-foreground">消費税(10%)</span>
+                                                    <span>¥{Math.round(selectedWorker.total_payment * 0.1).toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex justify-between w-full text-lg font-bold text-blue-600 pt-1">
+                                                    <span>税込合計</span>
+                                                    <span>¥{Math.round(selectedWorker.total_payment * 1.1).toLocaleString()}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -150,6 +150,9 @@ export default async function IndividualContractDetailPage({ params }: { params:
                                         <DollarSign className="w-4 h-4 text-slate-400" />
                                         <span className="font-medium text-lg">
                                             ¥{contract.contract_amount?.toLocaleString() || '0'}
+                                            <span className="text-xs font-normal text-muted-foreground ml-2">
+                                                (税込: ¥{Math.round((contract.contract_amount || 0) * 1.1).toLocaleString()})
+                                            </span>
                                         </span>
                                     </div>
                                     <div className="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-600 font-medium">

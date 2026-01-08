@@ -77,13 +77,13 @@ function CreateJobForm() {
             if (formData.rewardTaxMode === 'INCL') {
                 unitPrice = unitPrice / 1.1;
             }
-            const rewardTotal = Math.round(unitPrice * quantity);
+            const rewardTotal = unitPrice * quantity;
 
             let billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
             if (formData.billingTaxMode === 'INCL') {
                 billingUnitPrice = billingUnitPrice / 1.1;
             }
-            const billingTotal = Math.round(billingUnitPrice * quantity);
+            const billingTotal = billingUnitPrice * quantity;
 
             setFormData(prev => ({
                 ...prev,
@@ -95,6 +95,20 @@ function CreateJobForm() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
+        // Handle numeric fields to prevent leading zeros
+        const numericFields = ['rewardUnitPrice', 'billingUnitPrice', 'rewardQuantity', 'reward', 'billingAmount', 'maxWorkers'];
+        if (numericFields.includes(name)) {
+            let cleanedValue = value;
+            // Prevent leading zeros unless it's just '0' or starts with '0.'
+            if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+                cleanedValue = value.replace(/^0+/, '');
+                if (cleanedValue === '') cleanedValue = '0';
+            }
+            setFormData(prev => ({ ...prev, [name]: cleanedValue }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -121,13 +135,10 @@ function CreateJobForm() {
             if (formData.rewardType === 'FIXED' && formData.rewardTaxMode === 'INCL') {
                 rewardAmount = rewardAmount / 1.1;
             }
-            rewardAmount = Math.round(rewardAmount);
 
             let billingAmount = formData.billingAmount ? parseFloat(formData.billingAmount) : null;
             if (billingAmount !== null && formData.rewardType === 'FIXED' && formData.billingTaxMode === 'INCL') {
-                billingAmount = Math.round(billingAmount / 1.1);
-            } else if (billingAmount !== null) {
-                billingAmount = Math.round(billingAmount);
+                billingAmount = billingAmount / 1.1;
             }
 
             let rewardUnitPrice = formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null;
@@ -181,10 +192,10 @@ function CreateJobForm() {
                 reward_type: formData.rewardType,
                 reward_unit_price: rewardUnitPrice,
                 billing_unit_price: billingUnitPrice,
-                reward_quantity: formData.rewardType === 'UNIT' ? parseInt(formData.rewardQuantity) : null,
+                reward_quantity: formData.rewardType === 'UNIT' ? parseFloat(formData.rewardQuantity) : null,
 
                 billing_amount: billingAmount,
-                max_workers: parseInt(formData.maxWorkers),
+                max_workers: parseInt(formData.maxWorkers) || 1,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
                 is_flexible: formData.isFlexible,

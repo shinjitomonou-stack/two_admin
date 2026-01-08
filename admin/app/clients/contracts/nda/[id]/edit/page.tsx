@@ -8,6 +8,13 @@ import { useState, useEffect, use } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function EditNDAContractPage({ params }: { params: Promise<{ id: string }> }) {
+    const cleanNumericInput = (value: string) => {
+        if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+            const cleaned = value.replace(/^0+/, '');
+            return cleaned === '' ? '0' : cleaned;
+        }
+        return value;
+    };
     const { id } = use(params);
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -103,9 +110,7 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
     };
 
     const removeExistingFile = (index: number) => {
-        if (confirm("このファイルを削除してもよろしいですか？保存するまで反映されません。")) {
-            setExistingFiles(existingFiles.filter((_, i) => i !== index));
-        }
+        setExistingFiles(existingFiles.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -367,7 +372,7 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
                                 type="number"
                                 step="any"
                                 value={formData.monthly_amount}
-                                onChange={(e) => setFormData({ ...formData, monthly_amount: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, monthly_amount: cleanNumericInput(e.target.value) })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                 placeholder="0"
                             />

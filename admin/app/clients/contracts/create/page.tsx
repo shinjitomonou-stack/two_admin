@@ -10,6 +10,13 @@ import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 function CreateClientContractForm() {
+    const cleanNumericInput = (value: string) => {
+        if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+            const cleaned = value.replace(/^0+/, '');
+            return cleaned === '' ? '0' : cleaned;
+        }
+        return value;
+    };
     const router = useRouter();
     const searchParams = useSearchParams();
     const jobIdFromUrl = searchParams.get('job_id');
@@ -185,7 +192,7 @@ function CreateClientContractForm() {
                         template_id: formData.template_id || null,
                         title: formData.title,
                         content_snapshot: formData.content_snapshot,
-                        contract_amount: formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.contract_amount) / 1.1) : parseFloat(formData.contract_amount),
+                        contract_amount: formData.amountTaxMode === 'INCL' ? parseFloat(formData.contract_amount) / 1.1 : parseFloat(formData.contract_amount),
                         payment_terms: formData.payment_terms,
                         delivery_deadline: formData.delivery_deadline || null,
                         billing_cycle: formData.billing_cycle,
@@ -209,7 +216,7 @@ function CreateClientContractForm() {
                         start_date: formData.start_date,
                         end_date: formData.end_date || null,
                         auto_renew: formData.auto_renew,
-                        monthly_amount: formData.monthly_amount ? (formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.monthly_amount) / 1.1) : parseFloat(formData.monthly_amount)) : null,
+                        monthly_amount: formData.monthly_amount ? (formData.amountTaxMode === 'INCL' ? parseFloat(formData.monthly_amount) / 1.1 : parseFloat(formData.monthly_amount)) : null,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -399,6 +406,48 @@ function CreateClientContractForm() {
                             </div>
                         </div>
 
+                        {formData.contract_type === "BASIC" && (
+                            <div className="grid sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-medium">月額金額</label>
+                                        <div className="flex bg-slate-100 rounded-md p-0.5 text-[10px] font-bold">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(p => ({ ...p, amountTaxMode: 'EXCL' }))}
+                                                className={`px-2 py-0.5 rounded ${formData.amountTaxMode === 'EXCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                            >
+                                                税抜
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(p => ({ ...p, amountTaxMode: 'INCL' }))}
+                                                className={`px-2 py-0.5 rounded ${formData.amountTaxMode === 'INCL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}
+                                            >
+                                                税込
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        value={formData.monthly_amount}
+                                        onChange={(e) => setFormData({ ...formData, monthly_amount: cleanNumericInput(e.target.value) })}
+                                        className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                        placeholder="0"
+                                    />
+                                    {formData.monthly_amount && (
+                                        <p className="text-[10px] text-muted-foreground mt-1">
+                                            {formData.amountTaxMode === 'INCL'
+                                                ? `税抜金額: ¥${Math.round(parseFloat(formData.monthly_amount) / 1.1).toLocaleString()}`
+                                                : `税込金額: ¥${Math.round(parseFloat(formData.monthly_amount) * 1.1).toLocaleString()}`
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2">
                             <input
                                 type="checkbox"
@@ -411,6 +460,7 @@ function CreateClientContractForm() {
                                 自動更新
                             </label>
                         </div>
+
                     </div>
                 )}
 
@@ -445,7 +495,7 @@ function CreateClientContractForm() {
                                 step="any"
                                 required
                                 value={formData.contract_amount}
-                                onChange={(e) => setFormData({ ...formData, contract_amount: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, contract_amount: cleanNumericInput(e.target.value) })}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                 placeholder="0"
                             />
