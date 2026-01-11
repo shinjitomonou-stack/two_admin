@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, FileText, CheckCircle, Loader2, Download, CreditCard } from "lucide-react";
+import { Upload, X, FileText, CheckCircle, Loader2, Download, CreditCard, AlertCircle } from "lucide-react";
 import { bulkUpdateWorkerBankAccounts } from "@/app/actions/worker";
 import { toast } from "sonner";
 
@@ -113,9 +113,13 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
+    const [errors, setErrors] = useState<{ row: number; id: string; message: string }[]>([]);
+
     const handleSubmit = async () => {
         if (previewData.length === 0) return;
         setIsSubmitting(true);
+        setErrors([]); // Clear previous errors
+
         try {
             const result = await bulkUpdateWorkerBankAccounts(previewData);
             if (result.success) {
@@ -123,8 +127,8 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                 onClose();
             } else {
                 if (result.errors) {
-                    toast.error(`${result.count}件更新完了、${result.errors.length}件エラーです。`);
-                    console.error("Bulk update errors:", result.errors);
+                    setErrors(result.errors);
+                    toast.error(`${result.count}件更新完了、${result.errors.length}件エラーが発生しました。`);
                 } else {
                     toast.error("更新に失敗しました。");
                 }
@@ -260,30 +264,50 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                     )}
                 </div>
 
-                <div className="p-6 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-colors"
-                    >
-                        キャンセル
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!file || isParsing || isSubmitting || previewData.length === 0}
-                        className="px-8 py-2 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                更新中...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle className="w-4 h-4" />
-                                {previewData.length}件を更新
-                            </>
-                        )}
-                    </button>
+                <div className="p-6 border-t border-slate-100 flex flex-col gap-4 bg-slate-50/50">
+                    <div className="flex items-center justify-end gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-colors"
+                        >
+                            キャンセル
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!file || isParsing || isSubmitting || previewData.length === 0}
+                            className="px-8 py-2 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    更新中...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-4 h-4" />
+                                    {previewData.length}件を更新
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {errors.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 max-h-48 overflow-y-auto">
+                            <h4 className="text-red-800 font-semibold text-sm mb-2 flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.length}件のエラーが発生しました
+                            </h4>
+                            <ul className="text-xs text-red-700 space-y-1">
+                                {errors.map((error, idx) => (
+                                    <li key={idx} className="flex gap-2">
+                                        <span className="font-mono bg-red-100 px-1 rounded shrink-0 w-8 text-center">{error.row}行</span>
+                                        <span className="font-mono bg-red-100 px-1 rounded shrink-0">{error.id}</span>
+                                        <span>{error.message}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
