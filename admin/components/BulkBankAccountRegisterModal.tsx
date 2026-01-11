@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, FileText, CheckCircle, Loader2, Download, CreditCard } from "lucide-react";
+import { Upload, X, FileText, CheckCircle, Loader2, Download } from "lucide-react";
 import { bulkUpdateWorkerBankAccounts } from "@/app/actions/worker";
 import { toast } from "sonner";
 
@@ -161,7 +161,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <CreditCard className="w-5 h-5" />
+                            <FileText className="w-5 h-5" />
                             口座情報一括登録
                         </h2>
                         <p className="text-sm text-slate-500">CSVファイルをアップロードして既存ワーカーの銀行口座情報を更新します。</p>
