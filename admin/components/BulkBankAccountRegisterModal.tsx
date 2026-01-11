@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, FileText, CheckCircle, Loader2, Download, CreditCard, AlertCircle } from "lucide-react";
+import { Upload, X, FileText, CheckCircle, Loader2, Download, CreditCard } from "lucide-react";
 import { bulkUpdateWorkerBankAccounts } from "@/app/actions/worker";
 import { toast } from "sonner";
 
@@ -294,7 +294,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                     {errors.length > 0 && (
                         <div className="bg-red-50 border border-red-200 rounded-xl p-4 max-h-48 overflow-y-auto">
                             <h4 className="text-red-800 font-semibold text-sm mb-2 flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4" />
+                                <X className="w-4 h-4" />
                                 {errors.length}件のエラーが発生しました
                             </h4>
                             <ul className="text-xs text-red-700 space-y-1">
