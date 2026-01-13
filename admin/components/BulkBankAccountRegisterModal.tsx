@@ -65,11 +65,12 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
         if (rows.length < 2) return [];
 
         const headers = rows[0];
-        // Expected headers: ID, ワーカーID, 銀行名, 支店名, 種別, 口座番号, 口座名義, 口座名義(カナ)
+        // Expected headers: ID, ワーカーID, メールアドレス, 銀行名, 支店名, 種別, 口座番号, 口座名義, 口座名義(カナ)
         // Map to internal keys
         const headerMap: Record<string, string> = {
             "ID": "id",
             "ワーカーID": "worker_number",
+            "メールアドレス": "email",
             "銀行名": "bank_name",
             "支店名": "branch_name",
             "種別": "account_type",
@@ -141,10 +142,10 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
     };
 
     const downloadSampleCSV = () => {
-        // ID, ワーカーID, 銀行名, 支店名, 種別, 口座番号, 口座名義, 口座名義(カナ)
-        const headers = "ID,ワーカーID,銀行名,支店名,種別,口座番号,口座名義,口座名義(カナ)";
-        const sample1 = ",W10001,三菱UFJ銀行,渋谷支店,普通,1234567,ヤマダ タロウ,ヤマダ タロウ";
-        const sample2 = "uuid-goes-here,,三井住友銀行,新宿支店,当座,7654321,株式会社テスト,カbs";
+        // ID, ワーカーID, メールアドレス, 銀行名, 支店名, 種別, 口座番号, 口座名義, 口座名義(カナ)
+        const headers = "ID,ワーカーID,メールアドレス,銀行名,支店名,種別,口座番号,口座名義,口座名義(カナ)";
+        const sample1 = ",W10001,tanaka@example.com,三菱UFJ銀行,渋谷支店,普通,1234567,ヤマダ タロウ,ヤマダ タロウ";
+        const sample2 = "uuid-goes-here,,,三井住友銀行,新宿支店,当座,7654321,株式会社テスト,カbs";
         const csvContent = `${headers}\n${sample1}\n${sample2}`;
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -163,7 +164,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                             <FileText className="w-5 h-5" />
                             口座情報一括登録
                         </h2>
-                        <p className="text-sm text-slate-500">CSVファイルをアップロードして既存ワーカーの銀行口座情報を更新します。</p>
+                        <p className="text-sm text-slate-500">CSVファイルをアップロードして既存ワーカー（ID/メール/W番号）の銀行口座情報を更新します。</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
                         <X className="w-5 h-5" />
@@ -183,7 +184,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                                 <div className="text-center">
                                     <p className="text-lg font-semibold text-slate-900">CSVファイルをドロップ、または選択</p>
                                     <p className="text-sm text-slate-500">
-                                        IDまたはワーカーID(W番号)の一致するワーカーの口座情報を更新します
+                                        ID、メールアドレス、またはワーカーID(W番号)の一致するワーカーの口座情報を更新します
                                     </p>
                                 </div>
                                 <input
@@ -232,6 +233,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                                         <thead className="bg-slate-50 text-slate-500 font-medium">
                                             <tr>
                                                 <th className="px-4 py-3 border-b border-slate-200 w-32">ワーカーID</th>
+                                                <th className="px-4 py-3 border-b border-slate-200 w-48">メールアドレス</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">銀行名</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">支店名</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">種別</th>
@@ -242,7 +244,8 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                                         <tbody className="divide-y divide-slate-100">
                                             {previewData.slice(0, 50).map((row, i) => (
                                                 <tr key={i} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-4 py-3 font-mono text-xs">{row.worker_number || row.id || <span className="text-red-500">IDなし</span>}</td>
+                                                    <td className="px-4 py-3 font-mono text-xs">{row.worker_number || row.id || <span className="text-slate-400">-</span>}</td>
+                                                    <td className="px-4 py-3 text-xs text-slate-600 truncate max-w-[150px]">{row.email || "-"}</td>
                                                     <td className="px-4 py-3">{row.bank_name}</td>
                                                     <td className="px-4 py-3">{row.branch_name}</td>
                                                     <td className="px-4 py-3">{row.account_type}</td>
