@@ -35,23 +35,23 @@ export async function bulkUpdateWorkerBankAccounts(accountsData: any[]) {
             };
 
             // Find worker to update
-            // Strategy: Resolve target worker UUID first using ID, then Email, then Worker Number
+            // Strategy: Resolve target worker UUID first using Email (Highest Configured Priority), then ID, then Worker Number
             let targetWorkerId: string | null = null;
             const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
-            // 1. Try ID as UUID
-            if (id && isUuid(id)) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("id", id).single();
-                if (data) targetWorkerId = data.id;
-            }
-
-            // 2. Try Email
-            if (!targetWorkerId && email) {
+            // 1. Try Email (Priority requested by user)
+            if (email) {
                 const { data } = await supabaseAdmin.from("workers").select("id").eq("email", email).single();
                 if (data) targetWorkerId = data.id;
             }
 
-            // 3. Try Worker Number
+            // 2. Try ID as UUID (Fallback)
+            if (!targetWorkerId && id && isUuid(id)) {
+                const { data } = await supabaseAdmin.from("workers").select("id").eq("id", id).single();
+                if (data) targetWorkerId = data.id;
+            }
+
+            // 3. Try Worker Number (Fallback)
             if (!targetWorkerId && workerNumber) {
                 const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", workerNumber).single();
                 if (data) targetWorkerId = data.id;
