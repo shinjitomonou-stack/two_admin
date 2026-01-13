@@ -35,10 +35,17 @@ export async function bulkUpdateWorkerBankAccounts(accountsData: any[]) {
             // Find worker to update
             let query = supabaseAdmin.from("workers").update({ bank_account: bankAccount });
 
-            if (id) {
+            const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+            if (id && isUuid(id)) {
                 query = query.eq("id", id);
             } else if (workerNumber) {
                 query = query.eq("worker_number", workerNumber);
+            } else {
+                // If id is present but not UUID, and no workerNumber, we can't search.
+                // But if id was "87", maybe they meant worker_number? 
+                // For safety, if we can't determine a valid search key, throw.
+                throw new Error(`有効なID(UUID)またはワーカーID(W番号)が必要です。値: ${id || "なし"} / ${workerNumber || "なし"}`);
             }
 
             const { data, error, count } = await query.select("id").single();
