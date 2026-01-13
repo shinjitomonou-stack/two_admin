@@ -33,48 +33,25 @@ export async function bulkUpdateWorkerBankAccounts(accountsData: any[]) {
             };
 
             // Find worker to update
-            // Strategy: Resolve target worker UUID first using various heuristics
-            let targetWorkerId: string | null = null;
+            let query = supabaseAdmin.from("workers").update({ bank_account: bankAccount });
+
+            // Basic validation for ID format to prevent DB errors (e.g. "87" is not UUID)
             const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-            const isNumeric = (str: string) => /^\d+$/.test(str);
 
-            // 1. Try ID as UUID
             if (id && isUuid(id)) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("id", id).single();
-                if (data) targetWorkerId = data.id;
+                query = query.eq("id", id);
+            } else if (workerNumber) {
+                query = query.eq("worker_number", workerNumber);
+            } else {
+                throw new Error(`有効なID(UUID)またはワーカーID(W番号)が必要です。値: ${id || "なし"} / ${workerNumber || "なし"}`);
             }
 
-            // 2. Try exact worker_number
-            if (!targetWorkerId && workerNumber) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", workerNumber).single();
-                if (data) targetWorkerId = data.id;
-            }
-
-            // 3. Try ID as partial worker_number (e.g. "87" -> "10087")
-            if (!targetWorkerId && id && isNumeric(id)) {
-                // Try treating "87" as "10087"
-                const candidate = `100${id}`;
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", candidate).single();
-                if (data) targetWorkerId = data.id;
-            }
-
-            // 4. Try worker_number as partial (e.g. "87" -> "10087")
-            if (!targetWorkerId && workerNumber && isNumeric(workerNumber)) {
-                const candidate = `100${workerNumber}`;
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", candidate).single();
-                if (data) targetWorkerId = data.id;
-            }
-
-            if (!targetWorkerId) {
-                throw new Error(`対象のワーカーが見つかりません。ID: ${id || "-"} / ワーカーID: ${workerNumber || "-"}`);
-            }
-
-            const { error } = await supabaseAdmin
-                .from("workers")
-                .update({ bank_account: bankAccount })
-                .eq("id", targetWorkerId);
+            const { data, error, count } = await query.select("id").single();
 
             if (error) {
+                if (error.code === 'PGRST116') {
+                    throw new Error(`対象のワーカーが見つかりません (ID: ${id || workerNumber})`);
+                }
                 throw error;
             }
 
