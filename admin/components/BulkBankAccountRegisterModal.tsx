@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Upload, X, FileText, CheckCircle, Loader2, Download } from "lucide-react";
-// import { bulkUpdateWorkerBankAccounts } from "@/app/actions/worker";
+import { bulkUpdateWorkerBankAccounts } from "@/app/actions/bank";
 import { toast } from "sonner";
 
 interface BulkBankAccountRegisterModalProps {
@@ -120,13 +120,9 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
         setErrors([]); // Clear previous errors
 
         try {
-            // MOCK SUBMIT - Server action is commented out
-            // const result = await bulkUpdateWorkerBankAccounts(previewData);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const result = { success: true, count: previewData.length, errors: [] };
-
+            const result = await bulkUpdateWorkerBankAccounts(previewData);
             if (result.success) {
-                toast.success(`${result.count}件の口座情報を更新しました。(TEST)`);
+                toast.success(`${result.count}件の口座情報を更新しました。`);
                 onClose();
             } else {
                 if (result.errors) {
@@ -165,7 +161,7 @@ export default function BulkBankAccountRegisterModal({ isOpen, onClose }: BulkBa
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <FileText className="w-5 h-5" />
-                            口座情報一括登録 (UI Test)
+                            口座情報一括登録
                         </h2>
                         <p className="text-sm text-slate-500">CSVファイルをアップロードして既存ワーカーの銀行口座情報を更新します。</p>
                     </div>
