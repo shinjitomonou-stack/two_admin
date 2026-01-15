@@ -32,39 +32,53 @@ export async function createAdminUser(formData: FormData) {
         return { error: "このメールアドレスは既に登録されています" };
     }
 
-    // Use admin client for creating users
+    // Use admin client for creating/checking users
     const adminClient = await createAdminClient();
 
-    // Create user with Supabase Auth
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // Auto-confirm email for admin users
-    });
+    // 1. Try to find existing Auth user by email
+    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
+    const existingAuthUser = users.find(u => u.email === email);
 
-    if (authError) {
-        console.error("Auth user creation error:", authError);
-        return { error: "ユーザーの作成に失敗しました: " + authError.message };
+    let userId: string;
+
+    if (existingAuthUser) {
+        // User already exists in Auth
+        userId = existingAuthUser.id;
+        console.log("Existing Auth user found:", userId);
+    } else {
+        // 2. Create user with Supabase Auth if not exists
+        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+        });
+
+        if (authError) {
+            console.error("Auth user creation error:", authError);
+            return { error: "ユーザーの作成に失敗しました: " + authError.message };
+        }
+        if (!authData.user) {
+            return { error: "ユーザーの作成に失敗しました" };
+        }
+        userId = authData.user.id;
     }
 
-    if (!authData.user) {
-        return { error: "ユーザーの作成に失敗しました" };
-    }
-
-    // Create admin_users record using admin client to bypass RLS
+    // 3. Create admin_users record (or check if already exists - though we checked above)
     const { error: adminError } = await adminClient
         .from("admin_users")
         .insert([
             {
-                id: authData.user.id,
+                id: userId,
                 email: email,
             },
         ]);
 
     if (adminError) {
         console.error("Admin user creation error:", adminError);
-        // Cleanup: delete auth user if admin_users creation fails
-        await adminClient.auth.admin.deleteUser(authData.user.id);
+        // Only cleanup if we JUST created the user
+        if (!existingAuthUser) {
+            await adminClient.auth.admin.deleteUser(userId);
+        }
         return { error: "管理者の登録に失敗しました: " + adminError.message };
     }
 
