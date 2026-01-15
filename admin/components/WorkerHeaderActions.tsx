@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, FileUp, FileText } from "lucide-react";
+import { Plus, FileUp, FileText, Copy } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import BulkWorkerRegisterModal from "./BulkWorkerRegisterModal";
 import BulkBankAccountRegisterModal from "./BulkBankAccountRegisterModal";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,21 @@ export default function WorkerHeaderActions({ returnTo }: { returnTo?: string })
                 <Plus className="w-4 h-4" />
                 新規登録
             </Link>
+            <button
+                onClick={() => {
+                    // Default to localhost:3000/register if env var not set (assuming same domain for simplicity or dev default)
+                    // In production, NEXT_PUBLIC_WORKER_APP_URL should be set.
+                    const baseUrl = process.env.NEXT_PUBLIC_WORKER_APP_URL || window.location.origin;
+                    const url = `${baseUrl}/register`;
+                    navigator.clipboard.writeText(url)
+                        .then(() => toast.success("新規登録URLをコピーしました"))
+                        .catch(() => toast.error("コピーに失敗しました"));
+                }}
+                className="inline-flex items-center justify-center p-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                title="新規登録URLをコピー"
+            >
+                <Copy className="w-4 h-4" />
+            </button>
 
             <BulkWorkerRegisterModal
                 isOpen={isBulkModalOpen}
