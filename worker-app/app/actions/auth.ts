@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -66,7 +66,10 @@ export async function registerWorker(formData: FormData) {
     }
 
     // Create worker record with the same ID as auth user
-    const { error: workerError } = await supabase
+    // Use admin client to bypass RLS during registration if needed, 
+    // and to ensure the record is created even if the session isn't propagated.
+    const supabaseAdmin = await createAdminClient();
+    const { error: workerError } = await supabaseAdmin
         .from("workers")
         .insert([
             {
@@ -87,7 +90,7 @@ export async function registerWorker(formData: FormData) {
     if (workerError) {
         console.error("Worker creation error:", workerError);
         // Cleanup: delete auth user if worker creation fails
-        await supabase.auth.admin.deleteUser(authData.user.id);
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         return { error: "登録に失敗しました: " + workerError.message };
     }
 
