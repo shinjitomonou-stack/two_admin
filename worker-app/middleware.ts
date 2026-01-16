@@ -62,7 +62,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // If user is logged in and tries to access login/register, redirect to home
-    if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
+    // Note: We allow access to /register/verify even if logged in, to complete the flow if needed
+    if (user && (request.nextUrl.pathname === "/login" || (request.nextUrl.pathname === "/register" && !request.nextUrl.pathname.startsWith("/register/verify")))) {
         const url = request.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);

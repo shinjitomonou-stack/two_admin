@@ -4,14 +4,13 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-export async function registerWorker(formData: FormData) {
+export async function createWorkerProfile(formData: FormData) {
     try {
-        console.log("registerWorker: Starting registration for", formData.get("email"));
+        console.log("createWorkerProfile: Starting profile creation for", formData.get("email"));
         const name = formData.get("name") as string;
         const name_kana = formData.get("name_kana") as string;
         const line_name = formData.get("line_name") as string;
         const email = formData.get("email") as string;
-        const password = formData.get("password") as string;
         const phone = formData.get("phone") as string;
         const postal_code = formData.get("postal_code") as string;
         const address = formData.get("address") as string;
@@ -26,62 +25,50 @@ export async function registerWorker(formData: FormData) {
             birth_date = `${birth_year}-${birth_month.padStart(2, '0')}-${birth_day.padStart(2, '0')}`;
         }
 
-        if (!name || !email || !password || !name_kana || !phone || !address || !gender || !birth_date) {
+        if (!name || !email || !name_kana || !phone || !address || !gender || !birth_date) {
             return { error: "必須項目が入力されていません" };
         }
 
         const supabase = await createClient();
-        console.log("registerWorker: [STEP 1] Checking existing user (using anon key)");
 
-        // Check if email already exists
-        const { data: existingUser, error: checkError } = await supabase
+        // Get current authenticated user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+            console.error("createWorkerProfile: Authentication check failed:", userError);
+            return { error: "認証情報の取得に失敗しました。再度ログインしてください。" };
+        }
+
+        if (user.email !== email) {
+            console.error("createWorkerProfile: Email mismatch:", { sessionEmail: user.email, formEmail: email });
+            return { error: "不正なリクエストです: メールアドレスが一致しません" };
+        }
+
+        console.log("createWorkerProfile: Checking existing profile (using anon key)");
+
+        // Check if profile already exists
+        const { data: existingProfile, error: checkError } = await supabase
             .from("workers")
             .select("id")
-            .eq("email", email)
+            .eq("id", user.id)
             .maybeSingle();
 
         if (checkError) {
-            console.error("registerWorker: [STEP 1 ERROR] Check existing user failed:", checkError);
-            if (checkError.message.includes("API key")) {
-                return { error: "登録に失敗しました: システム設定エラー(Anon Keyが無効です)" };
-            }
+            console.error("createWorkerProfile: Check existing profile failed:", checkError);
         }
 
-        if (existingUser) {
-            return { error: "このメールアドレスは既に登録されています" };
+        if (existingProfile) {
+            console.log("createWorkerProfile: Profile already exists for user", user.id);
+            return { success: true };
         }
 
-        console.log("registerWorker: [STEP 2] Calling signUp (using anon key)");
-        // Create user with Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: name,
-                },
-            },
-        });
-
-        if (authError) {
-            console.error("registerWorker: [STEP 2 ERROR] Auth signup failed:", authError);
-            if (authError.message.includes("API key")) {
-                return { error: "登録に失敗しました: システム設定エラー(Anon Keyが無効です)" };
-            }
-            return { error: "登録に失敗しました: " + authError.message };
-        }
-
-        if (!authData.user) {
-            return { error: "ユーザーの作成に失敗しました" };
-        }
-
-        console.log("registerWorker: [STEP 3] Creating worker record in DB (using service role key)");
+        console.log("createWorkerProfile: Creating worker record in DB (using service role key)");
         const supabaseAdmin = await createAdminClient();
         const { error: workerError } = await supabaseAdmin
             .from("workers")
             .insert([
                 {
-                    id: authData.user.id,
+                    id: user.id,
                     full_name: name,
                     name_kana: name_kana,
                     line_name: line_name,
@@ -96,20 +83,18 @@ export async function registerWorker(formData: FormData) {
             ]);
 
         if (workerError) {
-            console.error("registerWorker: [STEP 3 ERROR] Worker record creation failed:", workerError);
-            await supabaseAdmin.auth.admin.deleteUser(authData.user.id).catch(e => console.error("Cleanup failed:", e));
-            if (workerError.message.includes("API key")) {
-                return { error: "登録に失敗しました: システム設定エラー(Service Role Keyが無効です)" };
-            }
-            return { error: "登録に失敗しました: " + workerError.message };
+            console.error("createWorkerProfile: Worker record creation failed:", workerError);
+            // Note: We don't delete the user here because they are already authenticated.
+            // They can retry profile creation.
+            return { error: "プロフィールの作成に失敗しました: " + workerError.message };
         }
 
-        console.log("registerWorker: Success, revalidating path");
+        console.log("createWorkerProfile: Success, revalidating path");
         revalidatePath("/");
         return { success: true };
     } catch (err: any) {
-        console.error("registerWorker: Unexpected server exception:", err);
-        return { error: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。(" + (err.message || "Unknown error") + ")" };
+        console.error("createWorkerProfile: Unexpected server exception:", err);
+        return { error: "予期しないエラーが発生しました。(" + (err.message || "Unknown error") + ")" };
     }
 }
 

@@ -1,51 +1,67 @@
 "use client";
 
 import { useState } from "react";
-import { registerWorker } from "@/app/actions/auth";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
         setError(null);
 
-        const result = await registerWorker(formData);
-        if (result?.error) {
-            setError(result.error);
-            setIsLoading(false);
-        } else if (result?.success) {
-            setIsSuccess(true);
+        try {
+            const email = formData.get("email") as string;
+            const password = formData.get("password") as string;
+            const name = formData.get("name") as string;
+
+            if (!email || !password || !name) {
+                throw new Error("必須項目を入力してください");
+            }
+
+            // 1. Client-side SignUp
+            const supabase = createClient();
+            const { error: signUpError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: name,
+                    },
+                    emailRedirectTo: undefined, // No link, using OTP
+                },
+            });
+
+            if (signUpError) {
+                if (signUpError.message.includes("already registered")) {
+                    throw new Error("このメールアドレスは既に登録されています");
+                }
+                throw new Error("登録に失敗しました: " + signUpError.message);
+            }
+
+            // 2. Save form data to localStorage for the next step (profile creation)
+            const formObj: Record<string, string> = {};
+            formData.forEach((value, key) => {
+                formObj[key] = value as string;
+            });
+            localStorage.setItem("worker_reg_data", JSON.stringify(formObj));
+
+            // 3. Redirect to Verify Page
+            router.push(`/register/verify?email=${encodeURIComponent(email)}`);
+
+        } catch (err: any) {
+            console.error("Registration error:", err);
+            setError(err.message || "予期しないエラーが発生しました");
+        } finally {
             setIsLoading(false);
         }
     };
-
-    if (isSuccess) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Loader2 className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-slate-900 mb-4">登録を受け付けました</h1>
-                    <p className="text-slate-600 mb-8 leading-relaxed">
-                        ご登録いただいたメールアドレスに確認メールを送信しました。<br />
-                        メール内のリンクをクリックして、登録を完了してください。
-                    </p>
-                    <Link
-                        href="/login"
-                        className="block w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
-                    >
-                        ログインページへ戻る
-                    </Link>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -213,7 +229,7 @@ export default function RegisterPage() {
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>
-                                送信
+                                次へ
                                 <ArrowRight className="w-4 h-4" />
                             </>
                         )}
