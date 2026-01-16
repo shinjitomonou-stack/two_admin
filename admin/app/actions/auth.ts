@@ -60,7 +60,8 @@ export async function resetPasswordRequest(formData: FormData) {
     const supabase = await createClient();
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://admin-liart-nine.vercel.app";
-    const redirectTo = `${siteUrl}/update-password`;
+    // Redirect to /auth/callback which will handle the code exchange and then redirect to /update-password
+    const redirectTo = `${siteUrl}/auth/callback?next=/update-password`;
 
     console.log("Password reset redirectTo:", redirectTo);
 

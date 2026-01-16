@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // Protected routes logic
-    const publicPaths = ["/login", "/forgot-password", "/update-password"];
+    const publicPaths = ["/login", "/forgot-password", "/update-password", "/auth/callback"];
     const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
 
     // If not logged in and not on a public page, redirect to login
