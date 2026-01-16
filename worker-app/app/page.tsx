@@ -10,7 +10,8 @@ export default async function Home() {
   const supabase = await createClient();
 
   // Get authenticated user from Supabase Auth
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
   const workerId = user?.id;
 
   // Check for unsigned contract if logged in

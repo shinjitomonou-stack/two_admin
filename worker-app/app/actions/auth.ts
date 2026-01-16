@@ -5,97 +5,104 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function registerWorker(formData: FormData) {
-    const name = formData.get("name") as string;
-    const name_kana = formData.get("name_kana") as string;
-    const line_name = formData.get("line_name") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const phone = formData.get("phone") as string;
-    const postal_code = formData.get("postal_code") as string;
-    const address = formData.get("address") as string;
-    const gender = formData.get("gender") as string;
+    try {
+        console.log("registerWorker: Starting registration for", formData.get("email"));
+        const name = formData.get("name") as string;
+        const name_kana = formData.get("name_kana") as string;
+        const line_name = formData.get("line_name") as string;
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+        const phone = formData.get("phone") as string;
+        const postal_code = formData.get("postal_code") as string;
+        const address = formData.get("address") as string;
+        const gender = formData.get("gender") as string;
 
-    // Handle date construction
-    const birth_year = formData.get("birth_year") as string;
-    const birth_month = formData.get("birth_month") as string;
-    const birth_day = formData.get("birth_day") as string;
-    let birth_date = null;
-    if (birth_year && birth_month && birth_day) {
-        birth_date = `${birth_year}-${birth_month.padStart(2, '0')}-${birth_day.padStart(2, '0')}`;
-    }
+        // Handle date construction
+        const birth_year = formData.get("birth_year") as string;
+        const birth_month = formData.get("birth_month") as string;
+        const birth_day = formData.get("birth_day") as string;
+        let birth_date = null;
+        if (birth_year && birth_month && birth_day) {
+            birth_date = `${birth_year}-${birth_month.padStart(2, '0')}-${birth_day.padStart(2, '0')}`;
+        }
 
-    if (!name || !email || !password || !name_kana || !phone || !address || !gender || !birth_date) {
-        return { error: "必須項目が入力されていません" };
-    }
+        if (!name || !email || !password || !name_kana || !phone || !address || !gender || !birth_date) {
+            return { error: "必須項目が入力されていません" };
+        }
 
-    if (password.length < 8) {
-        return { error: "パスワードは8文字以上で入力してください" };
-    }
+        const supabase = await createClient();
+        console.log("registerWorker: Checking existing user");
 
-    const supabase = await createClient();
+        // Check if email already exists
+        const { data: existingUser, error: checkError } = await supabase
+            .from("workers")
+            .select("id")
+            .eq("email", email)
+            .maybeSingle();
 
-    // Check if email already exists
-    const { data: existingUser } = await supabase
-        .from("workers")
-        .select("id")
-        .eq("email", email)
-        .single();
+        if (checkError) {
+            console.error("registerWorker: Error checking existing user:", checkError);
+        }
 
-    if (existingUser) {
-        return { error: "このメールアドレスは既に登録されています" };
-    }
+        if (existingUser) {
+            return { error: "このメールアドレスは既に登録されています" };
+        }
 
-    // Create user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
-                full_name: name,
+        console.log("registerWorker: Calling signUp");
+        // Create user with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: name,
+                },
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
             },
-        },
-    });
+        });
 
-    if (authError) {
-        console.error("Auth signup error:", authError);
-        return { error: "登録に失敗しました: " + authError.message };
+        if (authError) {
+            console.error("registerWorker: Auth signup error:", authError);
+            return { error: "登録に失敗しました: " + authError.message };
+        }
+
+        if (!authData.user) {
+            return { error: "ユーザーの作成に失敗しました" };
+        }
+
+        console.log("registerWorker: Creating worker record in DB");
+        const supabaseAdmin = await createAdminClient();
+        const { error: workerError } = await supabaseAdmin
+            .from("workers")
+            .insert([
+                {
+                    id: authData.user.id,
+                    full_name: name,
+                    name_kana: name_kana,
+                    line_name: line_name,
+                    email: email,
+                    phone: phone,
+                    postal_code: postal_code,
+                    address: address,
+                    gender: gender,
+                    birth_date: birth_date,
+                    rank: "Bronze",
+                },
+            ]);
+
+        if (workerError) {
+            console.error("registerWorker: Worker creation error:", workerError);
+            await supabaseAdmin.auth.admin.deleteUser(authData.user.id).catch(e => console.error("Cleanup failed:", e));
+            return { error: "登録に失敗しました: " + workerError.message };
+        }
+
+        console.log("registerWorker: Success, revalidating path");
+        revalidatePath("/");
+        return { success: true };
+    } catch (err: any) {
+        console.error("registerWorker: Unexpected server exception:", err);
+        return { error: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。(" + (err.message || "Unknown error") + ")" };
     }
-
-    if (!authData.user) {
-        return { error: "ユーザーの作成に失敗しました" };
-    }
-
-    // Create worker record with the same ID as auth user
-    // Use admin client to bypass RLS during registration if needed, 
-    // and to ensure the record is created even if the session isn't propagated.
-    const supabaseAdmin = await createAdminClient();
-    const { error: workerError } = await supabaseAdmin
-        .from("workers")
-        .insert([
-            {
-                id: authData.user.id, // Use auth user ID
-                full_name: name,
-                name_kana: name_kana,
-                line_name: line_name,
-                email: email,
-                phone: phone,
-                postal_code: postal_code,
-                address: address,
-                gender: gender,
-                birth_date: birth_date,
-                rank: "Bronze",
-            },
-        ]);
-
-    if (workerError) {
-        console.error("Worker creation error:", workerError);
-        // Cleanup: delete auth user if worker creation fails
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-        return { error: "登録に失敗しました: " + workerError.message };
-    }
-
-    revalidatePath("/");
-    return { success: true };
 }
 
 export async function loginWorker(formData: FormData) {

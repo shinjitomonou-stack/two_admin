@@ -46,9 +46,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // Refresh session if expired
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
 
     // Protected routes - require authentication
     const protectedPaths = ["/profile", "/applications"];
