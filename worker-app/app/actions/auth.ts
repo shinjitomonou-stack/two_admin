@@ -31,7 +31,7 @@ export async function registerWorker(formData: FormData) {
         }
 
         const supabase = await createClient();
-        console.log("registerWorker: Checking existing user");
+        console.log("registerWorker: [STEP 1] Checking existing user (using anon key)");
 
         // Check if email already exists
         const { data: existingUser, error: checkError } = await supabase
@@ -41,14 +41,17 @@ export async function registerWorker(formData: FormData) {
             .maybeSingle();
 
         if (checkError) {
-            console.error("registerWorker: Error checking existing user:", checkError);
+            console.error("registerWorker: [STEP 1 ERROR] Check existing user failed:", checkError);
+            if (checkError.message.includes("API key")) {
+                return { error: "登録に失敗しました: システム設定エラー(Anon Keyが無効です)" };
+            }
         }
 
         if (existingUser) {
             return { error: "このメールアドレスは既に登録されています" };
         }
 
-        console.log("registerWorker: Calling signUp");
+        console.log("registerWorker: [STEP 2] Calling signUp (using anon key)");
         // Create user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
@@ -62,7 +65,10 @@ export async function registerWorker(formData: FormData) {
         });
 
         if (authError) {
-            console.error("registerWorker: Auth signup error:", authError);
+            console.error("registerWorker: [STEP 2 ERROR] Auth signup failed:", authError);
+            if (authError.message.includes("API key")) {
+                return { error: "登録に失敗しました: システム設定エラー(Anon Keyが無効です)" };
+            }
             return { error: "登録に失敗しました: " + authError.message };
         }
 
@@ -70,7 +76,7 @@ export async function registerWorker(formData: FormData) {
             return { error: "ユーザーの作成に失敗しました" };
         }
 
-        console.log("registerWorker: Creating worker record in DB");
+        console.log("registerWorker: [STEP 3] Creating worker record in DB (using service role key)");
         const supabaseAdmin = await createAdminClient();
         const { error: workerError } = await supabaseAdmin
             .from("workers")
@@ -91,8 +97,11 @@ export async function registerWorker(formData: FormData) {
             ]);
 
         if (workerError) {
-            console.error("registerWorker: Worker creation error:", workerError);
+            console.error("registerWorker: [STEP 3 ERROR] Worker record creation failed:", workerError);
             await supabaseAdmin.auth.admin.deleteUser(authData.user.id).catch(e => console.error("Cleanup failed:", e));
+            if (workerError.message.includes("API key")) {
+                return { error: "登録に失敗しました: システム設定エラー(Service Role Keyが無効です)" };
+            }
             return { error: "登録に失敗しました: " + workerError.message };
         }
 
