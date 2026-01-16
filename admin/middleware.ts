@@ -37,15 +37,16 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // Protected routes logic
-    const isLoginPage = request.nextUrl.pathname === "/login";
+    const publicPaths = ["/login", "/forgot-password", "/update-password"];
+    const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
 
-    // If not logged in and not on login page, redirect to login
-    if (!user && !isLoginPage) {
+    // If not logged in and not on a public page, redirect to login
+    if (!user && !isPublicPath) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // If logged in and on login page, redirect to dashboard
-    if (user && isLoginPage) {
+    // If logged in and on a public page, redirect to dashboard
+    if (user && isPublicPath) {
         return NextResponse.redirect(new URL("/", request.url));
     }
 
