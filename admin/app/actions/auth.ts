@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function login(formData: FormData) {
     const email = formData.get("email") as string;
@@ -59,11 +60,15 @@ export async function resetPasswordRequest(formData: FormData) {
 
     const supabase = await createClient();
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://admin-liart-nine.vercel.app";
+    const headersList = await headers();
+    const host = headersList.get("host");
+    const protocol = host?.includes("localhost") ? "http" : "https";
+    const siteUrl = `${protocol}://${host}`;
+
     // Redirect to /auth/callback which will handle the code exchange and then redirect to /update-password
     const redirectTo = `${siteUrl}/auth/callback?next=/update-password`;
 
-    console.log("Password reset redirectTo:", redirectTo);
+    console.log("Password reset redirectTo (dynamic):", redirectTo);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
