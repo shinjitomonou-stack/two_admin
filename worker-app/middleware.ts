@@ -29,6 +29,22 @@ export async function middleware(request: NextRequest) {
         }
     );
 
+    // [Safety Bridge] If an auth code hits the worker root path, it's likely a fallback from Supabase
+    // because the 'Site URL' is set to this domain. Redirect it to the admin application.
+    const hasAuthCode = request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash");
+    if (hasAuthCode && request.nextUrl.pathname === "/") {
+        const adminCallbackUrl = new URL("https://admin-liart-nine.vercel.app/auth/callback");
+        request.nextUrl.searchParams.forEach((value, key) => {
+            adminCallbackUrl.searchParams.set(key, value);
+        });
+        // Default to /update-password if no 'next' is present
+        if (!adminCallbackUrl.searchParams.has("next")) {
+            adminCallbackUrl.searchParams.set("next", "/update-password");
+        }
+        console.log("Worker Middleware: Redirecting auth code bridge to Admin App");
+        return NextResponse.redirect(adminCallbackUrl);
+    }
+
     // Refresh session if expired
     const {
         data: { user },

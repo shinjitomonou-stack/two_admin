@@ -38,6 +38,24 @@ export async function middleware(request: NextRequest) {
     const publicPaths = ["/login", "/forgot-password", "/update-password", "/auth/callback"];
     const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
 
+    // [Safety Net] If the URL contains an auth code but we are not on the callback route,
+    // redirect to /auth/callback to process the login.
+    // This handles cases where Supabase redirects to the root due to misconfiguration.
+    const hasAuthCode = request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash");
+    if (hasAuthCode && request.nextUrl.pathname !== "/auth/callback") {
+        const callbackUrl = new URL("/auth/callback", request.url);
+        // Copy all search params
+        request.nextUrl.searchParams.forEach((value, key) => {
+            callbackUrl.searchParams.set(key, value);
+        });
+        // If 'next' is not present, default to /update-password for recovery type
+        if (!callbackUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
+            callbackUrl.searchParams.set("next", "/update-password");
+        }
+        console.log("Middleware: Auth code detected on non-callback path. Redirecting to /auth/callback");
+        return NextResponse.redirect(callbackUrl);
+    }
+
     // If not logged in and not on a public page, redirect to login
     if (!user && !isPublicPath) {
         return NextResponse.redirect(new URL("/login", request.url));

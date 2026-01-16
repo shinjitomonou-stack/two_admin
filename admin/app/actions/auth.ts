@@ -60,15 +60,15 @@ export async function resetPasswordRequest(formData: FormData) {
 
     const supabase = await createClient();
 
-    const headersList = await headers();
-    const host = headersList.get("host");
-    const protocol = host?.includes("localhost") ? "http" : "https";
-    const siteUrl = `${protocol}://${host}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://admin-liart-nine.vercel.app";
+
+    // Ensure no trailing slash
+    const baseSiteUrl = siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;
 
     // Redirect to /auth/callback which will handle the code exchange and then redirect to /update-password
-    const redirectTo = `${siteUrl}/auth/callback?next=/update-password`;
+    const redirectTo = `${baseSiteUrl}/auth/callback?next=/update-password`;
 
-    console.log("Password reset redirectTo (dynamic):", redirectTo);
+    console.log("Password reset redirectTo:", redirectTo);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
