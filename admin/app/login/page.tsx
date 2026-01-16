@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { login } from "@/app/actions/auth";
-import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function AdminLoginPage() {
+function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const isPasswordUpdated = searchParams.get("password_updated") === "true";
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
@@ -32,6 +36,13 @@ export default function AdminLoginPage() {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                    {isPasswordUpdated && (
+                        <div className="mb-6 p-4 bg-green-50 border border-green-100 text-green-700 text-sm rounded-lg flex items-start gap-2">
+                            <CheckCircle2 className="w-5 h-5 shrink-0" />
+                            <span>パスワードを更新しました。新しいパスワードでログインしてください。</span>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg flex items-start gap-2">
                             <AlertCircle className="w-5 h-5 shrink-0" />
@@ -78,8 +89,29 @@ export default function AdminLoginPage() {
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-6 text-center">
+                        <Link
+                            href="/forgot-password"
+                            className="text-sm text-primary hover:underline font-medium"
+                        >
+                            パスワードをお忘れですか？
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AdminLoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     );
 }
