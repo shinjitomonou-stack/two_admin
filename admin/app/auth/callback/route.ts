@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get("code");
     const next = requestUrl.searchParams.get("next") ?? "/";
 
+    console.log("Auth callback called with URL:", request.url);
+
     if (code) {
         const cookieStore = await cookies();
         const supabase = createServerClient(
@@ -34,8 +36,12 @@ export async function GET(request: NextRequest) {
 
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
+            console.log("Auth session exchanged successfully. Redirecting to:", next);
             return NextResponse.redirect(new URL(next, request.url));
         }
+        console.error("Auth session exchange error:", error);
+    } else {
+        console.warn("No code found in auth callback URL. Search params:", requestUrl.searchParams.toString());
     }
 
     // Return the user to an error page with some instructions
