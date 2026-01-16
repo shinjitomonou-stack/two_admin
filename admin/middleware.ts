@@ -17,12 +17,10 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        request.cookies.set(name, value)
-                    );
-                    response = NextResponse.next({
-                        request,
-                    });
+                    // The original logic was setting cookies on the request and then on the response.
+                    // To ensure cookies are correctly set for the response, we should only set them on the response object.
+                    // The `response` object is created outside this `setAll` function, so we need to ensure it's the one being modified.
+                    // The `createServerClient` expects `setAll` to modify the response object that will be returned.
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     );
@@ -46,7 +44,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // If logged in and on a public page, redirect to dashboard
-    if (user && isPublicPath) {
+    // Exception: Allow access to /update-password even if logged in (for forgot password flow)
+    if (user && isPublicPath && request.nextUrl.pathname !== "/update-password") {
         return NextResponse.redirect(new URL("/", request.url));
     }
 
