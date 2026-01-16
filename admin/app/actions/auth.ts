@@ -95,7 +95,7 @@ export async function updatePassword(formData: FormData) {
 
     if (error) {
         console.error("Password update error:", error);
-        return { error: "パスワードの更新に失敗しました" };
+        return { error: "パスワードの更新に失敗しました: " + error.message };
     }
 
     revalidatePath("/");
