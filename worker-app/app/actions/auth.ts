@@ -60,7 +60,6 @@ export async function registerWorker(formData: FormData) {
                 data: {
                     full_name: name,
                 },
-                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
             },
         });
 
