@@ -29,43 +29,49 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    // Refresh session if expired
+    // 1. [Safety Net] Handle auth code redirection before anything else
+    const hasAuthCode = request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash");
+    if (hasAuthCode && request.nextUrl.pathname !== "/auth/callback") {
+        const callbackUrl = new URL("/auth/callback", request.url);
+        request.nextUrl.searchParams.forEach((value, key) => {
+            callbackUrl.searchParams.set(key, value);
+        });
+        if (!callbackUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
+            callbackUrl.searchParams.set("next", "/update-password");
+        }
+        console.log(`Middleware: Redirecting auth code from ${request.nextUrl.pathname} to /auth/callback`);
+        return NextResponse.redirect(callbackUrl);
+    }
+
+    // 2. Public paths check
+    const publicPaths = ["/login", "/forgot-password", "/update-password", "/auth/callback"];
+    const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
+
+    // 3. Skip session refresh for public pages - especially /auth/callback to avoid PKCE interference
+    if (isPublicPath) {
+        if (request.nextUrl.pathname === "/auth/callback") {
+            const verifier = request.cookies.get("sb-mfxwslhcnpzujobobnxj-auth-token-code-verifier");
+            console.log(`Middleware: Entering callback route. PKCE verifier present: ${!!verifier}`);
+        }
+        return response;
+    }
+
+    // 4. Refresh session for protected routes
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Protected routes logic
-    const publicPaths = ["/login", "/forgot-password", "/update-password", "/auth/callback"];
-    const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
-
-    // [Safety Net] If the URL contains an auth code but we are not on the callback route,
-    // redirect to /auth/callback to process the login.
-    // This handles cases where Supabase redirects to the root due to misconfiguration.
-    const hasAuthCode = request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash");
-    if (hasAuthCode && request.nextUrl.pathname !== "/auth/callback") {
-        const callbackUrl = new URL("/auth/callback", request.url);
-        // Copy all search params
-        request.nextUrl.searchParams.forEach((value, key) => {
-            callbackUrl.searchParams.set(key, value);
-        });
-        // If 'next' is not present, default to /update-password for recovery type
-        if (!callbackUrl.searchParams.has("next") && request.nextUrl.searchParams.get("type") === "recovery") {
-            callbackUrl.searchParams.set("next", "/update-password");
-        }
-        console.log("Middleware: Auth code detected on non-callback path. Redirecting to /auth/callback");
-        return NextResponse.redirect(callbackUrl);
-    }
-
-    // If not logged in and not on a public page, redirect to login
-    if (!user && !isPublicPath) {
+    // 5. Protected routes logic
+    if (!user) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // If logged in and on a public page, redirect to dashboard
-    // Exception: Allow access to /update-password even if logged in (for forgot password flow)
-    if (user && isPublicPath && request.nextUrl.pathname !== "/update-password") {
-        return NextResponse.redirect(new URL("/", request.url));
-    }
+    // If logged in and on a public page (but we already handled public pages above, 
+    // this part only runs if we didn't return 'response' in step 3. 
+    // Since Step 3 handles ALL public paths, this part is technically unreachable 
+    // for non-authenticated public paths.)
+
+    return response;
 
     return response;
 }

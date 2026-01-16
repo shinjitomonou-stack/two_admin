@@ -10,6 +10,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`Auth callback: code=${!!code}, token_hash=${!!token_hash}, type=${type}, next=${next}`);
 
+    // Log all sb- cookies for debugging
+    const cookieHeader = request.headers.get("cookie");
+    const sbCookies = cookieHeader?.split(';').filter(c => c.trim().startsWith('sb-'));
+    console.log("Auth callback cookies (sb-*):", sbCookies);
+
     const supabase = await createClient();
 
     if (code) {
