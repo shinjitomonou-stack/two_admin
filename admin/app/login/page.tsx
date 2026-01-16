@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { login } from "@/app/actions/auth";
 import { Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
@@ -13,15 +13,13 @@ function LoginForm() {
     const isPasswordUpdated = searchParams.get("password_updated") === "true";
 
     // Check for auth callback errors
-    const [hasCheckedParams, setHasCheckedParams] = useState(false);
-    if (!hasCheckedParams) {
+    useEffect(() => {
         const authError = searchParams.get("error");
         const authMessage = searchParams.get("message");
         if (authError) {
             setError(`認証エラー: ${authMessage || "認証の処理に失敗しました"}`);
         }
-        setHasCheckedParams(true);
-    }
+    }, [searchParams]);
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
