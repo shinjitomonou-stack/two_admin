@@ -12,6 +12,17 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const isPasswordUpdated = searchParams.get("password_updated") === "true";
 
+    // Check for auth callback errors
+    const [hasCheckedParams, setHasCheckedParams] = useState(false);
+    if (!hasCheckedParams) {
+        const authError = searchParams.get("error");
+        const authMessage = searchParams.get("message");
+        if (authError) {
+            setError(`認証エラー: ${authMessage || "認証の処理に失敗しました"}`);
+        }
+        setHasCheckedParams(true);
+    }
+
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
         setError(null);
