@@ -5,40 +5,67 @@ import { CalendarWithStats } from "@/components/CalendarWithStats";
 export default async function CalendarPage() {
     const supabase = await createClient();
 
-    // Fetch all job applications with their schedules
-    const { data: applications, error } = await supabase
-        .from("job_applications")
+    // Fetch all jobs with their applications
+    const { data: jobs, error } = await supabase
+        .from("jobs")
         .select(`
             id,
-            scheduled_work_start,
-            scheduled_work_end,
+            title,
             status,
-            job:jobs(id, title, status, billing_amount, reward_amount),
-            worker:workers(full_name)
+            billing_amount,
+            reward_amount,
+            start_time,
+            end_time,
+            job_applications(
+                id,
+                scheduled_work_start,
+                scheduled_work_end,
+                status,
+                workers(full_name)
+            )
         `)
-        .not("scheduled_work_start", "is", null)
-        .order("scheduled_work_start", { ascending: true });
+        .order("start_time", { ascending: true });
 
     if (error) {
-        console.error("Error fetching applications:", error);
+        console.error("Error fetching jobs:", error);
     }
 
     // Transform data to match Calendar component interface
-    const calendarJobs = (applications || []).map((app) => {
-        const job = Array.isArray(app.job) ? app.job[0] : app.job;
-        const worker = Array.isArray(app.worker) ? app.worker[0] : app.worker;
+    const calendarJobs: any[] = [];
 
-        return {
-            id: job?.id || app.id,
-            title: job?.title || "案件名不明",
-            status: job?.status || "OPEN",
-            scheduled_work_start: app.scheduled_work_start,
-            scheduled_work_end: app.scheduled_work_end,
-            worker: worker,
-            client: { name: "" },
-            billing_amount: Math.round(Number(job?.billing_amount) || 0),
-            payment_amount: Math.round(Number(job?.reward_amount) || 0),
-        };
+    (jobs || []).forEach((job) => {
+        const applications = (job.job_applications || []).filter(app => app.scheduled_work_start);
+
+        if (applications.length > 0) {
+            // If there are applications with schedules, add each as an event
+            applications.forEach(app => {
+                const worker = Array.isArray(app.workers) ? app.workers[0] : app.workers;
+                calendarJobs.push({
+                    id: `${job.id}-${app.id}`,
+                    title: job.title,
+                    status: job.status,
+                    scheduled_work_start: app.scheduled_work_start,
+                    scheduled_work_end: app.scheduled_work_end,
+                    worker: worker,
+                    client: { name: "" },
+                    billing_amount: Math.round(Number(job.billing_amount) || 0),
+                    payment_amount: Math.round(Number(job.reward_amount) || 0),
+                });
+            });
+        } else {
+            // No scheduled applications, show the job itself using fallback dates
+            calendarJobs.push({
+                id: job.id,
+                title: job.title,
+                status: job.status,
+                scheduled_work_start: job.start_time,
+                scheduled_work_end: job.end_time,
+                worker: null,
+                client: { name: "" },
+                billing_amount: Math.round(Number(job.billing_amount) || 0),
+                payment_amount: Math.round(Number(job.reward_amount) || 0),
+            });
+        }
     });
 
     return (
