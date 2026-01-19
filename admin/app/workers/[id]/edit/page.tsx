@@ -16,6 +16,7 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
     const [id, setId] = useState<string | null>(null);
+    const [tagInput, setTagInput] = useState("");
 
     const [formData, setFormData] = useState({
         full_name: "",
@@ -66,6 +67,7 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                     tags: data.tags || [],
                     is_verified: data.is_verified || false,
                 });
+                setTagInput((data.tags || []).join(", "));
             }
             setIsFetching(false);
         };
@@ -94,6 +96,12 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleTagBlur = () => {
+        const tags = tagInput.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+        setFormData(prev => ({ ...prev, tags }));
+        setTagInput(tags.join(", "));
     };
 
     if (isFetching) {
@@ -245,8 +253,9 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                             <input
                                 type="text"
                                 placeholder="例: 早朝対応可, 運転免許, 経験者"
-                                value={formData.tags.join(", ")}
-                                onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(/[,，]/).map(s => s.trim()).filter(Boolean) })}
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onBlur={handleTagBlur}
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             />
                             <p className="text-[10px] text-slate-400">複数のタグを入力する場合はカンマ（,）で区切ってください。</p>
