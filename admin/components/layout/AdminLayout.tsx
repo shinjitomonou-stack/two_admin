@@ -127,7 +127,7 @@ function AdminLayoutContent({
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="h-16 flex items-center px-6 border-b border-primary-foreground/10">
-                    <h1 className="text-xl font-extrabold tracking-tight text-primary-foreground">Teo Admin</h1>
+                    <img src="/header-logo.png" alt="Teo Admin" className="h-8 w-auto" />
                 </div>
 
                 <div className="flex flex-col h-[calc(100vh-4rem)]">
