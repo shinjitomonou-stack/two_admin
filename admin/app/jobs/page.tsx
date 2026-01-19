@@ -1,7 +1,11 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Plus, MapPin, Calendar, Eye, Edit, Users } from "lucide-react";
+import { Plus, MapPin, Calendar, Eye, Edit, Users, Copy, Trash2, Loader2 } from "lucide-react";
+import { deleteJob, duplicateJob } from "@/app/actions/job";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { JobFilters, FilterState } from "@/components/JobFilters";
@@ -59,6 +63,8 @@ export default function JobsPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const router = useRouter();
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
     useEffect(() => {
@@ -177,6 +183,44 @@ export default function JobsPage() {
         const endIndex = startIndex + ITEMS_PER_PAGE;
         setPaginatedJobs(filteredJobs.slice(startIndex, endIndex));
     }, [filteredJobs, currentPage]);
+
+    const handleDuplicate = async (id: string) => {
+        if (!confirm("この案件を複製しますか？")) return;
+        setProcessingId(id);
+        try {
+            const result = await duplicateJob(id);
+            if (result.success) {
+                toast.success("案件を複製しました");
+                router.push(`/jobs/${result.data.id}/edit`);
+            } else {
+                toast.error("案件の複製に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("本当にこの案件を削除しますか？\nこの操作は取り消せません。")) return;
+        setProcessingId(id);
+        try {
+            const result = await deleteJob(id);
+            if (result.success) {
+                toast.success("案件を削除しました");
+                fetchData();
+            } else {
+                toast.error("案件の削除に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setProcessingId(null);
+        }
+    };
 
     if (loading) {
         return (
@@ -375,20 +419,22 @@ export default function JobsPage() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link
-                                                        href={`/jobs/${job.id}`}
-                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600"
-                                                        title="詳細"
+                                                    <button
+                                                        onClick={() => handleDuplicate(job.id)}
+                                                        disabled={processingId === job.id}
+                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600 disabled:opacity-50"
+                                                        title="複製"
                                                     >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Link>
-                                                    <Link
-                                                        href={`/jobs/${job.id}/edit?returnTo=/jobs`}
-                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-green-600"
-                                                        title="編集"
+                                                        {processingId === job.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(job.id)}
+                                                        disabled={processingId === job.id}
+                                                        className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-red-600 disabled:opacity-50"
+                                                        title="削除"
                                                     >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>

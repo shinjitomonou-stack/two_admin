@@ -49,6 +49,69 @@ export async function updateJob(id: string, payload: any) {
     }
 }
 
+export async function deleteJob(id: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        // In a real application, you might want to handle dependent records 
+        // (applications, contracts) based on business rules.
+        // For now, we perform a direct deletion.
+        const { error } = await supabase
+            .from("jobs")
+            .delete()
+            .eq("id", id);
+
+        if (error) throw error;
+
+        revalidatePath("/jobs");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting job:", error);
+        return { success: false, error };
+    }
+}
+
+export async function duplicateJob(id: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        // Fetch existing job
+        const { data: job, error: fetchError } = await supabase
+            .from("jobs")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Prepare new job payload (removing unique/auto-generated fields)
+        const { id: _, created_at: __, ...rest } = job;
+        const payload = {
+            ...rest,
+            title: `${job.title} (コピー)`,
+            status: "DRAFT", // Reset to draft for safety
+        };
+
+        const { data, error: insertError } = await supabase
+            .from("jobs")
+            .insert(payload)
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        revalidatePath("/jobs");
+        revalidatePath("/");
+        return { success: true, data };
+    } catch (error) {
+        console.error("Error duplicating job:", error);
+        return { success: false, error };
+    }
+}
+
 export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true) {
     await verifyAdmin();
     const supabase = await createClient();

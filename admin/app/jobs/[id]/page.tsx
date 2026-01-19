@@ -7,6 +7,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { ApplicationList } from "@/components/ApplicationList";
 import { JobStatusSelect } from "@/components/JobStatusSelect";
 import { LinkExistingContractButton } from "@/components/LinkExistingContractButton";
+import { JobDetailActions } from "@/components/JobDetailActions";
 
 const STATUS_STYLES = {
     APPLIED: "bg-blue-100 text-blue-700",
@@ -100,15 +101,7 @@ export default async function JobDetailPage({
                             <span>ID: {job.id}</span>
                         </div>
                     </div>
-                    <div>
-                        <Link
-                            href={`/jobs/${job.id}/edit?returnTo=/jobs/${job.id}`}
-                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
-                        >
-                            <Edit className="w-4 h-4" />
-                            編集する
-                        </Link>
-                    </div>
+                    <JobDetailActions jobId={job.id} />
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-3">
