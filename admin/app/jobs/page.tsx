@@ -292,10 +292,10 @@ export default function JobsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="space-y-1 text-xs">
-                                                    {earliestScheduled && (
+                                                    {(earliestScheduled || !earliestActual) && (
                                                         <div className="flex items-center gap-1 text-slate-600">
                                                             <Calendar className="w-3 h-3" />
-                                                            <span>予定: {formatDate(earliestScheduled.toISOString())}</span>
+                                                            <span>予定: {formatDate(earliestScheduled ? earliestScheduled.toISOString() : job.start_time)}</span>
                                                         </div>
                                                     )}
                                                     {earliestActual && (
@@ -303,9 +303,6 @@ export default function JobsPage() {
                                                             <Calendar className="w-3 h-3" />
                                                             <span>実施: {formatDate(earliestActual.toISOString())}</span>
                                                         </div>
-                                                    )}
-                                                    {!earliestScheduled && !earliestActual && (
-                                                        <span className="text-slate-400">未設定</span>
                                                     )}
                                                 </div>
                                             </td>
