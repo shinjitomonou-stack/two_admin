@@ -10,6 +10,14 @@ interface PaymentData {
     worker_name: string;
     total_payment: number;
     job_count: number;
+    bank_account?: {
+        bank_name?: string;
+        branch_name?: string;
+        account_type?: string;
+        account_number?: string;
+        account_holder_name?: string;
+        account_holder_name_kana?: string;
+    } | null;
 }
 
 export default function WorkerPaymentPage() {
@@ -46,7 +54,7 @@ export default function WorkerPaymentPage() {
 
         const { data: jobs, error: jobsError } = await supabase
             .from('jobs')
-            .select('id, title, reward_amount, end_time, is_flexible, work_period_end, status, job_applications(worker_id, status, workers(full_name), actual_work_start, scheduled_work_start)')
+            .select('id, title, reward_amount, end_time, is_flexible, work_period_end, status, job_applications(worker_id, status, workers(full_name, bank_account), actual_work_start, scheduled_work_start)')
             .eq('status', 'COMPLETED')
             .gte('end_time', queryStartDate)
             .lte('end_time', queryEndDate);
@@ -83,6 +91,7 @@ export default function WorkerPaymentPage() {
                         worker_name: app.workers?.full_name || '',
                         total_payment: 0,
                         job_count: 0,
+                        bank_account: app.workers?.bank_account,
                     });
                 }
                 const data = workerMap.get(workerId)!;
@@ -147,9 +156,27 @@ export default function WorkerPaymentPage() {
     };
 
     const exportToCSV = () => {
-        const headers = ['ワーカー名', '案件数', '支払金額(税抜)', '消費税(10%)', '税込合計'];
+        const headers = [
+            'ワーカー名',
+            '金融機関名',
+            '支店名',
+            '口座種別',
+            '口座番号',
+            '口座名義人',
+            '口座名義人(カナ)',
+            '案件数',
+            '支払金額(税抜)',
+            '消費税(10%)',
+            '税込合計'
+        ];
         const rows = paymentData.map(data => [
             data.worker_name,
+            data.bank_account?.bank_name || '',
+            data.bank_account?.branch_name || '',
+            data.bank_account?.account_type || '',
+            data.bank_account?.account_number || '',
+            data.bank_account?.account_holder_name || '',
+            data.bank_account?.account_holder_name_kana || '',
             data.job_count,
             data.total_payment,
             Math.round(data.total_payment * 0.1),
