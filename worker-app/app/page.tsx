@@ -554,6 +554,7 @@ id,
           <section className="bg-white rounded-xl border border-slate-200 p-4">
             <h2 className="font-bold text-slate-900 mb-4 text-sm">クイックアクション</h2>
             <div className="grid grid-cols-2 gap-3">
+              {/* Hidden for Phase 1
               <Link
                 href="/jobs"
                 className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -561,6 +562,7 @@ id,
                 <Search className="w-6 h-6 text-blue-600" />
                 <span className="text-xs font-medium text-slate-700">案件を探す</span>
               </Link>
+              */}
               <Link
                 href="/applications"
                 className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -717,8 +719,8 @@ id,
           </section>
         )}
 
-        {/* New Jobs */}
-        <section>
+        {/* New Jobs - Hidden for Phase 1 */}
+        {/* <section>
           <h2 className="font-bold text-slate-900 mb-4">新着の案件</h2>
           <div className="space-y-4">
             {jobs?.map((job) => (
@@ -730,7 +732,7 @@ id,
               </p>
             )}
           </div>
-        </section>
+        </section> */}
       </main>
     </div >
   );
