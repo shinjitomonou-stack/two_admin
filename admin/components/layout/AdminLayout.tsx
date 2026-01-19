@@ -126,8 +126,8 @@ function AdminLayoutContent({
                 "fixed inset-y-0 left-0 z-50 w-64 bg-primary border-r border-primary/20 transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-lg",
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                <div className="h-16 flex items-center px-6 border-b border-primary-foreground/10">
-                    <img src="/header-logo.png" alt="Teo Admin" className="h-8 w-auto" />
+                <div className="h-24 flex items-center justify-center border-b border-primary-foreground/10 mb-4 px-6">
+                    <img src="/header-logo.png" alt="Teo Admin" className="h-10 w-auto object-contain" />
                 </div>
 
                 <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -152,9 +152,9 @@ function AdminLayoutContent({
                                             <button
                                                 onClick={() => toggleExpanded(item.href)}
                                                 className={cn(
-                                                    "flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
+                                                    "flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200",
                                                     isActive
-                                                        ? "bg-white text-primary shadow-sm"
+                                                        ? "bg-white text-primary shadow-lg scale-[1.02]"
                                                         : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                                 )}
                                             >
@@ -206,9 +206,9 @@ function AdminLayoutContent({
                                             href={item.href}
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className={cn(
-                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
+                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200",
                                                 isActive
-                                                    ? "bg-white text-primary shadow-sm"
+                                                    ? "bg-white text-primary shadow-lg scale-[1.02]"
                                                     : "text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground"
                                             )}
                                         >
