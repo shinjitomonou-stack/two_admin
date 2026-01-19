@@ -146,9 +146,9 @@ export default function ClientPaymentPage() {
         const headers = ['クライアント/パートナー名', 'スポット支払(都度)', '月額支払(継続)', '合計(税抜)', '消費税(10%)', '税込合計'];
         const rows = paymentData.map(data => [
             data.client_name,
-            data.spot_payment.toLocaleString(),
-            data.recurring_payment.toLocaleString(),
-            data.total_payment.toLocaleString(),
+            Math.round(data.spot_payment).toLocaleString(),
+            Math.round(data.recurring_payment).toLocaleString(),
+            Math.round(data.total_payment).toLocaleString(),
             Math.round(data.total_payment * 0.1).toLocaleString(),
             Math.round(data.total_payment * 1.1).toLocaleString(),
         ]);
@@ -213,15 +213,15 @@ export default function ClientPaymentPage() {
                 <div className="grid md:grid-cols-3 gap-4">
                     <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
                         <div className="text-sm text-muted-foreground mb-1">スポット支払 (都度)</div>
-                        <div className="text-2xl font-bold">¥{totalSpotPayment.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">¥{Math.round(totalSpotPayment).toLocaleString()}</div>
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
                         <div className="text-sm text-muted-foreground mb-1">月額支払 (継続)</div>
-                        <div className="text-2xl font-bold">¥{totalRecurringPayment.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">¥{Math.round(totalRecurringPayment).toLocaleString()}</div>
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
-                        <div className="text-2xl font-bold text-blue-600">¥{grandTotal.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-blue-600">¥{Math.round(grandTotal).toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
                             税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
                         </div>
@@ -265,13 +265,13 @@ export default function ClientPaymentPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                ¥{data.spot_payment.toLocaleString()}
+                                                ¥{Math.round(data.spot_payment).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                ¥{data.recurring_payment.toLocaleString()}
+                                                ¥{Math.round(data.recurring_payment).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right font-medium">
-                                                ¥{data.total_payment.toLocaleString()}
+                                                ¥{Math.round(data.total_payment).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right text-blue-600 font-medium">
                                                 ¥{Math.round(data.total_payment * 1.1).toLocaleString()}
@@ -323,7 +323,7 @@ export default function ClientPaymentPage() {
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div className="font-medium">¥{parseFloat(contract.contract_amount || 0).toLocaleString()}</div>
+                                                    <div className="font-medium">¥{Math.round(parseFloat(contract.contract_amount || 0)).toLocaleString()}</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -336,7 +336,7 @@ export default function ClientPaymentPage() {
                                 <div className="border-t-2 border-slate-900 pt-4 space-y-2">
                                     <div className="flex justify-between text-lg">
                                         <span className="font-medium">税抜合計</span>
-                                        <span className="font-bold">¥{selectedClient.total_payment.toLocaleString()}</span>
+                                        <span className="font-bold">¥{Math.round(selectedClient.total_payment).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>消費税(10%)</span>
