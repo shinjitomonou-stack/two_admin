@@ -97,7 +97,7 @@ function VerifyContent() {
         <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm">
             <h1 className="text-2xl font-bold mb-2 text-center">メール確認</h1>
             <p className="text-sm text-gray-600 mb-6 text-center">
-                {email} 宛に送信された6桁の確認コードを入力してください。
+                {email} 宛に送信された確認コードを入力してください。
             </p>
 
             <form onSubmit={handleVerify} className="space-y-4">
@@ -111,7 +111,6 @@ function VerifyContent() {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         placeholder="123456"
-                        maxLength={6}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
                         required
                     />
