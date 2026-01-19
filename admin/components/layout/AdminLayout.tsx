@@ -49,7 +49,7 @@ const sidebarItems = [
         subItems: [
             { label: "クライアント管理", href: "/clients?trading_type=RECEIVING" },
             { label: "契約管理 (受注)", href: "/clients/contracts?trading_type=RECEIVING" },
-            { label: "請求金額集計", href: "/clients/billing" },
+            { label: "請求金額集計", href: "/clients/billing?trading_type=RECEIVING" },
         ]
     },
     {
@@ -59,7 +59,7 @@ const sidebarItems = [
         subItems: [
             { label: "パートナー管理", href: "/clients?trading_type=PLACING" },
             { label: "契約管理 (発注)", href: "/clients/contracts?trading_type=PLACING" },
-            { label: "支払金額集計", href: "/clients/payment" },
+            { label: "支払金額集計", href: "/clients/payment?trading_type=PLACING" },
         ]
     },
     {
