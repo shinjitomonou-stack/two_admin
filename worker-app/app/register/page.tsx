@@ -34,7 +34,6 @@ export default function RegisterPage() {
                     data: {
                         full_name: name,
                     },
-                    emailRedirectTo: undefined, // No link, using OTP
                 },
             });
 
