@@ -75,15 +75,15 @@ function CreateJobForm() {
 
             // If input is tax-inclusive, convert to exclusive for the base calculation
             if (formData.rewardTaxMode === 'INCL') {
-                unitPrice = Math.ceil(unitPrice / 1.1);
+                unitPrice = Math.ceil((unitPrice / 1.1) * 100) / 100;
             }
-            const rewardTotal = unitPrice * quantity;
+            const rewardTotal = Math.round(unitPrice * quantity);
 
             let billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
             if (formData.billingTaxMode === 'INCL') {
-                billingUnitPrice = Math.ceil(billingUnitPrice / 1.1);
+                billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
             }
-            const billingTotal = billingUnitPrice * quantity;
+            const billingTotal = Math.round(billingUnitPrice * quantity);
 
             setFormData(prev => ({
                 ...prev,
@@ -133,22 +133,22 @@ function CreateJobForm() {
             }
             // Convert to exclusive if inclusive mode was used for fixed reward
             if (formData.rewardType === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                rewardAmount = Math.ceil(rewardAmount / 1.1);
+                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
             }
 
             let billingAmount = formData.billingAmount ? parseFloat(formData.billingAmount) : null;
             if (billingAmount !== null && formData.rewardType === 'FIXED' && formData.billingTaxMode === 'INCL') {
-                billingAmount = Math.ceil(billingAmount / 1.1);
+                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
             }
 
             let rewardUnitPrice = formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null;
             if (rewardUnitPrice !== null && formData.rewardTaxMode === 'INCL') {
-                rewardUnitPrice = Math.ceil(rewardUnitPrice / 1.1);
+                rewardUnitPrice = Math.ceil((rewardUnitPrice / 1.1) * 100) / 100;
             }
 
             let billingUnitPrice = formData.rewardType === 'UNIT' && formData.billingUnitPrice ? parseFloat(formData.billingUnitPrice) : null;
             if (billingUnitPrice !== null && formData.billingTaxMode === 'INCL') {
-                billingUnitPrice = Math.ceil(billingUnitPrice / 1.1);
+                billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
             }
 
             let startDateTime: Date;
@@ -505,7 +505,7 @@ function CreateJobForm() {
                                             {formData.rewardUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.rewardUnitPrice) / 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.rewardUnitPrice) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.rewardUnitPrice) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                                     }
                                                 </p>
@@ -546,7 +546,7 @@ function CreateJobForm() {
                                             {formData.billingUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.billingUnitPrice) / 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billingUnitPrice) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.billingUnitPrice) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                                     }
                                                 </p>
@@ -589,7 +589,7 @@ function CreateJobForm() {
                                         {formData.reward && (
                                             <p className="text-[10px] text-muted-foreground mt-1">
                                                 {formData.rewardTaxMode === 'INCL'
-                                                    ? `税抜金額: ¥${Math.ceil(parseFloat(formData.reward) / 1.1).toLocaleString()}`
+                                                    ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                     : `税込金額: ¥${Math.round(parseFloat(formData.reward) * 1.1).toLocaleString()}`
                                                 }
                                             </p>
@@ -653,7 +653,7 @@ function CreateJobForm() {
                                     {formData.billingAmount && (
                                         <p className="text-[10px] text-muted-foreground mt-1">
                                             {formData.billingTaxMode === 'INCL'
-                                                ? `税抜金額: ¥${Math.ceil(parseFloat(formData.billingAmount) / 1.1).toLocaleString()}`
+                                                ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billingAmount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                 : `税込金額: ¥${Math.round(parseFloat(formData.billingAmount) * 1.1).toLocaleString()}`
                                             }
                                         </p>

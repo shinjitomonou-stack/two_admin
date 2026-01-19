@@ -122,11 +122,11 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
             let billingUnitPrice = parseFloat(formData.billing_unit_price) || 0;
             const quantity = parseFloat(formData.reward_quantity) || 0;
 
-            if (formData.rewardTaxMode === 'INCL') unitPrice = Math.ceil(unitPrice / 1.1);
-            if (formData.billingTaxMode === 'INCL') billingUnitPrice = Math.ceil(billingUnitPrice / 1.1);
+            if (formData.rewardTaxMode === 'INCL') unitPrice = Math.ceil((unitPrice / 1.1) * 100) / 100;
+            if (formData.billingTaxMode === 'INCL') billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
 
-            const newReward = unitPrice * quantity;
-            const newBilling = billingUnitPrice * quantity;
+            const newReward = Math.round(unitPrice * quantity);
+            const newBilling = Math.round(billingUnitPrice * quantity);
 
             // Avoid infinite loop by only updating if values are different
             // Compare as numbers to handle decimal precision diffs if any, but store as string
@@ -157,16 +157,16 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
 
             // Handle Tax Mode Conversions
             if (formData.reward_type === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                reward_amount = Math.ceil(reward_amount / 1.1);
+                reward_amount = Math.ceil((reward_amount / 1.1) * 100) / 100;
             }
             if (formData.reward_type === 'FIXED' && formData.billing_amount && formData.billingTaxMode === 'INCL') {
-                billing_amount = Math.ceil(billing_amount / 1.1);
+                billing_amount = Math.ceil((billing_amount / 1.1) * 100) / 100;
             }
             if (formData.reward_type === 'UNIT' && reward_unit_price !== null && formData.rewardTaxMode === 'INCL') {
-                reward_unit_price = Math.ceil(reward_unit_price / 1.1);
+                reward_unit_price = Math.ceil((reward_unit_price / 1.1) * 100) / 100;
             }
             if (formData.reward_type === 'UNIT' && billing_unit_price !== null && formData.billingTaxMode === 'INCL') {
-                billing_unit_price = Math.ceil(billing_unit_price / 1.1);
+                billing_unit_price = Math.ceil((billing_unit_price / 1.1) * 100) / 100;
             }
 
             const result = await updateJob(id!, {
@@ -345,7 +345,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.reward_unit_price) / 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward_unit_price) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.reward_unit_price) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                                     }
                                                 </p>
@@ -381,7 +381,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.billing_unit_price) / 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billing_unit_price) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.billing_unit_price) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                                     }
                                                 </p>
@@ -421,7 +421,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.reward_amount) / 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward_amount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.reward_amount) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
@@ -457,7 +457,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.ceil(parseFloat(formData.billing_amount) / 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billing_amount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.billing_amount) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
