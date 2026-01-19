@@ -320,14 +320,14 @@ export default function JobsPage() {
                                             <td className="px-6 py-4">
                                                 <div className="space-y-1 text-xs">
                                                     <div className="font-medium text-slate-900">
-                                                        報酬: ¥{job.reward_amount.toLocaleString()} /人
+                                                        報酬: ¥{Math.round(job.reward_amount).toLocaleString()} /人
                                                         <span className="text-[10px] text-muted-foreground ml-1">
                                                             (税込: ¥{Math.round(job.reward_amount * 1.1).toLocaleString()})
                                                         </span>
                                                     </div>
                                                     {job.billing_amount && (
                                                         <div className="text-blue-600">
-                                                            請求: ¥{job.billing_amount.toLocaleString()} /人
+                                                            請求: ¥{Math.round(job.billing_amount).toLocaleString()} /人
                                                             <span className="text-[10px] opacity-70 ml-1">
                                                                 (税込: ¥{Math.round(job.billing_amount * 1.1).toLocaleString()})
                                                             </span>

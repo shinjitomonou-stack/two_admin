@@ -162,7 +162,7 @@ export default async function JobDetailPage({
                                     <label className="text-xs font-medium text-muted-foreground">報酬</label>
                                     <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
                                         <DollarSign className="w-4 h-4 text-slate-400" />
-                                        ¥{job.reward_amount.toLocaleString()}
+                                        ¥{Math.round(job.reward_amount).toLocaleString()}
                                         <span className="text-xs font-normal text-muted-foreground ml-1">
                                             (税込: ¥{Math.round(job.reward_amount * 1.1).toLocaleString()})
                                         </span>
@@ -174,7 +174,7 @@ export default async function JobDetailPage({
                                         <label className="text-xs font-medium text-muted-foreground">請求金額</label>
                                         <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
                                             <Banknote className="w-4 h-4 text-slate-400" />
-                                            ¥{job.billing_amount.toLocaleString()}
+                                            ¥{Math.round(job.billing_amount).toLocaleString()}
                                             <span className="text-xs font-normal text-muted-foreground ml-1">
                                                 (税込: ¥{Math.round(job.billing_amount * 1.1).toLocaleString()})
                                             </span>
@@ -250,7 +250,7 @@ export default async function JobDetailPage({
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-right font-medium">
-                                                        ¥{parseFloat(contract.contract_amount || 0).toLocaleString()}
+                                                        ¥{Math.round(parseFloat(contract.contract_amount || 0)).toLocaleString()}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :

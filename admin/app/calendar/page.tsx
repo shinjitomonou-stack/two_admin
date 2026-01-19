@@ -36,8 +36,8 @@ export default async function CalendarPage() {
             scheduled_work_end: app.scheduled_work_end,
             worker: worker,
             client: { name: "" },
-            billing_amount: Number(job?.billing_amount) || 0,
-            payment_amount: Number(job?.reward_amount) || 0,
+            billing_amount: Math.round(Number(job?.billing_amount) || 0),
+            payment_amount: Math.round(Number(job?.reward_amount) || 0),
         };
     });
 

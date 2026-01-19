@@ -103,13 +103,13 @@ export function CalendarWithStats({ jobs }: CalendarWithStatsProps) {
                 <div className="bg-white rounded-lg border border-slate-200 p-4">
                     <div className="text-sm text-slate-500">請求金額 ({month + 1}月)</div>
                     <div className="text-2xl font-bold text-blue-600 mt-1">
-                        ¥{stats.totalBilling.toLocaleString()}
+                        ¥{Math.round(stats.totalBilling).toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-white rounded-lg border border-slate-200 p-4">
                     <div className="text-sm text-slate-500">報酬金額 ({month + 1}月)</div>
                     <div className="text-2xl font-bold text-green-600 mt-1">
-                        ¥{stats.totalReward.toLocaleString()}
+                        ¥{Math.round(stats.totalReward).toLocaleString()}
                     </div>
                 </div>
             </div>

@@ -223,7 +223,7 @@ export default function WorkerPaymentPage() {
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
-                        <div className="text-2xl font-bold text-blue-600">¥{grandTotal.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-blue-600">¥{Math.round(grandTotal).toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
                             税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
                         </div>
@@ -269,7 +269,7 @@ export default function WorkerPaymentPage() {
                                                 {data.job_count}件
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                ¥{data.total_payment.toLocaleString()}
+                                                ¥{Math.round(data.total_payment).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-blue-600">
                                                 ¥{Math.round(data.total_payment * 1.1).toLocaleString()}
@@ -316,13 +316,13 @@ export default function WorkerPaymentPage() {
                                                                         `終了日時: ${new Date(app.jobs?.end_time).toLocaleDateString('ja-JP')}`}
                                                         </div>
                                                     </div>
-                                                    <div className="font-medium">¥{parseFloat(app.jobs?.reward_amount || 0).toLocaleString()}</div>
+                                                    <div className="font-medium text-slate-900">¥{Math.round(parseFloat(app.jobs?.reward_amount || 0)).toLocaleString()}</div>
                                                 </div>
                                             ))}
                                             <div className="flex flex-col items-end pt-4 border-t-2 border-slate-900 space-y-1">
                                                 <div className="flex justify-between w-full text-sm">
                                                     <span className="text-muted-foreground">税抜合計</span>
-                                                    <span>¥{selectedWorker.total_payment.toLocaleString()}</span>
+                                                    <span>¥{Math.round(selectedWorker.total_payment).toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between w-full text-sm font-medium">
                                                     <span className="text-muted-foreground">消費税(10%)</span>

@@ -150,7 +150,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                     <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
                                         <span className="text-slate-500">金額</span>
                                         <span>
-                                            {job.reward_amount?.toLocaleString()}円
+                                            {Math.round(job.reward_amount || 0).toLocaleString()}円
                                         </span>
                                     </div>
                                 </div>

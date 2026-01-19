@@ -498,7 +498,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                 <div className="flex justify-between">
                                     <span className="text-slate-600">総報酬額:</span>
                                     <span className="font-semibold">
-                                        ¥{(parseFloat(formData.reward_amount) * parseFloat(formData.max_workers)).toLocaleString()}
+                                        ¥{Math.round(parseFloat(formData.reward_amount) * parseFloat(formData.max_workers)).toLocaleString()}
                                     </span>
                                 </div>
                                 {parseFloat(formData.billing_amount) > 0 && (
@@ -506,13 +506,13 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                         <div className="flex justify-between">
                                             <span className="text-slate-600">総請求額:</span>
                                             <span className="font-semibold">
-                                                ¥{(parseFloat(formData.billing_amount) * parseFloat(formData.max_workers)).toLocaleString()}
+                                                ¥{Math.round(parseFloat(formData.billing_amount) * parseFloat(formData.max_workers)).toLocaleString()}
                                             </span>
                                         </div>
                                         <div className="flex justify-between pt-2 border-t border-slate-300">
                                             <span className="text-slate-600">粗利:</span>
                                             <span className="font-semibold text-green-600">
-                                                ¥{((parseFloat(formData.billing_amount) - parseFloat(formData.reward_amount)) * parseFloat(formData.max_workers)).toLocaleString()}
+                                                ¥{Math.round((parseFloat(formData.billing_amount) - parseFloat(formData.reward_amount)) * parseFloat(formData.max_workers)).toLocaleString()}
                                                 {' '}
                                                 ({Math.round(((parseFloat(formData.billing_amount) - parseFloat(formData.reward_amount)) / parseFloat(formData.billing_amount)) * 100)}%)
                                             </span>
