@@ -15,7 +15,7 @@ import {
     Calendar as CalendarIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { logout } from "@/app/actions/auth";
 
 const sidebarItems = [
@@ -72,7 +72,7 @@ const sidebarItems = [
     },
 ];
 
-export default function AdminLayout({
+function AdminLayoutContent({
     children,
 }: {
     children: React.ReactNode;
@@ -261,5 +261,21 @@ export default function AdminLayout({
                 />
             )}
         </div>
+    );
+}
+
+export default function AdminLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+        </Suspense>
     );
 }
