@@ -4,6 +4,9 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Download, User, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { generatePaymentNotices } from "@/app/actions/payment";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface PaymentData {
     worker_id: string;
@@ -29,6 +32,9 @@ export default function WorkerPaymentPage() {
     });
     const [selectedWorker, setSelectedWorker] = useState<PaymentData | null>(null);
     const [workerDetails, setWorkerDetails] = useState<any>(null);
+    const [selectedWorkerIds, setSelectedWorkerIds] = useState<Set<string>>(new Set());
+    const [isGenerating, setIsGenerating] = useState(false);
+    const router = useRouter();
 
     const handleMoveMonth = (delta: number) => {
         const [year, month] = selectedMonth.split('-').map(Number);
@@ -39,6 +45,10 @@ export default function WorkerPaymentPage() {
     useEffect(() => {
         fetchPaymentData();
     }, [selectedMonth]);
+
+    useEffect(() => {
+        setSelectedWorkerIds(new Set(paymentData.map(d => d.worker_id)));
+    }, [paymentData]);
 
     const fetchPaymentData = async () => {
         setIsLoading(true);
@@ -155,6 +165,101 @@ export default function WorkerPaymentPage() {
         fetchWorkerDetails(worker.worker_id);
     };
 
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedWorkerIds(new Set(paymentData.map(d => d.worker_id)));
+        } else {
+            setSelectedWorkerIds(new Set());
+        }
+    };
+
+    const handleSelectWorker = (workerId: string, checked: boolean) => {
+        const newSet = new Set(selectedWorkerIds);
+        if (checked) {
+            newSet.add(workerId);
+        } else {
+            newSet.delete(workerId);
+        }
+        setSelectedWorkerIds(newSet);
+    };
+
+    const handleGenerateNotices = async () => {
+        if (selectedWorkerIds.size === 0) {
+            toast.error("ワーカーを選択してください");
+            return;
+        }
+
+        if (!confirm(`${selectedWorkerIds.size}名分の支払通知書を作成しますか？\n既に作成済みの場合は内容が更新されます。`)) return;
+
+        setIsGenerating(true);
+        const supabase = createClient();
+        const [year, month] = selectedMonth.split('-');
+        const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const endDate = new Date(parseInt(year), parseInt(month), 0);
+        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
+        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+
+        try {
+            // Fetch all COMPLETED jobs/apps for selected workers
+            const { data: jobs } = await supabase
+                .from('jobs')
+                .select('*, job_applications(*)')
+                .eq('status', 'COMPLETED')
+                .gte('end_time', queryStartDate)
+                .lte('end_time', queryEndDate);
+
+            const getEffectiveDate = (job: any, app: any) => {
+                if (app.actual_work_start) return new Date(app.actual_work_start);
+                if (app.scheduled_work_start) return new Date(app.scheduled_work_start);
+                if (job.is_flexible && job.work_period_end) return new Date(job.work_period_end);
+                return new Date(job.end_time);
+            };
+
+            const noticesPayload: any[] = [];
+            selectedWorkerIds.forEach(workerId => {
+                const workerSummary = paymentData.find(d => d.worker_id === workerId);
+                if (!workerSummary) return;
+
+                const details: any[] = [];
+                jobs?.forEach((job: any) => {
+                    job.job_applications?.forEach((app: any) => {
+                        if (app.worker_id !== workerId) return;
+                        if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
+
+                        const effectiveDate = getEffectiveDate(job, app);
+                        if (effectiveDate >= startDate && effectiveDate <= endDate) {
+                            details.push({
+                                job_id: job.id,
+                                job_title: job.title,
+                                amount: parseFloat(job.reward_amount || 0),
+                                work_date: effectiveDate.toISOString()
+                            });
+                        }
+                    });
+                });
+
+                noticesPayload.push({
+                    worker_id: workerId,
+                    total_payment: workerSummary.total_payment,
+                    details: details
+                });
+            });
+
+            const result = await generatePaymentNotices(selectedMonth, noticesPayload);
+            if (result.success) {
+                toast.success(`${result.count}件の支払通知書を作成しました`);
+                router.push("/workers/payment/notices");
+            } else {
+                toast.error("作成に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const exportToCSV = () => {
         const headers = [
             'ワーカー名',
@@ -229,8 +334,15 @@ export default function WorkerPaymentPage() {
                             </button>
                         </div>
                         <button
+                            onClick={handleGenerateNotices}
+                            disabled={isGenerating || selectedWorkerIds.size === 0}
+                            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                            {isGenerating ? "作成中..." : "支払通知書を作成"}
+                        </button>
+                        <button
                             onClick={exportToCSV}
-                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
+                            className="inline-flex items-center gap-2 bg-slate-100 text-slate-900 border border-slate-200 px-4 py-2 rounded-md hover:bg-slate-200 transition-colors text-sm font-medium"
                         >
                             <Download className="w-4 h-4" />
                             CSV出力
@@ -263,6 +375,14 @@ export default function WorkerPaymentPage() {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500">
                                 <tr>
+                                    <th className="px-6 py-3 w-10">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                            checked={paymentData.length > 0 && selectedWorkerIds.size === paymentData.length}
+                                            onChange={(e) => handleSelectAll(e.target.checked)}
+                                        />
+                                    </th>
                                     <th className="px-6 py-3 font-medium">ワーカー名</th>
                                     <th className="px-6 py-3 font-medium text-right">完了案件数</th>
                                     <th className="px-6 py-3 font-medium text-right">合計(税抜)</th>
@@ -286,6 +406,15 @@ export default function WorkerPaymentPage() {
                                 ) : (
                                     paymentData.map((data) => (
                                         <tr key={data.worker_id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={selectedWorkerIds.has(data.worker_id)}
+                                                    onChange={(e) => handleSelectWorker(data.worker_id, e.target.checked)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <User className="w-4 h-4 text-slate-400" />

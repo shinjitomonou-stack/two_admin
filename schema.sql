@@ -241,3 +241,23 @@ ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 -- Policies for admin_users
 CREATE POLICY "Admins can view own data" ON public.admin_users
     FOR SELECT USING (auth.uid() = id);
+-- 11. Payment Notices
+CREATE TABLE public.payment_notices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    worker_id UUID REFERENCES public.workers(id) NOT NULL,
+    month TEXT NOT NULL, -- Format: YYYY-MM
+    status TEXT CHECK (status IN ('DRAFT', 'ISSUED', 'APPROVED', 'PAID')) DEFAULT 'DRAFT',
+    total_amount DECIMAL(12, 2) NOT NULL, -- Total amount (pre-tax)
+    tax_amount DECIMAL(12, 2) NOT NULL, -- Tax amount
+    job_details JSONB NOT NULL DEFAULT '[]', -- Snapshot of jobs included in this notice
+    issued_at TIMESTAMP WITH TIME ZONE,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    paid_at TIMESTAMP WITH TIME ZONE,
+    notification_sent_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_payment_notices_worker ON public.payment_notices(worker_id);
+CREATE INDEX idx_payment_notices_month ON public.payment_notices(month);
+CREATE INDEX idx_payment_notices_status ON public.payment_notices(status);
