@@ -88,6 +88,8 @@ create table public.jobs (
   work_period_end timestamp with time zone,
   schedule_notes text, -- Notes about schedule/timing for workers
   report_template_id uuid references public.report_templates(id),
+  reward_tax_mode text check (reward_tax_mode in ('EXCL', 'INCL')) default 'EXCL',
+  billing_tax_mode text check (billing_tax_mode in ('EXCL', 'INCL')) default 'EXCL',
   created_at timestamp with time zone default now()
 );
 

@@ -170,6 +170,11 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
             const maxWorkers = parseNumber(job.max_workers);
             if (maxWorkers <= 0) throw new Error(`募集人数は1人以上に設定してください: ${job.title}`);
 
+            // Calculate inclusive amounts if needed (for bulk import, we assume EXCL or handle specifically)
+            // For now, bulk import remains as is but supports the columns if provided
+            const rewardTaxMode = job.reward_tax_mode || "EXCL";
+            const billingTaxMode = job.billing_tax_mode || "EXCL";
+
             return {
                 title: job.title,
                 client_id: clientId,
@@ -177,6 +182,8 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
                 address_text: job.address_text,
                 reward_amount: parseNumber(job.reward_amount),
                 billing_amount: job.billing_amount ? parseNumber(job.billing_amount) : null,
+                reward_tax_mode: rewardTaxMode,
+                billing_tax_mode: billingTaxMode,
                 max_workers: maxWorkers,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
