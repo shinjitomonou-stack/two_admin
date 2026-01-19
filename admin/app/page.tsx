@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
+import { TodayJobsList } from "@/components/dashboard/TodayJobsList";
 
 export const dynamic = 'force-dynamic';
 
@@ -37,8 +38,28 @@ export default async function Home() {
     .select("*", { count: "exact", head: true })
     .eq("status", "PENDING");
 
-  // 2. Fetch Recent Data
-  // 2. Fetch Recent Data
+  // 2. Fetch Today's Jobs
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(startOfToday);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const { data: todayJobs } = await supabase
+    .from("jobs")
+    .select(`
+      id,
+      title,
+      status,
+      start_time,
+      end_time,
+      address_text,
+      clients(name)
+    `)
+    .gte("start_time", startOfToday.toISOString())
+    .lte("start_time", endOfToday.toISOString())
+    .order("start_time", { ascending: true });
+
+  // 3. Fetch Recent Data
   // Recent Applications
   const { data: recentApps } = await supabase
     .from("job_applications")
@@ -209,6 +230,17 @@ export default async function Home() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Today's Jobs Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold tracking-tight">本日の案件状況</h3>
+            <Link href="/jobs" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+              案件管理へ <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <TodayJobsList jobs={todayJobs || []} />
         </div>
 
         {/* Charts Section */}

@@ -41,6 +41,7 @@ export async function updateJob(id: string, payload: any) {
 
         revalidatePath("/jobs");
         revalidatePath(`/jobs/${id}`);
+        revalidatePath("/");
         return { success: true, data };
     } catch (error) {
         console.error("Error updating job:", error);
