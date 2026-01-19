@@ -97,15 +97,15 @@ export async function sendPaymentNoticeNotification(id: string) {
             .from("payment_notices")
             .select(`
                 *,
-                worker:workers(full_name, line_id)
+                worker:workers(full_name, line_id, line_user_id)
             `)
             .eq("id", id)
             .single();
 
         if (noticeError || !notice) throw new Error("Payment notice not found");
 
-        const worker = notice.worker;
-        const lineUserId = worker?.line_id;
+        const worker = notice.worker as any;
+        const lineUserId = worker?.line_id || worker?.line_user_id;
 
         if (!lineUserId) {
             return { success: false, message: "Worker has no LINE ID" };
