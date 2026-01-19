@@ -497,16 +497,15 @@ function CreateJobForm() {
                                                     value={formData.rewardUnitPrice}
                                                     onChange={handleChange}
                                                     type="number"
-                                                    step="any"
-                                                    placeholder="100.5"
+                                                    placeholder="100"
                                                     className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
                                                 />
                                             </div>
                                             {formData.rewardUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.rewardUnitPrice) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.rewardUnitPrice) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.rewardUnitPrice) / 1.1) * 100) / 100).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(parseFloat(formData.rewardUnitPrice) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -538,16 +537,15 @@ function CreateJobForm() {
                                                     value={formData.billingUnitPrice}
                                                     onChange={handleChange}
                                                     type="number"
-                                                    step="any"
-                                                    placeholder="150.8"
+                                                    placeholder="150"
                                                     className="w-full pl-7 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:ring-2 focus:ring-slate-400 focus:outline-none font-medium"
                                                 />
                                             </div>
                                             {formData.billingUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billingUnitPrice) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billingUnitPrice) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billingUnitPrice) / 1.1) * 100) / 100).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billingUnitPrice) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -589,7 +587,7 @@ function CreateJobForm() {
                                         {formData.reward && (
                                             <p className="text-[10px] text-muted-foreground mt-1">
                                                 {formData.rewardTaxMode === 'INCL'
-                                                    ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                    ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward) / 1.1) * 100) / 100).toLocaleString()}`
                                                     : `税込金額: ¥${Math.round(parseFloat(formData.reward) * 1.1).toLocaleString()}`
                                                 }
                                             </p>
@@ -653,7 +651,7 @@ function CreateJobForm() {
                                     {formData.billingAmount && (
                                         <p className="text-[10px] text-muted-foreground mt-1">
                                             {formData.billingTaxMode === 'INCL'
-                                                ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billingAmount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billingAmount) / 1.1) * 100) / 100).toLocaleString()}`
                                                 : `税込金額: ¥${Math.round(parseFloat(formData.billingAmount) * 1.1).toLocaleString()}`
                                             }
                                         </p>

@@ -84,11 +84,20 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
                 };
 
+                const rewardTaxMode = (data.reward_tax_mode as "EXCL" | "INCL") || "EXCL";
+                const billingTaxMode = (data.billing_tax_mode as "EXCL" | "INCL") || "EXCL";
+
+                // Restore inclusive amounts back to integers for display
+                const restoreAmount = (val: number | null, mode: string) => {
+                    if (val === null) return "0";
+                    return mode === 'INCL' ? Math.round(val * 1.1).toString() : val.toString();
+                };
+
                 setFormData({
                     title: data.title,
                     description: data.description || "",
-                    reward_amount: data.reward_amount.toString(),
-                    billing_amount: (data.billing_amount || 0).toString(),
+                    reward_amount: restoreAmount(data.reward_amount, rewardTaxMode),
+                    billing_amount: restoreAmount(data.billing_amount, billingTaxMode),
                     max_workers: (data.max_workers || 1).toString(),
                     start_time: formatDateTime(data.start_time),
                     end_time: formatDateTime(data.end_time),
@@ -101,11 +110,11 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     report_template_id: data.report_template_id || "",
                     // New fields
                     reward_type: (data.reward_type as "FIXED" | "UNIT") || "FIXED",
-                    reward_unit_price: data.reward_unit_price?.toString() || "0",
-                    billing_unit_price: data.billing_unit_price?.toString() || "0",
+                    reward_unit_price: restoreAmount(data.reward_unit_price, rewardTaxMode),
+                    billing_unit_price: restoreAmount(data.billing_unit_price, billingTaxMode),
                     reward_quantity: data.reward_quantity?.toString() || "0",
-                    rewardTaxMode: (data.reward_tax_mode as "EXCL" | "INCL") || "EXCL",
-                    billingTaxMode: (data.billing_tax_mode as "EXCL" | "INCL") || "EXCL",
+                    rewardTaxMode,
+                    billingTaxMode,
                 });
             }
             setIsFetching(false);
@@ -336,7 +345,6 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             </div>
                                             <input
                                                 type="number"
-                                                step="any"
                                                 required
                                                 value={formData.reward_unit_price}
                                                 onChange={(e) => setFormData({ ...formData, reward_unit_price: cleanNumericInput(e.target.value) })}
@@ -345,8 +353,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward_unit_price) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.reward_unit_price) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward_unit_price) / 1.1) * 100) / 100).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(parseFloat(formData.reward_unit_price) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -373,7 +381,6 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             </div>
                                             <input
                                                 type="number"
-                                                step="any"
                                                 value={formData.billing_unit_price}
                                                 onChange={(e) => setFormData({ ...formData, billing_unit_price: cleanNumericInput(e.target.value) })}
                                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -381,8 +388,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billing_unit_price) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billing_unit_price) * 1.1).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billing_unit_price) / 1.1) * 100) / 100).toLocaleString()}`
+                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billing_unit_price) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -421,7 +428,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.reward_amount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward_amount) / 1.1) * 100) / 100).toLocaleString()}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.reward_amount) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
@@ -457,7 +464,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${(Math.ceil((parseFloat(formData.billing_amount) / 1.1) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billing_amount) / 1.1) * 100) / 100).toLocaleString()}`
                                                         : `税込金額: ¥${Math.round(parseFloat(formData.billing_amount) * 1.1).toLocaleString()}`
                                                     }
                                                 </p>
