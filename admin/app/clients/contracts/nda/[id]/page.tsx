@@ -91,7 +91,7 @@ export default async function NDAContractDetailPage({ params }: { params: Promis
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div>
-                                <div className="text-xs text-muted-foreground mb-1">クライアント</div>
+                                <div className="text-xs text-muted-foreground mb-1">クライアント/パートナー</div>
                                 <div className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4 text-slate-400" />
                                     {/* @ts-ignore */}

@@ -5,8 +5,16 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 
-export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientDetailPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>,
+    searchParams: Promise<{ trading_type?: string }>
+}) {
     const { id } = await params;
+    const { trading_type: tradingTypeQuery } = await searchParams;
+    const tradingType = tradingTypeQuery || 'RECEIVING';
     const supabase = await createClient();
 
     const { data: client, error } = await supabase
@@ -62,7 +70,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            href="/clients"
+                            href={`/clients?trading_type=${tradingType}`}
                             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-500" />
@@ -78,7 +86,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
                     <Link
-                        href={`/clients/${client.id}/edit?returnTo=/clients/${client.id}`}
+                        href={`/clients/${client.id}/edit?returnTo=${encodeURIComponent(`/clients/${client.id}?trading_type=${tradingType}`)}`}
                         className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
                     >
                         <Edit className="w-4 h-4" />

@@ -144,7 +144,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                         <span className="font-medium">{job.title}</span>
                                     </div>
                                     <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
-                                        <span className="text-slate-500">クライアント</span>
+                                        <span className="text-slate-500">クライアント/パートナー</span>
                                         <span>{job.clients?.name}</span>
                                     </div>
                                     <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">

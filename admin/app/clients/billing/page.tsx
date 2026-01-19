@@ -202,7 +202,7 @@ export default function ClientBillingPage() {
     };
 
     const exportToCSV = () => {
-        const headers = ['クライアント名', '案件請求', '月額請求', '合計(税抜)', '消費税(10%)', '税込合計'];
+        const headers = ['クライアント/パートナー名', '案件請求', '月額請求', '合計(税抜)', '消費税(10%)', '税込合計'];
         const rows = billingData.map(data => [
             data.client_name,
             Math.round(data.job_billing).toLocaleString(),
@@ -230,9 +230,9 @@ export default function ClientBillingPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">クライアント請求金額集計</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">クライアント別 請求金額集計</h2>
                         <p className="text-muted-foreground">
-                            クライアント別の請求金額を確認できます。
+                            クライアント別の請求実績を確認できます。
                         </p>
                     </div>
                     <div className="flex items-center gap-3">

@@ -333,7 +333,7 @@ export default function ReportsPage() {
                                 <table className="w-full text-left border-collapse">
                                     <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
                                         <tr>
-                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">案件名 / クライアント</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">案件名 / クライアント/パートナー</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ワーカー</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">作業日時</th>
                                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">提出日時</th>

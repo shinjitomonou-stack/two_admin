@@ -231,7 +231,7 @@ export default function JobsPage() {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-3 font-medium">案件名 / クライアント</th>
+                                    <th className="px-6 py-3 font-medium">案件名 / クライアント/パートナー</th>
                                     <th className="px-6 py-3 font-medium">作業予定日 / 実施日</th>
                                     <th className="px-6 py-3 font-medium">場所</th>
                                     <th className="px-6 py-3 font-medium">報酬 / 請求金額</th>
@@ -286,7 +286,7 @@ export default function JobsPage() {
                                                         {job.title}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">
-                                                        {job.clients?.name || "クライアント未設定"}
+                                                        {job.clients?.name || "クライアント/パートナー未設定"}
                                                     </div>
                                                 </Link>
                                             </td>

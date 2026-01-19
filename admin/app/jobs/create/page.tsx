@@ -124,7 +124,7 @@ function CreateJobForm() {
         try {
             // Validation
             if (!formData.clientId || formData.clientId === "demo-client-id") {
-                throw new Error("クライアントを選択してください（デモ用IDは使用できません）");
+                throw new Error("クライアント/パートナーを選択してください（デモ用IDは使用できません）");
             }
 
             let rewardAmount = parseFloat(formData.reward);
@@ -273,7 +273,7 @@ function CreateJobForm() {
 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-sm font-medium">クライアント <span className="text-red-500">*</span></label>
+                                    <label className="text-sm font-medium">クライアント/パートナー <span className="text-red-500">*</span></label>
                                     <Link
                                         href={`/clients/create?returnTo=/jobs/create${returnTo ? `&returnToParam=${encodeURIComponent(returnTo)}` : ""}`}
                                         target="_blank"
@@ -291,12 +291,12 @@ function CreateJobForm() {
                                         ...clients.map(c => ({ value: c.id, label: c.name })),
                                         ...(clients.length === 0 ? [{ value: "demo-client-id", label: "デモクライアント (DB未接続時はエラーになります)" }] : [])
                                     ]}
-                                    placeholder="クライアントを選択してください"
-                                    searchPlaceholder="クライアント名で検索"
+                                    placeholder="クライアント/パートナーを選択してください"
+                                    searchPlaceholder="クライアント/パートナー名で検索"
                                 />
                                 {clients.length === 0 && (
                                     <p className="text-xs text-orange-500">
-                                        ※ クライアントが見つかりません。先にDBにクライアントデータを登録してください。
+                                        ※ クライアント/パートナーが見つかりません。先にDBにクライアント/パートナーデータを登録してください。
                                     </p>
                                 )}
                             </div>

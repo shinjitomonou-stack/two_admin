@@ -50,10 +50,10 @@ function CreateClientContractForm() {
         const fetchData = async () => {
             const supabase = createClient();
 
-            // Fetch clients
+            // Fetch clients with trading_role
             const { data: clientsData } = await supabase
                 .from("clients")
-                .select("*")
+                .select("id, name, trading_role")
                 .order("name");
             setClients(clientsData || []);
 
@@ -247,7 +247,7 @@ function CreateClientContractForm() {
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">新規契約作成</h2>
                             <p className="text-muted-foreground text-sm">
-                                クライアントとの契約を作成します。
+                                {formData.trading_type === 'PLACING' ? 'パートナー' : 'クライアント'}との契約を作成します。
                             </p>
                         </div>
                     </div>
@@ -298,15 +298,25 @@ function CreateClientContractForm() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">
-                                クライアント <span className="text-red-500">*</span>
+                                {formData.trading_type === 'PLACING' ? 'パートナー' : 'クライアント'} <span className="text-red-500">*</span>
                             </label>
                             <SearchableSelect
                                 required
                                 value={formData.client_id}
                                 onChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
-                                options={clients.map(c => ({ value: c.id, label: c.name }))}
-                                placeholder="クライアントを選択してください"
-                                searchPlaceholder="クライアント名で検索"
+                                options={clients
+                                    .filter(c => {
+                                        if (formData.trading_type === 'PLACING') {
+                                            return c.trading_role === 'PARTNER' || c.trading_role === 'BOTH';
+                                        } else {
+                                            // RECEIVING (NULL is treated as CLIENT for legacy support)
+                                            return !c.trading_role || c.trading_role === 'CLIENT' || c.trading_role === 'BOTH';
+                                        }
+                                    })
+                                    .map(c => ({ value: c.id, label: c.name }))
+                                }
+                                placeholder={`${formData.trading_type === 'PLACING' ? 'パートナー' : 'クライアント'}を選択してください`}
+                                searchPlaceholder={`${formData.trading_type === 'PLACING' ? 'パートナー' : 'クライアント'}名で検索`}
                             />
                         </div>
                     </div>

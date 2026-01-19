@@ -10,6 +10,8 @@ const ITEMS_PER_PAGE = 100;
 
 export default async function ClientContractsPage({ searchParams }: { searchParams: Promise<{ tab?: string; page?: string; status?: string; trading_type?: string; search?: string }> }) {
     const { tab, page, status, trading_type, search } = await searchParams;
+    const isPartnerContext = trading_type === "PLACING";
+    const label = isPartnerContext ? "パートナー" : "クライアント";
     const currentTab = tab || 'basic';
     const currentPage = Number(page) || 1;
     const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -86,9 +88,9 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">クライアント契約管理</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">{label}契約管理</h2>
                         <p className="text-muted-foreground">
-                            クライアントとの契約を管理します。
+                            {isPartnerContext ? "パートナー（外注先）" : "クライアント（発注元）"}との契約を管理します。
                         </p>
                     </div>
                     <Link
@@ -104,7 +106,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                 <div className="border-b border-border">
                     <div className="flex gap-8">
                         <Link
-                            href="/clients/contracts?tab=basic"
+                            href={`/clients/contracts?tab=basic${trading_type ? `&trading_type=${trading_type}` : ''}`}
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'basic'
                                 ? 'border-slate-900 text-slate-900'
                                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -113,7 +115,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             基本契約
                         </Link>
                         <Link
-                            href="/clients/contracts?tab=nda"
+                            href={`/clients/contracts?tab=nda${trading_type ? `&trading_type=${trading_type}` : ''}`}
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'nda'
                                 ? 'border-slate-900 text-slate-900'
                                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -122,7 +124,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             NDA
                         </Link>
                         <Link
-                            href="/clients/contracts?tab=individual"
+                            href={`/clients/contracts?tab=individual${trading_type ? `&trading_type=${trading_type}` : ''}`}
                             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${currentTab === 'individual'
                                 ? 'border-slate-900 text-slate-900'
                                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -148,7 +150,7 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-3 font-medium text-center">種別</th>
-                                    <th className="px-6 py-3 font-medium">クライアント</th>
+                                    <th className="px-6 py-3 font-medium">{label}名</th>
                                     <th className="px-6 py-3 font-medium">契約タイトル</th>
                                     {currentTab === 'individual' && <th className="px-6 py-3 font-medium">案件</th>}
                                     <th className="px-6 py-3 font-medium">契約期間</th>
@@ -265,15 +267,15 @@ export default async function ClientContractsPage({ searchParams }: { searchPara
                             </tbody>
                         </table>
                     </div>
-                    {totalPages > 1 && (
-                        <ServerPagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            baseUrl={`/clients/contracts?tab=${currentTab}`}
-                            searchParams={{ status, trading_type, search }}
-                        />
-                    )}
                 </div>
+                {totalPages > 1 && (
+                    <ServerPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        baseUrl={`/clients/contracts?tab=${currentTab}`}
+                        searchParams={{ status, trading_type, search }}
+                    />
+                )}
             </div>
         </AdminLayout>
     );

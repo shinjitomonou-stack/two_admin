@@ -208,10 +208,10 @@ export default async function JobDetailPage({
                             <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
                                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                                        外部業者への発注 ({placementContracts?.length || 0})
+                                        パートナーへの発注 ({placementContracts?.length || 0})
                                     </h3>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        この案件に対する外部業者への発注契約
+                                        この案件に対するパートナーへの発注契約
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default async function JobDetailPage({
                                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                     >
                                         <Plus className="w-4 h-4" />
-                                        外部業者に発注
+                                        パートナーに発注
                                     </Link>
                                 </div>
                             </div>
@@ -233,7 +233,7 @@ export default async function JobDetailPage({
                                 <table className="w-full text-sm text-left">
                                     <thead className="bg-slate-50 border-b border-border text-slate-500">
                                         <tr>
-                                            <th className="px-6 py-3 font-medium">クライアント（業者）</th>
+                                            <th className="px-6 py-3 font-medium">パートナー</th>
                                             <th className="px-6 py-3 font-medium text-right">契約金額</th>
                                             <th className="px-6 py-3 font-medium">ステータス</th>
                                             <th className="px-6 py-3 font-medium text-right">アクション</th>

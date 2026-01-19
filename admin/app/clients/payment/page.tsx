@@ -143,7 +143,7 @@ export default function ClientPaymentPage() {
     };
 
     const exportToCSV = () => {
-        const headers = ['クライアント名', 'スポット支払(都度)', '月額支払(継続)', '合計(税抜)', '消費税(10%)', '税込合計'];
+        const headers = ['クライアント/パートナー名', 'スポット支払(都度)', '月額支払(継続)', '合計(税抜)', '消費税(10%)', '税込合計'];
         const rows = paymentData.map(data => [
             data.client_name,
             data.spot_payment.toLocaleString(),
@@ -171,9 +171,9 @@ export default function ClientPaymentPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">クライアント支払金額集計</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">パートナー別 支払金額集計</h2>
                         <p className="text-muted-foreground">
-                            クライアント別の支払金額（発注契約）を確認できます。
+                            パートナー（外注先）別の支払実績を確認できます。
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -234,7 +234,7 @@ export default function ClientPaymentPage() {
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50 border-b border-border text-slate-500">
                                 <tr>
-                                    <th className="px-6 py-3 font-medium">クライアント名</th>
+                                    <th className="px-6 py-3 font-medium">パートナー名</th>
                                     <th className="px-6 py-3 font-medium text-right">スポット支払</th>
                                     <th className="px-6 py-3 font-medium text-right">月額支払</th>
                                     <th className="px-6 py-3 font-medium text-right">合計(税抜)</th>

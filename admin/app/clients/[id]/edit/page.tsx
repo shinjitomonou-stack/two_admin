@@ -33,6 +33,7 @@ function EditClientForm({ params }: { params: Promise<{ id: string }> }) {
         billing_contact_email: "",
         billing_contact_phone: "",
         billing_method: "銀行振込",
+        trading_role: "CLIENT" as "CLIENT" | "PARTNER" | "BOTH"
     });
 
     useEffect(() => {
@@ -71,6 +72,7 @@ function EditClientForm({ params }: { params: Promise<{ id: string }> }) {
                     billing_contact_email: data.billing_contact_email || "",
                     billing_contact_phone: data.billing_contact_phone || "",
                     billing_method: data.billing_method || "銀行振込",
+                    trading_role: data.trading_role || "CLIENT"
                 });
             }
             setIsFetching(false);
@@ -128,7 +130,7 @@ function EditClientForm({ params }: { params: Promise<{ id: string }> }) {
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-500" />
                         </Link>
-                        <h2 className="text-2xl font-bold tracking-tight">クライアント編集</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">組織情報編集</h2>
                     </div>
                     <button
                         type="submit"
@@ -227,6 +229,48 @@ function EditClientForm({ params }: { params: Promise<{ id: string }> }) {
                         </div>
 
 
+                    </div>
+                </div>
+
+                {/* Role Information */}
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-lg font-semibold">組織の役割</h3>
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-4">
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="CLIENT"
+                                    checked={formData.trading_role === 'CLIENT'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">クライアント (発注元)</div>
+                            </label>
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="PARTNER"
+                                    checked={formData.trading_role === 'PARTNER'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">パートナー (外注先)</div>
+                            </label>
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="BOTH"
+                                    checked={formData.trading_role === 'BOTH'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">両方</div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

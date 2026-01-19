@@ -166,9 +166,7 @@ export default async function ContractsPage({
                                 <tr>
                                     <th className="px-6 py-3 font-medium">契約書名</th>
                                     <th className="px-6 py-3 font-medium">ワーカー</th>
-                                    {currentTab === 'individual' && (
-                                        <th className="px-6 py-3 font-medium">案件 / クライアント</th>
-                                    )}
+                                    {currentTab === 'individual' && <th className="px-6 py-3 font-medium">案件名 / クライアント/パートナー</th>}
                                     <th className="px-6 py-3 font-medium">ステータス</th>
                                     <th className="px-6 py-3 font-medium">締結日時</th>
                                     <th className="px-6 py-3 font-medium text-right">詳細</th>

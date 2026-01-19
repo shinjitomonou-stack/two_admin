@@ -13,6 +13,8 @@ function CreateClientForm() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const isPartner = searchParams.get('type') === 'PLACING';
+    const label = isPartner ? 'パートナー' : 'クライアント';
     const returnTo = searchParams.get("returnTo");
     const supabase = createClient();
 
@@ -32,6 +34,7 @@ function CreateClientForm() {
         billing_contact_email: "",
         billing_contact_phone: "",
         billing_method: "銀行振込",
+        trading_role: searchParams.get('type') === 'PLACING' ? 'PARTNER' : 'CLIENT'
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -48,7 +51,7 @@ function CreateClientForm() {
 
             if (!result.success) throw result.error;
 
-            toast.success("クライアントを登録しました");
+            toast.success(`${label}を登録しました`);
             router.push(returnTo || "/clients");
             router.refresh();
         } catch (error: any) {
@@ -71,9 +74,9 @@ function CreateClientForm() {
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">新規クライアント登録</h2>
+                        <h2 className="text-2xl font-bold tracking-tight">{label}登録</h2>
                         <p className="text-muted-foreground">
-                            新しいクライアント情報を登録します。
+                            新しい{label}情報を登録します。
                         </p>
                     </div>
                 </div>
@@ -171,6 +174,51 @@ function CreateClientForm() {
                         </div>
 
 
+                    </div>
+                </div>
+
+                {/* Role Information */}
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <h3 className="text-lg font-semibold">組織の役割</h3>
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-4">
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="CLIENT"
+                                    checked={formData.trading_role === 'CLIENT'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">クライアント (発注元)</div>
+                            </label>
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="PARTNER"
+                                    checked={formData.trading_role === 'PARTNER'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">パートナー (外注先)</div>
+                            </label>
+                            <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+                                <input
+                                    type="radio"
+                                    name="trading_role"
+                                    value="BOTH"
+                                    checked={formData.trading_role === 'BOTH'}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-slate-900"
+                                />
+                                <div className="text-sm font-medium">両方</div>
+                            </label>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            ※「両方」を選択すると、クライアント管理とパートナー管理の両方のリストに表示されます。
+                        </p>
                     </div>
                 </div>
 

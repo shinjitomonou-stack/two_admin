@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
     LayoutDashboard,
     Users,
@@ -45,11 +45,20 @@ const sidebarItems = [
     {
         icon: Building2,
         label: "クライアント",
-        href: "/clients",
+        href: "/clients?trading_type=RECEIVING",
         subItems: [
-            { label: "クライアント管理", href: "/clients" },
-            { label: "契約管理", href: "/clients/contracts" },
+            { label: "クライアント管理", href: "/clients?trading_type=RECEIVING" },
+            { label: "契約管理 (受注)", href: "/clients/contracts?trading_type=RECEIVING" },
             { label: "請求金額集計", href: "/clients/billing" },
+        ]
+    },
+    {
+        icon: Building2,
+        label: "パートナー",
+        href: "/clients?trading_type=PLACING",
+        subItems: [
+            { label: "パートナー管理", href: "/clients?trading_type=PLACING" },
+            { label: "契約管理 (発注)", href: "/clients/contracts?trading_type=PLACING" },
             { label: "支払金額集計", href: "/clients/payment" },
         ]
     },
@@ -69,8 +78,10 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const tradingType = searchParams.get("trading_type");
 
     const toggleExpanded = (href: string) => {
         setExpandedItems(prev =>
@@ -84,10 +95,18 @@ export default function AdminLayout({
     useEffect(() => {
         const activeParentHrefs = sidebarItems
             .filter(item => {
-                const isActive = item.href === '/'
+                const itemPath = item.href.split('?')[0];
+                const itemParams = new URLSearchParams(item.href.split('?')[1] || "");
+                const itemTradingType = itemParams.get("trading_type");
+
+                const isPathMatch = itemPath === '/'
                     ? pathname === '/'
-                    : (pathname === item.href || pathname.startsWith(item.href + "/"));
-                return isActive && item.subItems && (item.subItems.length > 0);
+                    : (pathname === itemPath || pathname.startsWith(itemPath + "/"));
+
+                // If the menu item has a trading_type, it must match the current URL's trading_type
+                const isTypeMatch = !itemTradingType || itemTradingType === tradingType;
+
+                return isPathMatch && isTypeMatch && item.subItems && (item.subItems.length > 0);
             })
             .map(item => item.href);
 
@@ -98,7 +117,7 @@ export default function AdminLayout({
                 return [...prev, ...missing];
             });
         }
-    }, [pathname]);
+    }, [pathname, tradingType]);
 
     return (
         <div className="min-h-screen bg-muted/30 flex">
@@ -114,7 +133,15 @@ export default function AdminLayout({
                 <div className="flex flex-col h-[calc(100vh-4rem)]">
                     <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                         {sidebarItems.map((item) => {
-                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                            const itemPath = item.href.split('?')[0];
+                            const itemParams = new URLSearchParams(item.href.split('?')[1] || "");
+                            const itemTradingType = itemParams.get("trading_type");
+
+                            const isPathMatch = itemPath === '/'
+                                ? pathname === '/'
+                                : (pathname === itemPath || pathname.startsWith(itemPath + "/"));
+
+                            const isActive = isPathMatch && (!itemTradingType || itemTradingType === tradingType);
                             const hasSubItems = item.subItems && item.subItems.length > 0;
                             const isExpanded = expandedItems.includes(item.href);
 
@@ -150,7 +177,11 @@ export default function AdminLayout({
                                             {isExpanded && (
                                                 <div className="ml-8 mt-1 space-y-1">
                                                     {item.subItems.map((subItem) => {
-                                                        const isSubActive = pathname === subItem.href;
+                                                        const subItemPath = subItem.href.split('?')[0];
+                                                        const subItemParams = new URLSearchParams(subItem.href.split('?')[1] || "");
+                                                        const subItemTradingType = subItemParams.get("trading_type");
+                                                        const isSubActive = pathname === subItemPath && (!subItemTradingType || subItemTradingType === tradingType);
+
                                                         return (
                                                             <Link
                                                                 key={subItem.href}

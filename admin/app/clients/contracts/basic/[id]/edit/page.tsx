@@ -257,7 +257,7 @@ export default function EditBasicContractPage({ params }: { params: Promise<{ id
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">
-                                クライアント <span className="text-red-500">*</span>
+                                クライアント/パートナー <span className="text-red-500">*</span>
                             </label>
                             <select
                                 required

@@ -56,7 +56,7 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
         // Pre-validate client names and collect unique names for bulk lookup
         const clientNames = Array.from(new Set(jobs.map(j => {
             if (!j.client_name) {
-                throw new Error(`クライアント名が未入力です: ${j.title || "不明な案件"}`);
+                throw new Error(`クライアント/パートナー名が未入力です: ${j.title || "不明な案件"}`);
             }
             return j.client_name.trim();
         }).filter(Boolean)));
@@ -83,7 +83,7 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
 
         const payloads = jobs.map(job => {
             const clientId = clientMap.get(job.client_name?.trim());
-            if (!clientId) throw new Error(`クライアントが見つかりません: ${job.client_name}`);
+            if (!clientId) throw new Error(`クライアント/パートナーが見つかりません: ${job.client_name}`);
 
             const reportTemplateId = job.template_name ? templateMap.get(job.template_name) : null;
 
