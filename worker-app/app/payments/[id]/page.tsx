@@ -98,7 +98,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                         <div>
                             <div className="text-sm font-bold text-green-900">確認・承認済み</div>
                             <div className="text-xs text-green-700 mt-0.5">
-                                {new Date(notice.approved_at).toLocaleString('ja-JP')} に承認されました。現在は支払処理待ちです。
+                                {new Date(notice.approved_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })} に承認されました。現在は支払処理待ちです。
                             </div>
                         </div>
                     </div>

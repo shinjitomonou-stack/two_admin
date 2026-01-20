@@ -1,7 +1,7 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User } from "lucide-react";
+import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, DollarSign } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,7 @@ export default async function Home() {
   let showContractAlert = false;
   let showBankAccountAlert = false;
   let showLineAlert = false;
+  let showPaymentNoticeAlert = false;
   let workerName = "";
 
   // Dashboard statistics
@@ -210,6 +211,18 @@ id,
 
       // Calculate percentage (6 total items)
       profileCompletion = Math.round((profileCompletion / 6) * 100);
+    }
+
+    // Check for pending payment notices (ISSUED status)
+    const { data: pendingNotices } = await supabase
+      .from("payment_notices")
+      .select("id")
+      .eq("worker_id", workerId)
+      .eq("status", "ISSUED")
+      .limit(1);
+
+    if (pendingNotices && pendingNotices.length > 0) {
+      showPaymentNoticeAlert = true;
     }
   }
 
@@ -468,6 +481,29 @@ id,
         )
       }
 
+      {/* Payment Notice Alert */}
+      {showPaymentNoticeAlert && (
+        <div className="max-w-md mx-auto px-4 mt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+            <Bell className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-blue-800 text-sm">確認待ちの支払明細があります</h3>
+              <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                今月分の支払明細が発行されました。
+                <br />
+                内容を確認し、承認をお願いします。
+              </p>
+              <Link
+                href="/payments"
+                className="inline-block mt-3 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                明細を確認・承認する
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Dashboard Statistics */}
@@ -576,6 +612,13 @@ id,
               >
                 <FileText className="w-6 h-6 text-green-600" />
                 <span className="text-xs font-medium text-slate-700">作業報告</span>
+              </Link>
+              <Link
+                href="/payments"
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <DollarSign className="w-6 h-6 text-orange-500" />
+                <span className="text-xs font-medium text-slate-700">支払明細</span>
               </Link>
               <Link
                 href="/settings"
