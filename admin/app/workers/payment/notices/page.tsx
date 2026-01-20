@@ -4,7 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { ChevronLeft, ChevronRight, FileText, Send, CheckCircle2, Clock, Eye, AlertCircle, Loader2, ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { updatePaymentNoticeStatus, sendPaymentNoticeNotification } from "@/app/actions/payment";
+import { updatePaymentNoticeStatus, sendPaymentNoticeNotification, upsertPaymentSchedule, completePayment } from "@/app/actions/payment";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,9 @@ export default function PaymentNoticesPage() {
     const [notices, setNotices] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+    const [paymentSchedule, setPaymentSchedule] = useState<any>(null);
+    const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+    const [scheduledDate, setScheduledDate] = useState("");
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -53,6 +56,16 @@ export default function PaymentNoticesPage() {
         } else {
             setNotices(data || []);
         }
+
+        // Fetch payment schedule for this month
+        const { data: schedule } = await supabase
+            .from("payment_schedules")
+            .select("*")
+            .eq("month", selectedMonth)
+            .maybeSingle();
+
+        setPaymentSchedule(schedule);
+        setScheduledDate(schedule?.scheduled_payment_date || "");
         setIsLoading(false);
     };
 
@@ -126,6 +139,52 @@ export default function PaymentNoticesPage() {
         fetchNotices();
     };
 
+    const handleSaveSchedule = async () => {
+        if (!scheduledDate) return;
+        setIsLoading(true);
+        try {
+            const result = await upsertPaymentSchedule(selectedMonth, scheduledDate);
+            if (result.success) {
+                toast.success("支払予定日を設定しました");
+                setPaymentSchedule(result.data);
+                setIsEditingSchedule(false);
+            } else {
+                toast.error("設定に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCompletePayment = async (id: string) => {
+        if (!paymentSchedule) {
+            toast.error("支払予定日を先に設定してください");
+            return;
+        }
+        setProcessingIds(prev => new Set(prev).add(id));
+        try {
+            const result = await completePayment(id);
+            if (result.success) {
+                toast.success("支払処理が完了し、LINE通知を送信しました");
+                fetchNotices();
+            } else {
+                toast.error(result.error || "支払処理に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setProcessingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    };
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -166,6 +225,61 @@ export default function PaymentNoticesPage() {
                             一括発行 & 通知
                         </button>
                     </div>
+                </div>
+
+                {/* Payment Schedule Section */}
+                <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="font-bold text-lg">支払予定日設定</h3>
+                            <p className="text-sm text-muted-foreground">この月の全通知書に適用される支払予定日を設定します</p>
+                        </div>
+                        {!isEditingSchedule && paymentSchedule && (
+                            <button
+                                onClick={() => setIsEditingSchedule(true)}
+                                className="text-sm text-blue-600 hover:underline font-medium"
+                            >
+                                変更
+                            </button>
+                        )}
+                    </div>
+                    {isEditingSchedule || !paymentSchedule ? (
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="date"
+                                value={scheduledDate}
+                                onChange={(e) => setScheduledDate(e.target.value)}
+                                className="px-3 py-2 border border-input rounded-md text-sm"
+                            />
+                            <button
+                                onClick={handleSaveSchedule}
+                                disabled={!scheduledDate || isLoading}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                            >
+                                保存
+                            </button>
+                            {paymentSchedule && (
+                                <button
+                                    onClick={() => {
+                                        setIsEditingSchedule(false);
+                                        setScheduledDate(paymentSchedule.scheduled_payment_date);
+                                    }}
+                                    className="text-sm text-slate-600 hover:underline"
+                                >
+                                    キャンセル
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-lg font-bold text-blue-600">
+                            {new Date(paymentSchedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
+                    )}
+                    {!paymentSchedule && !isEditingSchedule && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
+                            <p className="text-sm text-yellow-800">⚠️ 支払予定日が未設定です。支払完了処理を行う前に設定してください。</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -245,7 +359,7 @@ export default function PaymentNoticesPage() {
                                                 )}
                                                 {notice.status === 'APPROVED' && (
                                                     <button
-                                                        onClick={() => handleStatusUpdate(notice.id, 'PAID')}
+                                                        onClick={() => handleCompletePayment(notice.id)}
                                                         disabled={processingIds.has(notice.id)}
                                                         className="text-xs text-purple-600 hover:underline font-medium disabled:opacity-50"
                                                     >

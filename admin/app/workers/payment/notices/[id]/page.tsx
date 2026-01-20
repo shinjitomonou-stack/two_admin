@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, DollarSign, CheckCircle2, Clock, Building2, User, Globe, Monitor, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updatePaymentNoticeStatus, sendPaymentNoticeNotification } from "@/app/actions/payment";
+import { updatePaymentNoticeStatus, sendPaymentNoticeNotification, completePayment } from "@/app/actions/payment";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -84,6 +84,24 @@ export default function PaymentNoticeDetailPage() {
                 fetchNotice();
             } else {
                 toast.error(result.message || "通知の送信に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleCompletePayment = async () => {
+        setIsProcessing(true);
+        try {
+            const result = await completePayment(id);
+            if (result.success) {
+                toast.success("支払処理が完了し、LINE通知を送信しました");
+                fetchNotice();
+            } else {
+                toast.error(result.error || "支払処理に失敗しました");
             }
         } catch (error) {
             console.error(error);
@@ -305,7 +323,7 @@ export default function PaymentNoticeDetailPage() {
                                 )}
                                 {notice.status === 'APPROVED' && (
                                     <button
-                                        onClick={() => handleStatusUpdate('PAID')}
+                                        onClick={handleCompletePayment}
                                         disabled={isProcessing}
                                         className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                                     >

@@ -263,3 +263,15 @@ CREATE TABLE public.payment_notices (
 CREATE INDEX idx_payment_notices_worker ON public.payment_notices(worker_id);
 CREATE INDEX idx_payment_notices_month ON public.payment_notices(month);
 CREATE INDEX idx_payment_notices_status ON public.payment_notices(status);
+
+-- Payment Schedules (Monthly Payment Date Master)
+CREATE TABLE public.payment_schedules (
+    month TEXT PRIMARY KEY, -- Format: YYYY-MM
+    scheduled_payment_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.payment_schedules IS 'Monthly payment schedule master table';
+COMMENT ON COLUMN public.payment_schedules.month IS 'Target month in YYYY-MM format';
+COMMENT ON COLUMN public.payment_schedules.scheduled_payment_date IS 'Scheduled payment date for all notices in this month';

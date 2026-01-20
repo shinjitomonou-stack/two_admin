@@ -134,3 +134,88 @@ export async function sendPaymentNoticeNotification(id: string) {
         return { success: false, error: error.message };
     }
 }
+
+export async function completePayment(id: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        // Get payment notice with worker info
+        const { data: notice, error: noticeError } = await supabase
+            .from("payment_notices")
+            .select(`
+                *,
+                worker:workers(full_name, line_id, line_user_id)
+            `)
+            .eq("id", id)
+            .single();
+
+        if (noticeError || !notice) throw new Error("Payment notice not found");
+
+        // Get scheduled payment date for this month
+        const { data: schedule } = await supabase
+            .from("payment_schedules")
+            .select("scheduled_payment_date")
+            .eq("month", notice.month)
+            .single();
+
+        // Update status to PAID
+        const { error: updateError } = await supabase
+            .from("payment_notices")
+            .update({
+                status: "PAID",
+                paid_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (updateError) throw updateError;
+
+        // Send LINE notification
+        const worker = notice.worker as any;
+        const lineUserId = worker?.line_id || worker?.line_user_id;
+
+        if (lineUserId) {
+            const paymentDateText = schedule?.scheduled_payment_date
+                ? `\n\nお支払予定日: ${new Date(schedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}`
+                : "";
+
+            const message = `【お支払処理完了のお知らせ】\n\n${worker.full_name}様\n\n${notice.month}分の支払処理が完了しました。${paymentDateText}\n\nご確認ありがとうございました。`;
+
+            await sendLineMessage(lineUserId, message);
+        }
+
+        revalidatePath("/workers/payment/notices");
+        revalidatePath(`/workers/payment/notices/${id}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error completing payment:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function upsertPaymentSchedule(month: string, scheduledPaymentDate: string) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        const { data, error } = await supabase
+            .from("payment_schedules")
+            .upsert({
+                month,
+                scheduled_payment_date: scheduledPaymentDate,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: "month"
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        revalidatePath("/workers/payment/notices");
+        return { success: true, data };
+    } catch (error) {
+        console.error("Error upserting payment schedule:", error);
+        return { success: false, error };
+    }
+}

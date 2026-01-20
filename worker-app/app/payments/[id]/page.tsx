@@ -23,6 +23,13 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
 
     if (!notice) notFound();
 
+    // Fetch payment schedule for this month
+    const { data: schedule } = await supabase
+        .from("payment_schedules")
+        .select("scheduled_payment_date")
+        .eq("month", notice.month)
+        .maybeSingle();
+
     const jobs = (notice.job_details as any[]) || [];
 
     return (
@@ -111,6 +118,12 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                             <div className="text-sm font-bold text-purple-900">お支払完了</div>
                             <div className="text-xs text-purple-700 mt-0.5">
                                 この明細の支払処理は完了しています。
+                                {schedule?.scheduled_payment_date && (
+                                    <>
+                                        <br />
+                                        お支払予定日: {new Date(schedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
