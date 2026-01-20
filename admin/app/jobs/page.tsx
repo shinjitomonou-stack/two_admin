@@ -74,10 +74,9 @@ export default function JobsPage() {
     const fetchData = async () => {
         const supabase = createClient();
 
-        // Fetch jobs
-        const { data: jobsData, error: jobsError } = await supabase
-            .from("jobs")
-            .select(`
+        // Parallel fetch: Jobs and Clients
+        const [jobsRes, clientsRes] = await Promise.all([
+            supabase.from("jobs").select(`
                 *,
                 clients(name),
                 job_applications(
@@ -99,26 +98,21 @@ export default function JobsPage() {
                     trading_type,
                     clients(name)
                 )
-            `)
-            .order("created_at", { ascending: false });
+            `).order("created_at", { ascending: false }),
+            supabase.from("clients").select("id, name").order("name")
+        ]);
 
-        if (jobsError) {
-            console.error("Error fetching jobs:", jobsError);
+        if (jobsRes.error) {
+            console.error("Error fetching jobs:", jobsRes.error);
         } else {
-            setJobs(jobsData || []);
-            setFilteredJobs(jobsData || []);
+            setJobs(jobsRes.data || []);
+            setFilteredJobs(jobsRes.data || []);
         }
 
-        // Fetch clients for filter
-        const { data: clientsData, error: clientsError } = await supabase
-            .from("clients")
-            .select("id, name")
-            .order("name");
-
-        if (clientsError) {
-            console.error("Error fetching clients:", clientsError);
+        if (clientsRes.error) {
+            console.error("Error fetching clients:", clientsRes.error);
         } else {
-            setClients(clientsData || []);
+            setClients(clientsRes.data || []);
         }
 
         setLoading(false);

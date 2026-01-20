@@ -11,42 +11,42 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const supabase = await createClient();
 
-  // 1. Fetch Stats
-  // Active Jobs (OPEN or FILLED)
-  const { count: activeJobsCount } = await supabase
-    .from("jobs")
-    .select("*", { count: "exact", head: true })
-    .in("status", ["OPEN", "FILLED"]);
-
-  // Pending Applications (APPLIED)
-  const { count: pendingAppsCount } = await supabase
-    .from("job_applications")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "APPLIED");
-
-  // Unverified Workers
-  const { count: unverifiedWorkersCount } = await supabase
-    .from("workers")
-    .select("*", { count: "exact", head: true })
-    .eq("is_verified", false);
-
-  // Pending Basic Contracts
-  // Note: This might be complex depending on how we define "pending" globally, 
-  // but for now let's count all pending basic contracts.
-  const { count: pendingContractsCount } = await supabase
-    .from("worker_basic_contracts")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "PENDING");
-
-  // 2. Fetch Today's Jobs
+  // 1. Prepare Dates
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const endOfToday = new Date(startOfToday);
   endOfToday.setHours(23, 59, 59, 999);
 
-  const { data: todayJobs } = await supabase
-    .from("jobs")
-    .select(`
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1); // Start of month
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  // 2. Parallel Fetch All Data
+  const [
+    activeJobsRes,
+    pendingAppsRes,
+    unverifiedWorkersCountRes,
+    pendingContractsRes,
+    todayJobsRes,
+    recentAppsRes,
+    unverifiedWorkersRes,
+    jobContractsRes,
+    applicationsRes,
+    verifiedCountRes
+  ] = await Promise.all([
+    // Active Jobs (OPEN or FILLED)
+    supabase.from("jobs").select("*", { count: "exact", head: true }).in("status", ["OPEN", "FILLED"]),
+    // Pending Applications (APPLIED)
+    supabase.from("job_applications").select("*", { count: "exact", head: true }).eq("status", "APPLIED"),
+    // Unverified Workers Count
+    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", false),
+    // Pending Basic Contracts
+    supabase.from("worker_basic_contracts").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
+    // Today's Jobs
+    supabase.from("jobs").select(`
       id,
       title,
       status,
@@ -54,46 +54,39 @@ export default async function Home() {
       end_time,
       address_text,
       clients(name)
-    `)
-    .gte("start_time", startOfToday.toISOString())
-    .lte("start_time", endOfToday.toISOString())
-    .order("start_time", { ascending: true });
-
-  // 3. Fetch Recent Data
-  // Recent Applications
-  const { data: recentApps } = await supabase
-    .from("job_applications")
-    .select(`
+    `).gte("start_time", startOfToday.toISOString()).lte("start_time", endOfToday.toISOString()).order("start_time", { ascending: true }),
+    // Recent Applications
+    supabase.from("job_applications").select(`
       id,
       created_at,
       status,
       workers(full_name),
       jobs(title)
-    `)
-    .eq("status", "APPLIED")
-    .order("created_at", { ascending: false })
-    .limit(5);
+    `).eq("status", "APPLIED").order("created_at", { ascending: false }).limit(5),
+    // Unverified Workers List
+    supabase.from("workers").select("id, full_name, email, created_at").eq("is_verified", false).order("created_at", { ascending: false }).limit(5),
+    // Client Job Contracts for Monthly Sales
+    supabase.from("client_job_contracts").select("contract_amount, billing_cycle, created_at").gte("created_at", sixMonthsAgo.toISOString()),
+    // Applications for Trends
+    supabase.from("job_applications").select("created_at").gte("created_at", thirtyDaysAgo.toISOString()),
+    // Verified Workers Count
+    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", true)
+  ]);
 
-  // Unverified Workers
-  const { data: unverifiedWorkers } = await supabase
-    .from("workers")
-    .select("id, full_name, email, created_at")
-    .eq("is_verified", false)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const activeJobsCount = activeJobsRes.count;
+  const pendingAppsCount = pendingAppsRes.count;
+  const unverifiedWorkersCount = unverifiedWorkersCountRes.count;
+  const pendingContractsCount = pendingContractsRes.count;
+  const todayJobs = todayJobsRes.data;
+  const recentApps = recentAppsRes.data;
+  const unverifiedWorkers = unverifiedWorkersRes.data;
+  const jobContracts = jobContractsRes.data;
+  const applications = applicationsRes.data;
+  const verifiedCount = verifiedCountRes.count;
 
   // 3. Aggregate Data for Charts
   // A. Monthly Sales (Client Job Contracts + Client Contracts)
   // Note: This is a simplified estimation.
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-  sixMonthsAgo.setDate(1); // Start of month
-
-  const { data: jobContracts } = await supabase
-    .from("client_job_contracts")
-    .select("contract_amount, billing_cycle, created_at")
-    .gte("created_at", sixMonthsAgo.toISOString());
-
   // Helper to format month Key (e.g., "2023-11")
   const getMonthKey = (dateStr: string) => dateStr.substring(0, 7);
 
@@ -127,14 +120,6 @@ export default async function Home() {
     .map(({ month, amount }) => ({ month, amount }));
 
   // B. Application Trends (Last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const { data: applications } = await supabase
-    .from("job_applications")
-    .select("created_at")
-    .gte("created_at", thirtyDaysAgo.toISOString());
-
   const appMap = new Map<string, number>();
   // Initialize last 30 days
   for (let i = 0; i < 30; i++) {
@@ -161,11 +146,6 @@ export default async function Home() {
     .map(({ date, count }) => ({ date, count }));
 
   // C. Worker Status
-  const { count: verifiedCount } = await supabase
-    .from("workers")
-    .select("*", { count: "exact", head: true })
-    .eq("is_verified", true);
-
   const workerData = [
     { name: "本人確認済み", value: verifiedCount || 0 },
     { name: "未確認", value: unverifiedWorkersCount || 0 },

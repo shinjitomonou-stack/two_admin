@@ -9,60 +9,106 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const supabase = await createClient();
 
-  // Get authenticated user from Supabase Auth
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
-  const workerId = user?.id;
-
-  // Check for unsigned contract if logged in
-  let showContractAlert = false;
-  let showBankAccountAlert = false;
-  let showLineAlert = false;
-  let showPaymentNoticeAlert = false;
-  let workerName = "";
-
-  // Dashboard statistics
+  // Dashboard statistics setup
   let workDaysThisMonth = 0;
   let earningsThisMonth = 0;
   let appliedCount = 0;
   let confirmedCount = 0;
   let upcomingSchedule: any[] = [];
-
-  // Phase 2 variables
   let recentActivity: any[] = [];
   let announcementsWithReadStatus: any[] = [];
   let profileCompletion = 0;
   let incompleteItems: string[] = [];
+  let showContractAlert = false;
+  let showBankAccountAlert = false;
+  let showLineAlert = false;
+  let showPaymentNoticeAlert = false;
+  let workerName = "";
+  let pendingIndividualContracts: any[] = [];
+  let applicationsNeedingSchedule: any[] = [];
+  let applicationsOverdue: any[] = [];
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // Parallel fetch: Base data
+  const [authData, jobsData] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("jobs").select("*, clients(name, address)").eq("status", "OPEN").order("created_at", { ascending: false })
+  ]);
+
+  const user = authData.data?.user;
+  const workerId = user?.id;
+  const { data: jobs, error: jobsError } = jobsData;
+
+  if (jobsError) {
+    console.error("Error fetching jobs:", jobsError);
+  }
 
   if (workerId) {
-    // Fetch worker details
-    const { data: worker } = await supabase
-      .from("workers")
-      .select("full_name, email, phone, bank_account, line_user_id")
-      .eq("id", workerId)
-      .single();
+    // 1. Fetch all worker-related data in parallel
+    const [
+      workerRes,
+      templateRes,
+      completedWorkRes,
+      earningsRes,
+      applicationsRes,
+      scheduleRes,
+      recentActivityRes,
+      announcementsRes,
+      pendingNoticesRes,
+      pendingContractsRes,
+      assignedAppsRes
+    ] = await Promise.all([
+      supabase.from("workers").select("full_name, email, phone, bank_account, line_user_id").eq("id", workerId).single(),
+      supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).limit(1).single(),
+      supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", startOfMonth.toISOString()).lte("actual_work_start", endOfMonth.toISOString()),
+      supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", startOfMonth.toISOString()).lte("scheduled_work_start", endOfMonth.toISOString()),
+      supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", now.toISOString()).lte("scheduled_work_start", sevenDaysLater.toISOString()).order("scheduled_work_start"),
+      supabase.from("job_applications").select("id, actual_work_end, jobs(id, title, reward_amount), reports(id, status)").eq("worker_id", workerId).eq("status", "COMPLETED").not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(5),
+      supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`).order("created_at", { ascending: false }).limit(3),
+      supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
+      supabase.from("job_individual_contracts").select("id, job_applications!inner(worker_id, jobs(title))").eq("status", "PENDING").eq("job_applications.worker_id", workerId),
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
+    ]);
 
+    const worker = workerRes.data;
+    const template = templateRes.data;
+    const completedWork = completedWorkRes.data;
+    const earningsData = earningsRes.data;
+    const applications = applicationsRes.data;
+    const schedule = scheduleRes.data;
+    const recentActivityData = recentActivityRes.data;
+    const announcementsData = announcementsRes.data;
+    const pendingNotices = pendingNoticesRes.data;
+    const myPendingContracts = pendingContractsRes.data;
+    const assignedApplications = assignedAppsRes.data;
+
+    // Process Worker Info
     if (worker) {
       workerName = worker.full_name;
-      if (!worker.bank_account) {
-        showBankAccountAlert = true;
-      }
-      if (!worker.line_user_id) {
-        showLineAlert = true;
-      }
+      showBankAccountAlert = !worker.bank_account;
+      showLineAlert = !worker.line_user_id;
+
+      // Profile Completion Stats
+      const checks = [
+        { field: worker.full_name, label: "氏名" },
+        { field: worker.email, label: "メールアドレス" },
+        { field: worker.phone, label: "電話番号" },
+        { field: worker.bank_account, label: "口座情報" },
+        { field: worker.line_user_id, label: "LINE連携" },
+      ];
+      checks.forEach(check => {
+        if (check.field) profileCompletion += 1;
+        else incompleteItems.push(check.label);
+      });
     }
 
-    // Get active basic template
-    const { data: template } = await supabase
-      .from("contract_templates")
-      .select("id")
-      .eq("type", "BASIC")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
+    // Process Contract Alert (Async part needed if template exists)
     if (template) {
-      // Check for basic contract (PENDING or SIGNED)
       const { data: contract } = await supabase
         .from("worker_basic_contracts")
         .select("id, status")
@@ -72,210 +118,57 @@ export default async function Home() {
         .limit(1)
         .maybeSingle();
 
-      // Show alert if no contract OR status is PENDING
       if (!contract || contract.status === 'PENDING') {
         showContractAlert = true;
+        incompleteItems.push("基本契約");
+      } else {
+        profileCompletion += 1;
       }
     }
+    profileCompletion = Math.round((profileCompletion / 6) * 100);
 
-    // Calculate dashboard statistics
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    // This month's work days (completed work)
-    const { data: completedWork } = await supabase
-      .from("job_applications")
-      .select("id, actual_work_start")
-      .eq("worker_id", workerId)
-      .not("actual_work_start", "is", null)
-      .gte("actual_work_start", startOfMonth.toISOString())
-      .lte("actual_work_start", endOfMonth.toISOString());
-
+    // Process Stats
     workDaysThisMonth = completedWork?.length || 0;
-
-    // This month's earnings (confirmed and completed work)
-    const { data: earningsData } = await supabase
-      .from("job_applications")
-      .select("jobs(reward_amount)")
-      .eq("worker_id", workerId)
-      .in("status", ["CONFIRMED", "COMPLETED"])
-      .gte("scheduled_work_start", startOfMonth.toISOString())
-      .lte("scheduled_work_start", endOfMonth.toISOString());
-
     if (earningsData) {
       earningsThisMonth = earningsData.reduce((sum, app: any) => {
         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
         return sum + (job?.reward_amount || 0);
       }, 0);
     }
-
-    // Application counts
-    const { data: applications } = await supabase
-      .from("job_applications")
-      .select("status")
-      .eq("worker_id", workerId)
-      .in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]);
-
     if (applications) {
       appliedCount = applications.filter(app => app.status === "APPLIED").length;
       confirmedCount = applications.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED").length;
     }
 
-    // Upcoming schedule (next 7 days)
-    const { data: schedule } = await supabase
-      .from("job_applications")
-      .select(`
-id,
-  scheduled_work_start,
-  scheduled_work_end,
-  jobs(id, title, address_text, clients(name))
-    `)
-      .eq("worker_id", workerId)
-      .in("status", ["ASSIGNED", "CONFIRMED"])
-      .gte("scheduled_work_start", now.toISOString())
-      .lte("scheduled_work_start", sevenDaysLater.toISOString())
-      .order("scheduled_work_start");
-
     upcomingSchedule = schedule || [];
-
-    // Phase 2: Recent Activity (completed work)
-    const { data: recentActivityData } = await supabase
-      .from("job_applications")
-      .select(`
-        id,
-        actual_work_end,
-        jobs(id, title, reward_amount),
-        reports(id, status)
-      `)
-      .eq("worker_id", workerId)
-      .eq("status", "COMPLETED")
-      .not("actual_work_end", "is", null)
-      .order("actual_work_end", { ascending: false })
-      .limit(5);
-
     recentActivity = recentActivityData || [];
+    showPaymentNoticeAlert = (pendingNotices?.length || 0) > 0;
+    pendingIndividualContracts = myPendingContracts || [];
 
-    // Phase 2: Announcements
-    const { data: announcementsData } = await supabase
-      .from("announcements")
-      .select("*")
-      .eq("is_active", true)
-      .or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`)
-      .order("created_at", { ascending: false })
-      .limit(3);
+    // Process Announcements with Read Status (Batch fetch)
+    if (announcementsData && announcementsData.length > 0) {
+      const announcementIds = announcementsData.map(a => a.id);
+      const { data: readStatuses } = await supabase
+        .from("worker_announcement_reads")
+        .select("announcement_id")
+        .eq("worker_id", workerId)
+        .in("announcement_id", announcementIds);
 
-    // Check which announcements have been read
-    if (announcementsData) {
-      for (const announcement of announcementsData) {
-        const { data: readStatus } = await supabase
-          .from("worker_announcement_reads")
-          .select("id")
-          .eq("worker_id", workerId)
-          .eq("announcement_id", announcement.id)
-          .maybeSingle();
-
-        announcementsWithReadStatus.push({
-          ...announcement,
-          isRead: !!readStatus
-        });
-      }
+      const readIdSet = new Set(readStatuses?.map(r => r.announcement_id) || []);
+      announcementsWithReadStatus = announcementsData.map(a => ({
+        ...a,
+        isRead: readIdSet.has(a.id)
+      }));
     }
 
-    // Phase 2: Profile Completion
-    if (worker) {
-      const checks = [
-        { field: worker.full_name, label: "氏名" },
-        { field: worker.email, label: "メールアドレス" },
-        { field: worker.phone, label: "電話番号" },
-        { field: worker.bank_account, label: "口座情報" },
-        { field: worker.line_user_id, label: "LINE連携" },
-      ];
-
-      // Check basic contract
-      const hasBasicContract = !showContractAlert;
-      if (hasBasicContract) {
-        profileCompletion += 1;
-      } else {
-        incompleteItems.push("基本契約");
-      }
-
-      checks.forEach(check => {
-        if (check.field) {
-          profileCompletion += 1;
-        } else {
-          incompleteItems.push(check.label);
-        }
-      });
-
-      // Calculate percentage (6 total items)
-      profileCompletion = Math.round((profileCompletion / 6) * 100);
-    }
-
-    // Check for pending payment notices (ISSUED status)
-    const { data: pendingNotices } = await supabase
-      .from("payment_notices")
-      .select("id")
-      .eq("worker_id", workerId)
-      .eq("status", "ISSUED")
-      .limit(1);
-
-    if (pendingNotices && pendingNotices.length > 0) {
-      showPaymentNoticeAlert = true;
-    }
-  }
-
-  // Check for pending individual contracts
-  let pendingIndividualContracts: any[] = [];
-  if (workerId) {
-    const { data: myPendingContracts } = await supabase
-      .from("job_individual_contracts")
-      .select(`
-id,
-  job_applications!inner(
-    worker_id,
-    jobs(title)
-  )
-    `)
-      .eq("status", "PENDING")
-      .eq("job_applications.worker_id", workerId);
-
-    if (myPendingContracts) {
-      pendingIndividualContracts = myPendingContracts;
-    }
-  }
-
-  // Check for applications needing schedule
-  let applicationsNeedingSchedule: any[] = [];
-  let applicationsOverdue: any[] = [];
-
-  if (workerId) {
-    const { data: assignedApplications } = await supabase
-      .from("job_applications")
-      .select(`
-id,
-  scheduled_work_start,
-  scheduled_work_end,
-  jobs(
-    id,
-    title
-  )
-    `)
-      .eq("worker_id", workerId)
-      .in("status", ["ASSIGNED", "CONFIRMED"]);
-
+    // Process Overdue/Schedule alerts
     if (assignedApplications) {
-      const now = new Date();
-
       for (const app of assignedApplications) {
-        // Check if schedule is missing
         if (!app.scheduled_work_start || !app.scheduled_work_end) {
           applicationsNeedingSchedule.push(app);
-        }
-        // Check if overdue (scheduled end time has passed)
-        else if (new Date(app.scheduled_work_end) < now) {
-          // Check if report exists
+        } else if (new Date(app.scheduled_work_end) < now) {
+          // This one is still a bit sequential, but let's batch check reports if it becomes a problem.
+          // For now, it's usually only a few applications.
           const { data: report } = await supabase
             .from("reports")
             .select("id")
@@ -288,22 +181,6 @@ id,
         }
       }
     }
-  }
-
-  const { data: jobs, error } = await supabase
-    .from("jobs")
-    .select(`
-  *,
-  clients(
-    name,
-    address
-  )
-    `)
-    .eq("status", "OPEN")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching jobs:", error);
   }
 
   // Helper function to format date

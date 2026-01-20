@@ -55,14 +55,6 @@ export default async function WorkersPage({
         .from("workers")
         .select("*", { count: "exact", head: true });
 
-    if (search) {
-        countQuery = countQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%,tags.cs.{${search}}`);
-    }
-
-    const { count } = await countQuery;
-
-    const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
-
     // Build query for paginated data
     let dataQuery = supabase
         .from("workers")
@@ -71,14 +63,25 @@ export default async function WorkersPage({
         .range(from, to);
 
     if (search) {
-        dataQuery = dataQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%,tags.cs.{${search}}`);
+        const searchCondition = `full_name.ilike.%${search}%,email.ilike.%${search}%,worker_number.ilike.%${search}%,tags.cs.{${search}}`;
+        countQuery = countQuery.or(searchCondition);
+        dataQuery = dataQuery.or(searchCondition);
     }
 
-    const { data: workers, error } = await dataQuery;
+    // Parallel fetch: Count and Paginated Data
+    const [countRes, dataRes] = await Promise.all([
+        countQuery,
+        dataQuery
+    ]);
+
+    const count = countRes.count;
+    const { data: workers, error } = dataRes;
 
     if (error) {
         console.error("Error fetching workers:", error);
     }
+
+    const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE);
 
     // Fetch email verification status for each worker
     const workersWithVerification = await Promise.all(
