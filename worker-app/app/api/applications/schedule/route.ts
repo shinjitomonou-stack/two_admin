@@ -39,12 +39,13 @@ export async function POST(request: Request) {
             );
         }
 
-        // Update the schedule
+        // Update the schedule and set status to CONFIRMED
         const { error } = await supabase
             .from("job_applications")
             .update({
                 scheduled_work_start: scheduledStart,
                 scheduled_work_end: scheduledEnd,
+                status: 'CONFIRMED'
             })
             .eq("id", applicationId);
 
