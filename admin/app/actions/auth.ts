@@ -60,7 +60,7 @@ export async function resetPasswordRequest(formData: FormData) {
 
     const supabase = await createClient();
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://admin-liart-nine.vercel.app";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://teo-work.com";
 
     // Ensure no trailing slash
     const baseSiteUrl = siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;

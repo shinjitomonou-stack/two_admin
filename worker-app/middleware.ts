@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
     // because the 'Site URL' is set to this domain. Redirect it to the admin application.
     const hasAuthCode = request.nextUrl.searchParams.has("code") || request.nextUrl.searchParams.has("token_hash");
     if (hasAuthCode && request.nextUrl.pathname === "/") {
-        const adminCallbackUrl = new URL("https://admin-liart-nine.vercel.app/auth/callback");
+        const adminCallbackUrl = new URL("https://teo-work.com/auth/callback");
         request.nextUrl.searchParams.forEach((value, key) => {
             adminCallbackUrl.searchParams.set(key, value);
         });

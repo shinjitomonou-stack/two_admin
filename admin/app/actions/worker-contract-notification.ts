@@ -54,7 +54,7 @@ export async function sendWorkerContractNotification(contractId: string) {
         }
 
         // TODO: This should be an environment variable in the future
-        const WORKER_APP_URL = process.env.WORKER_APP_URL || "https://two-admin.vercel.app";
+        const WORKER_APP_URL = process.env.WORKER_APP_URL || "https://support.teo-work.com";
 
         // 2. Send LINE message
         const contractUrl = `${WORKER_APP_URL}/contracts/individual/${contractId}`;

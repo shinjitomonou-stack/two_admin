@@ -184,7 +184,7 @@ export async function resetPasswordRequest(formData: FormData) {
 
     const supabase = await createClient();
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://two-worker.vercel.app";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://support.teo-work.com";
     const redirectTo = `${siteUrl}/api/auth/callback?next=/update-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
