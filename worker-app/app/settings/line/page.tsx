@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LineConnectButton } from "@/components/LineConnectButton";
+import BackButton from "@/components/BackButton";
 
 export default async function LineSettingsPage() {
     const supabase = await createClient();
@@ -26,9 +27,7 @@ export default async function LineSettingsPage() {
         <div className="min-h-screen bg-slate-50 pb-20">
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-3">
-                    <Link href="/" className="p-2 -ml-2 hover:bg-slate-50 rounded-full">
-                        <ArrowLeft className="w-5 h-5 text-slate-500" />
-                    </Link>
+                    <BackButton fallbackHref="/" />
                     <h1 className="font-bold text-lg text-slate-900">LINE連携設定</h1>
                 </div>
             </header>

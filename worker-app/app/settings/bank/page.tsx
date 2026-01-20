@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BankAccountForm } from "@/components/BankAccountForm";
+import BackButton from "@/components/BackButton";
 
 export default async function BankAccountPage() {
     const supabase = await createClient();
@@ -36,9 +37,7 @@ export default async function BankAccountPage() {
             {/* Header */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-4">
-                    <Link href="/" className="p-2 -ml-2 hover:bg-slate-100 rounded-full">
-                        <ArrowLeft className="w-5 h-5 text-slate-600" />
-                    </Link>
+                    <BackButton fallbackHref="/" />
                     <h1 className="font-bold text-lg">口座情報登録</h1>
                 </div>
             </header>

@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, FileText, Calendar, JapaneseYen, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
+import { FileText, Calendar, JapaneseYen, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import PaymentApprovalButton from "@/components/PaymentApprovalButton";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +37,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
         <div className="min-h-screen bg-slate-50 pb-32">
             {/* Header */}
             <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center gap-4">
-                <Link href="/payments" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <ChevronLeft className="w-6 h-6 text-slate-500" />
-                </Link>
+                <BackButton fallbackHref="/payments" variant="chevron" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 ml-0" />
                 <h1 className="text-lg font-bold text-slate-900">支払明細詳細</h1>
             </div>
 

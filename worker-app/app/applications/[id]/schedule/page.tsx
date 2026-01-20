@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, Save } from "lucide-react";
+import { Calendar, Clock, Save } from "lucide-react";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 
 export default function SchedulePage() {
     const router = useRouter();
@@ -56,9 +57,7 @@ export default function SchedulePage() {
             {/* Header */}
             <header className="sticky top-0 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-border px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <Link href="/" className="p-2 -ml-2 hover:bg-slate-50 rounded-full">
-                        <ArrowLeft className="w-5 h-5 text-slate-500" />
-                    </Link>
+                    <BackButton fallbackHref="/" />
                     <h1 className="text-lg font-bold">作業予定日の設定</h1>
                 </div>
             </header>

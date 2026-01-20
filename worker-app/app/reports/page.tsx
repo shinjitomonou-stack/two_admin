@@ -2,7 +2,8 @@ import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
-import { ArrowLeft, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ReportsPage() {
@@ -104,9 +105,7 @@ export default async function ReportsPage() {
             {/* Header */}
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ArrowLeft className="w-5 h-5 text-slate-500" />
-                    </Link>
+                    <BackButton fallbackHref="/" />
                     <div>
                         <h1 className="font-bold text-lg text-slate-900">作業報告</h1>
                         {workerName && (

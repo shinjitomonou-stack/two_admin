@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Clock, Calendar, JapaneseYen, Building2 } from "lucide-react";
+import { MapPin, Clock, Calendar, JapaneseYen, Building2 } from "lucide-react";
 import { ApplyButton } from "@/components/ApplyButton";
+import BackButton from "@/components/BackButton";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -82,9 +83,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <div className="min-h-screen bg-slate-50 pb-20">
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-3">
-                    <Link href="/jobs" className="p-2 -ml-2 hover:bg-slate-50 rounded-full">
-                        <ArrowLeft className="w-5 h-5 text-slate-500" />
-                    </Link>
+                    <BackButton fallbackHref="/jobs" />
                     <h1 className="font-bold text-lg text-slate-900">案件詳細</h1>
                 </div>
             </header>

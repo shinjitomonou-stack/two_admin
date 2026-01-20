@@ -3,7 +3,8 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Briefcase, ChevronRight, Clock, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, Briefcase, ChevronRight, Clock, CheckCircle } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 
@@ -154,9 +155,7 @@ export default function ApplicationsPage() {
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="px-4 h-14 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="p-2 -ml-2 hover:bg-slate-50 rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-slate-500" />
-                        </Link>
+                        <BackButton fallbackHref="/" />
                         <h1 className="font-bold text-lg text-slate-900">お仕事管理</h1>
                     </div>
                 </div>

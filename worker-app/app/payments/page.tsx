@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { ChevronRight, FileText, CheckCircle2, Clock, Inbox, ChevronLeft } from "lucide-react";
+import { ChevronRight, FileText, CheckCircle2, Clock, Inbox } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 const STATUS_LABELS: Record<string, string> = {
     ISSUED: "確認待ち",
@@ -32,9 +33,7 @@ export default async function PaymentsPage() {
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
             <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center gap-4">
-                <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <ChevronLeft className="w-6 h-6 text-slate-500" />
-                </Link>
+                <BackButton fallbackHref="/" variant="chevron" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 ml-0" />
                 <div>
                     <h1 className="text-lg font-bold text-slate-900">支払明細</h1>
                     <p className="text-xs text-slate-500 mt-0.5">
