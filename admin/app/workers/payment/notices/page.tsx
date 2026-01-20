@@ -219,6 +219,12 @@ export default function PaymentNoticesPage() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-right space-x-2">
+                                                <Link
+                                                    href={`/workers/payment/notices/${notice.id}`}
+                                                    className="text-xs text-slate-600 hover:underline font-medium"
+                                                >
+                                                    詳細
+                                                </Link>
                                                 {notice.status === 'DRAFT' && (
                                                     <button
                                                         onClick={() => handleStatusUpdate(notice.id, 'ISSUED')}

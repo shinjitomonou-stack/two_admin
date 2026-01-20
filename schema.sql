@@ -252,6 +252,8 @@ CREATE TABLE public.payment_notices (
     job_details JSONB NOT NULL DEFAULT '[]', -- Snapshot of jobs included in this notice
     issued_at TIMESTAMP WITH TIME ZONE,
     approved_at TIMESTAMP WITH TIME ZONE,
+    approved_ip_address TEXT, -- IP address when approved
+    approved_user_agent TEXT, -- User agent when approved
     paid_at TIMESTAMP WITH TIME ZONE,
     notification_sent_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
