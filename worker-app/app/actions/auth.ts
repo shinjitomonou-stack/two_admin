@@ -98,33 +98,6 @@ export async function createWorkerProfile(formData: FormData) {
     }
 }
 
-export async function loginWorker(formData: FormData) {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    if (!email || !password) {
-        return { error: "メールアドレスとパスワードを入力してください" };
-    }
-
-    const supabase = await createClient();
-
-    const { data: worker } = await supabase
-        .from("workers")
-        .select("id, password_hash")
-        .eq("email", email)
-        .single();
-
-    if (!worker || worker.password_hash !== password) {
-        return { error: "メールアドレスまたはパスワードが間違っています" };
-    }
-
-    // Set cookie
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    cookieStore.set("worker_id", worker.id, { httpOnly: true, path: "/" });
-
-    redirect("/");
-}
 
 // ===== Supabase Auth Functions =====
 

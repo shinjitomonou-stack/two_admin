@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -7,14 +6,15 @@ import ReportForm from "@/components/ReportForm";
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const workerId = cookieStore.get("worker_id")?.value;
+    const supabase = await createClient();
+
+    // Get authenticated user from Supabase Auth
+    const { data: { user } } = await supabase.auth.getUser();
+    const workerId = user?.id;
 
     if (!workerId) {
         redirect("/login");
     }
-
-    const supabase = await createClient();
 
     // Fetch job details including template ID
     const { data: job, error: jobError } = await supabase
