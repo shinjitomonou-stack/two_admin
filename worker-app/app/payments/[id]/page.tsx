@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, FileText, Calendar, DollarSign, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
+import { ChevronLeft, FileText, Calendar, JapaneseYen, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
 import PaymentApprovalButton from "@/components/PaymentApprovalButton";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
 
                 {notice.status === 'PAID' && (
                     <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
-                        <DollarSign className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
                         <div className="w-full">
                             <div className="text-sm font-bold text-purple-900">お支払処理完了</div>
                             <div className="text-xs text-purple-700 mt-0.5">

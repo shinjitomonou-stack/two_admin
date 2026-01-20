@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Download, FileText, Calendar, Building2, User, DollarSign, Edit } from "lucide-react";
+import { ArrowLeft, Download, FileText, Calendar, Building2, User, JapaneseYen, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -116,7 +116,7 @@ export default async function NDAContractDetailPage({ params }: { params: Promis
                                 <div>
                                     <div className="text-xs text-muted-foreground mb-1">月額金額</div>
                                     <div className="flex items-center gap-2">
-                                        <DollarSign className="w-4 h-4 text-slate-400" />
+                                        <JapaneseYen className="w-4 h-4 text-slate-400" />
                                         <span className="font-medium text-lg">
                                             ¥{contract.monthly_amount.toLocaleString()}
                                         </span>

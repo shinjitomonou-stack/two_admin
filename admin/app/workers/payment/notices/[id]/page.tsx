@@ -4,7 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { createClient } from "@/lib/supabase/client";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, DollarSign, CheckCircle2, Clock, Building2, User, Globe, Monitor, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, JapaneseYen, CheckCircle2, Clock, Building2, User, Globe, Monitor, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updatePaymentNoticeStatus, sendPaymentNoticeNotification, completePayment } from "@/app/actions/payment";
 import { useState, useEffect } from "react";
@@ -178,7 +178,7 @@ export default function PaymentNoticeDetailPage() {
                         {/* Payment Summary */}
                         <div className="bg-white rounded-xl border border-border shadow-sm p-6">
                             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                <DollarSign className="w-5 h-5 text-slate-500" />
+                                <JapaneseYen className="w-5 h-5 text-slate-500" />
                                 支払サマリー
                             </h3>
                             <div className="space-y-3">

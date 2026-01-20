@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, MapPin, Calendar, Clock, Users, DollarSign, Building2, Edit, Banknote, Plus, FileText } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Clock, Users, JapaneseYen, Building2, Edit, Banknote, Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -154,7 +154,7 @@ export default async function JobDetailPage({
                                 <div>
                                     <label className="text-xs font-medium text-muted-foreground">報酬</label>
                                     <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
-                                        <DollarSign className="w-4 h-4 text-slate-400" />
+                                        <JapaneseYen className="w-4 h-4 text-slate-400" />
                                         ¥{Math.round(job.reward_amount).toLocaleString()}
                                         <span className="text-xs font-normal text-muted-foreground ml-1">
                                             (税込: ¥{Math.round(job.reward_amount * 1.1).toLocaleString()})

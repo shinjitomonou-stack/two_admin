@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Download, FileText, Calendar, Building2, User, DollarSign, Briefcase, Edit } from "lucide-react";
+import { ArrowLeft, Download, FileText, Calendar, Building2, User, JapaneseYen, Briefcase, Edit } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
@@ -147,7 +147,7 @@ export default async function IndividualContractDetailPage({ params }: { params:
                                 <div className="text-xs text-muted-foreground mb-1">契約金額 / 請求サイクル</div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                        <DollarSign className="w-4 h-4 text-slate-400" />
+                                        <JapaneseYen className="w-4 h-4 text-slate-400" />
                                         <span className="font-medium text-lg">
                                             ¥{contract.contract_amount?.toLocaleString() || '0'}
                                             <span className="text-xs font-normal text-muted-foreground ml-2">

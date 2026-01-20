@@ -1,7 +1,7 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, DollarSign } from "lucide-react";
+import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, JapaneseYen } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export const dynamic = 'force-dynamic';
@@ -617,8 +617,10 @@ id,
                 href="/payments"
                 className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
               >
-                <DollarSign className="w-6 h-6 text-orange-500" />
-                <span className="text-xs font-medium text-slate-700">支払明細</span>
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <JapaneseYen className="w-6 h-6 text-purple-600" />
+                </div>
+                <span className="text-xs font-medium text-slate-600">支払明細</span>
               </Link>
               <Link
                 href="/settings"

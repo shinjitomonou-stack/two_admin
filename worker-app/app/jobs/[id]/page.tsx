@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Clock, Calendar, DollarSign, Building2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Calendar, JapaneseYen, Building2 } from "lucide-react";
 import { ApplyButton } from "@/components/ApplyButton";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -146,7 +146,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                         <div className="bg-slate-50 p-3 rounded-xl space-y-1">
                             <div className="text-xs text-slate-500 font-medium">報酬</div>
                             <div className="flex items-center gap-1 font-bold text-slate-900">
-                                <DollarSign className="w-4 h-4 text-slate-400" />
+                                <JapaneseYen className="w-4 h-4 text-slate-400" />
                                 <span>¥{(job.reward_amount || 0).toLocaleString()}</span>
                             </div>
                         </div>
