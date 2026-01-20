@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { loginWithEmail } from "@/app/actions/auth";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirectTo");
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
@@ -37,6 +40,7 @@ export default function LoginPage() {
                 )}
 
                 <form action={handleSubmit} className="space-y-6">
+                    {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700">メールアドレス</label>
                         <input
@@ -89,5 +93,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

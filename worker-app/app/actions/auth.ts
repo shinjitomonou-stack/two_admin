@@ -161,8 +161,10 @@ export async function loginWithEmail(formData: FormData) {
         return { error: "ワーカー情報が見つかりません" };
     }
 
+    const redirectTo = (formData.get("redirectTo") as string) || "/";
+
     revalidatePath("/");
-    redirect("/");
+    redirect(redirectTo);
 }
 
 export async function logout() {

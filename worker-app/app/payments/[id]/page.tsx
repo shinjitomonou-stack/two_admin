@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, FileText, Calendar, DollarSign, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
 import PaymentApprovalButton from "@/components/PaymentApprovalButton";
@@ -10,7 +10,9 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return <div className="p-4 text-center">ログインしてください</div>;
+    if (!user) {
+        redirect(`/login?redirectTo=/payments/${id}`);
+    }
 
     const { data: notice } = await supabase
         .from("payment_notices")

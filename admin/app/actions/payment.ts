@@ -112,7 +112,7 @@ export async function sendPaymentNoticeNotification(id: string) {
         }
 
         const WORKER_APP_URL = process.env.WORKER_APP_URL || "https://two-admin.vercel.app";
-        const noticeUrl = `${WORKER_APP_URL}/payments/${id}`;
+        const noticeUrl = `${WORKER_APP_URL}/payments/${id}?openExternalBrowser=1`;
 
         const message = `【支払通知書発行のお知らせ】\n\n${worker.full_name}様\n\n${notice.month}分の支払通知書（支払明細）が発行されました。\n内容をご確認の上、問題がなければ承認をお願いいたします。\n\n詳細はこちら：\n${noticeUrl}`;
 
