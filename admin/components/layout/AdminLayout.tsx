@@ -39,7 +39,8 @@ const sidebarItems = [
             { label: "ワーカー", href: "/workers" },
             { label: "契約管理", href: "/contracts" },
             { label: "契約書テンプレート", href: "/contracts/templates" },
-            { label: "支払金額集計", href: "/workers/payment" },
+            { label: "支払集計・通知書作成", href: "/workers/payment" },
+            { label: "支払通知管理", href: "/workers/payment/notices" },
         ]
     },
     {

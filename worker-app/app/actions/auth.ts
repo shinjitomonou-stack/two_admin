@@ -185,7 +185,7 @@ export async function resetPasswordRequest(formData: FormData) {
     const supabase = await createClient();
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://two-worker.vercel.app";
-    const redirectTo = `${siteUrl}/update-password`;
+    const redirectTo = `${siteUrl}/api/auth/callback?next=/update-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
@@ -222,8 +222,12 @@ export async function updatePassword(formData: FormData) {
     });
 
     if (error) {
-        console.error("Password update error:", error);
-        return { error: "パスワードの更新に失敗しました" };
+        console.error("Password update server-side error:", {
+            message: error.message,
+            status: error.status,
+            name: error.name
+        });
+        return { error: `パスワードの更新に失敗しました: ${error.message}` };
     }
 
     revalidatePath("/");
