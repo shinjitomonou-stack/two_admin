@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { ChevronRight, FileText, CheckCircle2, Clock, Inbox } from "lucide-react";
+import { ChevronRight, FileText, CheckCircle2, Clock, Inbox, ChevronLeft } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
     ISSUED: "確認待ち",
@@ -31,11 +31,16 @@ export default async function PaymentsPage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             {/* Header */}
-            <div className="bg-white border-b border-slate-200 px-6 py-6 sticky top-0 z-10">
-                <h1 className="text-xl font-bold text-slate-900">支払明細</h1>
-                <p className="text-sm text-slate-500 mt-1">
-                    月ごとの支払金額を確認・承認できます。
-                </p>
+            <div className="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-10 flex items-center gap-4">
+                <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <ChevronLeft className="w-6 h-6 text-slate-500" />
+                </Link>
+                <div>
+                    <h1 className="text-lg font-bold text-slate-900">支払明細</h1>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                        月ごとの支払金額を確認・承認できます。
+                    </p>
+                </div>
             </div>
 
             <div className="p-6 space-y-4">

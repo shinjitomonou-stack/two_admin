@@ -179,7 +179,7 @@ export async function completePayment(id: string) {
                 ? `\n\nお支払予定日: ${new Date(schedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}`
                 : "";
 
-            const message = `【お支払処理完了のお知らせ】\n\n${worker.full_name}様\n\n${notice.month}分の支払処理が完了しました。${paymentDateText}\n\nご確認ありがとうございました。`;
+            const message = `【お支払処理受付のお知らせ】\n\n${worker.full_name}様\n\n${notice.month}分の支払処理を受け付けました。${paymentDateText}\n\nご確認ありがとうございました。`;
 
             await sendLineMessage(lineUserId, message);
         }
