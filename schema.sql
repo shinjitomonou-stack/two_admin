@@ -90,6 +90,7 @@ create table public.jobs (
   report_template_id uuid references public.report_templates(id),
   reward_tax_mode text check (reward_tax_mode in ('EXCL', 'INCL')) default 'EXCL',
   billing_tax_mode text check (billing_tax_mode in ('EXCL', 'INCL')) default 'EXCL',
+  auto_set_schedule boolean default false,
   created_at timestamp with time zone default now()
 );
 

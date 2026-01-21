@@ -15,14 +15,26 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
             .select(`
                 *,
                 workers(full_name, line_user_id),
-                jobs(title, start_time, address_text)
+                jobs(title, start_time, end_time, address_text, auto_set_schedule, is_flexible)
             `)
             .eq("id", applicationId)
             .single();
 
+        const job = application?.jobs;
+        let updateData: any = { status: newStatus };
+
+        // If auto-setting schedule is enabled and we are assigning
+        if (newStatus === 'ASSIGNED' && job?.auto_set_schedule && !job.is_flexible) {
+            updateData = {
+                status: 'CONFIRMED',
+                scheduled_work_start: job.start_time,
+                scheduled_work_end: job.end_time
+            };
+        }
+
         const { error } = await supabase
             .from("job_applications")
-            .update({ status: newStatus })
+            .update(updateData)
             .eq("id", applicationId);
 
         if (error) throw error;
@@ -85,16 +97,32 @@ export async function assignMultipleWorkers(applicationIds: string[]) {
             .select(`
                 *,
                 workers(full_name, line_user_id),
-                jobs(title, start_time, address_text)
+                jobs(title, start_time, end_time, address_text, auto_set_schedule, is_flexible)
             `)
             .in("id", applicationIds);
 
-        const { error } = await supabase
-            .from("job_applications")
-            .update({ status: 'ASSIGNED' })
-            .in("id", applicationIds);
+        // Process individual updates to handle potential mixed auto-schedule settings
+        if (applications) {
+            for (const app of applications) {
+                const job = app.jobs;
+                let updateData: any = { status: 'ASSIGNED' };
 
-        if (error) throw error;
+                if (job?.auto_set_schedule && !job.is_flexible) {
+                    updateData = {
+                        status: 'CONFIRMED',
+                        scheduled_work_start: job.start_time,
+                        scheduled_work_end: job.end_time
+                    };
+                }
+
+                const { error } = await supabase
+                    .from("job_applications")
+                    .update(updateData)
+                    .eq("id", app.id);
+
+                if (error) throw error;
+            }
+        }
 
         // Send LINE notifications
         if (applications) {

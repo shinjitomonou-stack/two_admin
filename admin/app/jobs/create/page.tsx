@@ -49,6 +49,7 @@ function CreateJobForm() {
         scheduleNotes: "",
         reportTemplateId: "",
         publish: false,
+        autoSetSchedule: true,
     });
 
     useEffect(() => {
@@ -206,6 +207,7 @@ function CreateJobForm() {
                 schedule_notes: formData.scheduleNotes || null,
                 report_template_id: formData.reportTemplateId || null,
                 status: formData.publish ? "OPEN" : "DRAFT",
+                auto_set_schedule: formData.autoSetSchedule,
             };
 
             console.log("Sending payload:", payload);
@@ -789,6 +791,22 @@ function CreateJobForm() {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {!formData.isFlexible && (
+                                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                                    <input
+                                        type="checkbox"
+                                        id="autoSetSchedule"
+                                        name="autoSetSchedule"
+                                        checked={formData.autoSetSchedule}
+                                        onChange={handleCheckboxChange}
+                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="autoSetSchedule" className="text-sm font-medium cursor-pointer">
+                                        作業日時をそのまま作業予定日に反映する（ワーカーの入力を省略）
+                                    </label>
                                 </div>
                             )}
 

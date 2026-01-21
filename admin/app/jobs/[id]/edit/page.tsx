@@ -40,6 +40,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
         work_period_end: "",
         schedule_notes: "",
         report_template_id: "",
+        auto_set_schedule: false,
         // New fields
         reward_type: "FIXED" as "FIXED" | "UNIT",
         reward_unit_price: "0",
@@ -108,6 +109,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     work_period_end: data.work_period_end ? formatDateTime(data.work_period_end) : "",
                     schedule_notes: data.schedule_notes || "",
                     report_template_id: data.report_template_id || "",
+                    auto_set_schedule: data.auto_set_schedule || false,
                     // New fields
                     reward_type: (data.reward_type as "FIXED" | "UNIT") || "FIXED",
                     reward_unit_price: restoreAmount(data.reward_unit_price, rewardTaxMode),
@@ -199,6 +201,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                 work_period_end: formData.work_period_end ? new Date(formData.work_period_end).toISOString() : null,
                 schedule_notes: formData.schedule_notes,
                 report_template_id: formData.report_template_id || null,
+                auto_set_schedule: formData.auto_set_schedule,
             });
 
             if (!result.success) throw result.error;
@@ -582,6 +585,21 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                         className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                                     />
                                 </div>
+                            </div>
+                        )}
+
+                        {!formData.is_flexible && (
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                                <input
+                                    type="checkbox"
+                                    id="auto_set_schedule"
+                                    checked={formData.auto_set_schedule}
+                                    onChange={(e) => setFormData({ ...formData, auto_set_schedule: e.target.checked })}
+                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="auto_set_schedule" className="text-sm font-medium cursor-pointer">
+                                    作業日時をそのまま作業予定日に反映する（ワーカーの入力を省略）
+                                </label>
                             </div>
                         )}
 

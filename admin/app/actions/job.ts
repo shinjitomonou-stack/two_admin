@@ -257,6 +257,7 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
                 report_template_id: reportTemplateId,
                 status: job.status || (defaultPublish ? "OPEN" : "DRAFT"),
                 reward_type: "FIXED",
+                auto_set_schedule: job.auto_set_schedule === "はい" || job.auto_set_schedule === true,
             };
         });
 
