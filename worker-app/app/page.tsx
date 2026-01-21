@@ -72,7 +72,7 @@ export default async function Home() {
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, job_applications!inner(worker_id, jobs(title))").eq("status", "PENDING").eq("job_applications.worker_id", workerId),
-      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
     ]);
 
     const worker = workerRes.data;
@@ -167,14 +167,21 @@ export default async function Home() {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       for (const app of assignedApplications) {
-        // Only show alerts for future or recent items (within last 7 days)
-        const scheduledEnd = new Date(app.scheduled_work_end);
-        const isRecentOrFuture = scheduledEnd > sevenDaysAgo;
+        const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+        if (!job) continue;
+
+        const jobStartTime = new Date(job.start_time);
+        const scheduledEnd = app.scheduled_work_end ? new Date(app.scheduled_work_end) : null;
+
+        // Only show alerts for future or very recent items (within last 7 days)
+        const isRecentOrFuture = jobStartTime > sevenDaysAgo;
 
         if (!app.scheduled_work_start || !app.scheduled_work_end) {
-          // Future job without schedule
-          applicationsNeedingSchedule.push(app);
-        } else if (isRecentOrFuture && scheduledEnd < now) {
+          // Future job without schedule - only alert if it's recent or in the future
+          if (isRecentOrFuture) {
+            applicationsNeedingSchedule.push(app);
+          }
+        } else if (scheduledEnd && isRecentOrFuture && scheduledEnd < now) {
           // Recent past job without report
           const { data: report } = await supabase
             .from("reports")
