@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Teo Worker",
   description: "Teo ワーカー専用アプリ",
+  robots: "noindex, nofollow",
 };
 
 export default function RootLayout({

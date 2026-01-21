@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Teo Admin",
   description: "Teo Business Management System",
+  robots: "noindex, nofollow",
 };
 
 export default function RootLayout({
