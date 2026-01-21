@@ -1,7 +1,7 @@
 import { JobCard } from "@/components/JobCard";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, JapaneseYen } from "lucide-react";
+import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, JapaneseYen, ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
 
 export const dynamic = 'force-dynamic';
@@ -208,6 +208,116 @@ export default async function Home() {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return { date: `${month}/${day} (${weekday})`, time: `${hours}:${minutes}` };
   };
+
+  if (!workerId) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Navigation */}
+        <nav className="flex items-center justify-between px-6 py-4 sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
+          <div className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Teo Work</div>
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">ログイン</Link>
+            <Link href="/register" className="bg-slate-900 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-sm">
+              新規登録
+            </Link>
+          </div>
+        </nav>
+
+        {/* Hero Section */}
+        <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+          {/* Decorative backgrounds */}
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-blue-50 rounded-full blur-3xl opacity-50" />
+          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-[500px] h-[500px] bg-purple-50 rounded-full blur-3xl opacity-50" />
+
+          <div className="max-w-2xl mx-auto text-center relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold mb-6">
+              <Sparkles className="w-3 h-3" />
+              <span>スキマ時間で賢く稼ぐ</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-tight mb-6">
+              あなたの「得意」が<br />
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent italic">
+                すぐにお金に変わる
+              </span>
+            </h1>
+            <p className="text-slate-600 text-lg mb-10 leading-relaxed max-w-lg mx-auto">
+              Teo Workは、面接なしですぐに働ける<br className="hidden sm:block" />
+              次世代のワークプラットフォームです。
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/register" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 group">
+                今すぐ無料で始める
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link href="/login" className="w-full sm:w-auto text-slate-500 font-bold hover:text-slate-900 py-4 transition-colors">
+                すでにアカウントをお持ちの方
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="py-20 px-6 bg-slate-50/50">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-center text-sm font-black text-blue-600 uppercase tracking-widest mb-12">FEATURES</h2>
+            <div className="grid gap-8">
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-600">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-3">面接なし・即採用</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  面倒な履歴書や面接は一切不要。アプリから選んで応募するだけで、その日のうちに仕事が決まります。
+                </p>
+              </div>
+
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 text-purple-600">
+                  <JapaneseYen className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-3">最短当日払い</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  働いたその日のうちに報酬確定。急な出費が必要なときでも、安心して働ける環境を整えています。
+                </p>
+              </div>
+
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-6 text-green-600">
+                  <Shield className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-3">安心のサポート</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  LINEを通じた万全のサポート体制。困ったことがあれば、いつでも専門のスタッフが対応いたします。
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA */}
+        <section className="py-24 px-6 text-center">
+          <div className="max-w-xl mx-auto bg-gradient-to-br from-slate-900 to-slate-800 p-12 rounded-[2rem] shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
+            <h2 className="text-3xl font-black text-white mb-6 relative z-10">
+              新しい働き方を、<br />今すぐ体験しよう。
+            </h2>
+            <p className="text-slate-400 mb-10 relative z-10">
+              登録は30秒で完了します。
+            </p>
+            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-lg hover:bg-slate-100 transition-all shadow-xl relative z-10 group">
+              無料でアカウント作成
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-12 px-6 border-t border-slate-100 text-center">
+          <p className="text-xs text-slate-400">© 2026 Teo Work. All rights reserved.</p>
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
