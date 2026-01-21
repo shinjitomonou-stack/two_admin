@@ -215,7 +215,7 @@ export default async function Home() {
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-4 sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
           <div className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <Briefcase className="w-6 h-6 text-yellow-500" />
+            <img src="/app-icon.png" alt="Teo Work" className="w-8 h-8 object-contain" />
             Teo Work
           </div>
           <div className="flex items-center gap-4">
