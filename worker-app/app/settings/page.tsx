@@ -1,5 +1,7 @@
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
+import { logout } from "@/app/actions/auth";
+import { LogOut } from "lucide-react";
 
 export default function SettingsPage() {
     return (
@@ -20,6 +22,18 @@ export default function SettingsPage() {
                     >
                         ホームに戻る
                     </Link>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-slate-100">
+                    <form action={logout}>
+                        <button
+                            type="submit"
+                            className="w-full flex items-center justify-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 py-3 rounded-lg transition-colors font-medium bg-white border border-slate-200 shadow-sm"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            ログアウト
+                        </button>
+                    </form>
                 </div>
             </main>
         </div>

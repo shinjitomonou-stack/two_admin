@@ -145,7 +145,7 @@ export async function logout() {
     await supabase.auth.signOut();
 
     revalidatePath("/");
-    redirect("/login");
+    redirect("/");
 }
 
 export async function resetPasswordRequest(formData: FormData) {
