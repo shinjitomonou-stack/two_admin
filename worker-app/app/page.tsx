@@ -215,7 +215,7 @@ export default async function Home() {
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-4 sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
           <div className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <span className="text-yellow-500">⚡️</span>
+            <Briefcase className="w-6 h-6 text-yellow-500" />
             Teo Work
           </div>
           <div className="flex items-center gap-4">
@@ -238,9 +238,9 @@ export default async function Home() {
               <span>スキマ時間で賢く稼ぐ</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-tight mb-6">
-              あなたの「得意」が<br />
+              世の中の副業を<br />
               <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent italic">
-                すぐにお金に変わる
+                もっと手軽に
               </span>
             </h1>
             <p className="text-slate-600 text-lg mb-10 leading-relaxed max-w-lg mx-auto">
