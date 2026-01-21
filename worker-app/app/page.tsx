@@ -163,12 +163,19 @@ export default async function Home() {
 
     // Process Overdue/Schedule alerts
     if (assignedApplications) {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       for (const app of assignedApplications) {
+        // Only show alerts for future or recent items (within last 7 days)
+        const scheduledEnd = new Date(app.scheduled_work_end);
+        const isRecentOrFuture = scheduledEnd > sevenDaysAgo;
+
         if (!app.scheduled_work_start || !app.scheduled_work_end) {
+          // Future job without schedule
           applicationsNeedingSchedule.push(app);
-        } else if (new Date(app.scheduled_work_end) < now) {
-          // This one is still a bit sequential, but let's batch check reports if it becomes a problem.
-          // For now, it's usually only a few applications.
+        } else if (isRecentOrFuture && scheduledEnd < now) {
+          // Recent past job without report
           const { data: report } = await supabase
             .from("reports")
             .select("id")

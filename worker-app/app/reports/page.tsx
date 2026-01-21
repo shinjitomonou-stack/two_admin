@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
-import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,7 +14,10 @@ export default async function ReportsPage() {
     const workerId = user?.id;
 
     let reports: any[] = [];
+    let pendingReports: any[] = [];
     let workerName = "";
+
+    const now = new Date().toISOString();
 
     if (workerId) {
         // Fetch worker name
@@ -28,30 +31,42 @@ export default async function ReportsPage() {
             workerName = worker.full_name;
         }
 
-        // Fetch reports with job details
-        const { data: reportsData } = await supabase
-            .from("reports")
+        // Fetch applications that have ended or are in progress to check reports
+        const { data: applications } = await supabase
+            .from("job_applications")
             .select(`
                 id,
                 status,
-                created_at,
-                work_start_at,
-                work_end_at,
-                report_text,
-                job_applications!inner(
+                scheduled_work_start,
+                scheduled_work_end,
+                jobs(
                     id,
-                    worker_id,
-                    jobs(
-                        id,
-                        title,
-                        reward_amount
-                    )
-                )
+                    title,
+                    reward_amount
+                ),
+                reports(*)
             `)
-            .eq("job_applications.worker_id", workerId)
-            .order("created_at", { ascending: false });
+            .eq("worker_id", workerId)
+            .in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"])
+            .order("scheduled_work_end", { ascending: false });
 
-        reports = reportsData || [];
+        if (applications) {
+            applications.forEach((app: any) => {
+                const report = app.reports && app.reports.length > 0 ? app.reports[0] : null;
+                const isPast = new Date(app.scheduled_work_end) < new Date();
+
+                if (report) {
+                    // Normalize the report object to match original structure used in UI
+                    reports.push({
+                        ...report,
+                        job_applications: app // Include application info
+                    });
+                } else if (isPast && app.status !== "COMPLETED") {
+                    // Pending report: past end time, no report record, and not yet marked as completed
+                    pendingReports.push(app);
+                }
+            });
+        }
     }
 
     const formatDateTime = (dateStr: string) => {
@@ -66,6 +81,13 @@ export default async function ReportsPage() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
+            case "PENDING":
+                return (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        <AlertTriangle className="w-3 h-3" />
+                        未提出
+                    </span>
+                );
             case "SUBMITTED":
                 return (
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -94,7 +116,8 @@ export default async function ReportsPage() {
 
     // Calculate statistics
     const stats = {
-        total: reports.length,
+        total: reports.length + pendingReports.length,
+        pending: pendingReports.length,
         submitted: reports.filter(r => r.status === "SUBMITTED").length,
         approved: reports.filter(r => r.status === "APPROVED").length,
         rejected: reports.filter(r => r.status === "REJECTED").length,
@@ -132,9 +155,9 @@ export default async function ReportsPage() {
                         <section className="bg-white rounded-xl border border-slate-200 p-4">
                             <h2 className="font-bold text-slate-900 mb-4 text-sm">報告統計</h2>
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-slate-50 rounded-lg p-3">
-                                    <div className="text-xs text-slate-600 mb-1">総報告数</div>
-                                    <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
+                                <div className="bg-orange-50 rounded-lg p-3">
+                                    <div className="text-xs text-orange-700 mb-1">未提出</div>
+                                    <div className="text-2xl font-bold text-orange-900">{stats.pending}</div>
                                 </div>
                                 <div className="bg-green-50 rounded-lg p-3">
                                     <div className="text-xs text-green-700 mb-1">承認済み</div>
@@ -150,6 +173,48 @@ export default async function ReportsPage() {
                                 </div>
                             </div>
                         </section>
+
+                        {/* Pending Reports */}
+                        {pendingReports.length > 0 && (
+                            <section>
+                                <h2 className="font-bold text-red-600 mb-4 text-sm flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4" />
+                                    未提出の報告
+                                </h2>
+                                <div className="space-y-3">
+                                    {pendingReports.map((app) => (
+                                        <div
+                                            key={app.id}
+                                            className="bg-orange-50 border border-orange-200 rounded-xl p-4 hover:shadow-md transition-shadow"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-slate-900 text-sm mb-1">
+                                                        {app.jobs?.title || "案件名不明"}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500">
+                                                        作業予定日時: {formatDateTime(app.scheduled_work_start)} - {formatDateTime(app.scheduled_work_end)}
+                                                    </p>
+                                                </div>
+                                                {getStatusBadge("PENDING")}
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-4 mt-2">
+                                                <div className="text-xs text-orange-800 flex-1">
+                                                    作業が終了しています。速やかに報告書を提出してください。
+                                                </div>
+                                                <Link
+                                                    href={`/jobs/${app.jobs?.id}/report`}
+                                                    className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                                                >
+                                                    報告する
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Reports List */}
                         <section>
