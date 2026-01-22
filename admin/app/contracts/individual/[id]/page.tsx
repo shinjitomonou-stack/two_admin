@@ -16,6 +16,10 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .from("job_individual_contracts")
         .select(`
             *,
+            party_a_signed_at,
+            party_a_signer_id,
+            party_a_ip_address,
+            party_a_user_agent,
             contract_templates(title, version),
             worker:workers (
                 id,
@@ -174,7 +178,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                             <div className="mt-8 pt-8 border-t border-border">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* Ko (Company) */}
-                                    <div>
+                                    <div className="relative">
                                         <p className="text-sm font-bold mb-4 border-b border-border pb-2">甲（委託者）</p>
                                         <div className="space-y-4">
                                             {company ? (
@@ -196,6 +200,15 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                                 <p className="text-sm text-muted-foreground italic">企業情報が設定されていません</p>
                                             )}
                                         </div>
+
+                                        {contract.party_a_signed_at && (
+                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-200 rounded-full flex items-center justify-center text-red-300 font-serif transform -rotate-12 select-none pointer-events-none opacity-80">
+                                                <div className="text-center">
+                                                    <span className="block text-xs">電子署名済</span>
+                                                    <span className="block text-xs mt-1">{formatDate(contract.party_a_signed_at)}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Otsu (Worker) */}
@@ -226,6 +239,25 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Party A Approval Button */}
+                                {!contract.party_a_signed_at && contract.status === 'SIGNED' && (
+                                    <div className="mt-8 flex justify-center">
+                                        <form action={async () => {
+                                            "use server";
+                                            const { approveIndividualContract } = await import("@/app/actions/contract");
+                                            await approveIndividualContract(id);
+                                        }}>
+                                            <button
+                                                type="submit"
+                                                className="bg-slate-900 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                                            >
+                                                <FileSignature className="w-5 h-5" />
+                                                甲（会社側）として承認・署名する
+                                            </button>
+                                        </form>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -270,6 +302,31 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                             ) : (
                                 <div className="text-sm text-muted-foreground">
                                     まだ署名されていません。
+                                </div>
+                            )}
+
+                            {contract.party_a_signed_at && (
+                                <div className="space-y-4 pt-4 border-t border-slate-100">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                                        <ShieldCheck className="w-3 h-3" /> 甲（会社側）の証跡
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                            <Clock className="w-3 h-3" /> 承認日時
+                                        </label>
+                                        <div className="text-sm font-mono bg-blue-50 p-2 rounded border border-blue-100">
+                                            {new Date(contract.party_a_signed_at).toISOString()}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                            <Globe className="w-3 h-3" /> IPアドレス
+                                        </label>
+                                        <div className="text-sm font-mono bg-blue-50 p-2 rounded border border-blue-100">
+                                            {contract.party_a_ip_address || "Unknown"}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

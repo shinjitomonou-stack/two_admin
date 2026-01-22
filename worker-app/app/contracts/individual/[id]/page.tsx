@@ -5,6 +5,7 @@ import { CheckCircle, FileText } from "lucide-react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import { logout } from "@/app/actions/auth";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export default async function IndividualContractPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -136,6 +137,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
+            <ScrollToTop />
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-3">
                     <BackButton fallbackHref="/" />
