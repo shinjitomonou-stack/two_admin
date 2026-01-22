@@ -120,7 +120,7 @@ export default async function Home() {
 
       if (!contract || contract.status === 'PENDING') {
         showContractAlert = true;
-        incompleteItems.push("基本契約");
+        incompleteItems.push("利用規約");
       } else {
         profileCompletion += 1;
       }
@@ -292,17 +292,17 @@ export default async function Home() {
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-bold text-red-800 text-sm">基本契約の締結が必要です</h3>
+              <h3 className="font-bold text-red-800 text-sm">利用規約への同意が必要です</h3>
               <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                お仕事に応募するには、基本契約への同意が必要です。
+                お仕事に応募するには、利用規約への同意が必要です。
                 <br />
-                内容をご確認の上、締結をお願いします。
+                内容をご確認の上、同意をお願いします。
               </p>
               <Link
                 href="/contracts/basic"
                 className="inline-block mt-3 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
               >
-                契約書を確認する
+                利用規約を確認する
               </Link>
             </div>
           </div>
