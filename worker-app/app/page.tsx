@@ -62,7 +62,7 @@ export default async function Home() {
       pendingContractsRes,
       assignedAppsRes
     ] = await Promise.all([
-      supabase.from("workers").select("full_name, email, phone, bank_account, line_user_id").eq("id", workerId).single(),
+      supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
       supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).limit(1).single(),
       supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", startOfMonth.toISOString()).lte("actual_work_start", endOfMonth.toISOString()),
       supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", startOfMonth.toISOString()).lte("scheduled_work_start", endOfMonth.toISOString()),
@@ -91,7 +91,7 @@ export default async function Home() {
     if (worker) {
       workerName = worker.full_name;
       showBankAccountAlert = !worker.bank_account;
-      showLineAlert = !worker.line_user_id;
+      showLineAlert = !worker.line_id;
 
       // Profile Completion Stats
       const checks = [
@@ -99,7 +99,7 @@ export default async function Home() {
         { field: worker.email, label: "メールアドレス" },
         { field: worker.phone, label: "電話番号" },
         { field: worker.bank_account, label: "口座情報" },
-        { field: worker.line_user_id, label: "LINE連携" },
+        { field: worker.line_id, label: "LINE連携" },
       ];
       checks.forEach(check => {
         if (check.field) profileCompletion += 1;

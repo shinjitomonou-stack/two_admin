@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
         const { error: updateError } = await supabase
             .from('workers')
-            .update({ line_user_id: lineUserId })
+            .update({ line_id: lineUserId })
             .eq('id', user.id);
 
         if (updateError) {
