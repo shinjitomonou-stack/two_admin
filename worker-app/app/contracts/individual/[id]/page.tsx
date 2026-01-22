@@ -82,16 +82,9 @@ export default async function IndividualContractPage({ params }: { params: Promi
     const isSigned = contract.status === "SIGNED";
 
     // Replace placeholders in template with actual job data
+    // Note: In a real app, use a proper template engine. Here we do simple replacement.
     let content = contract.contract_templates?.content_template || "";
-    const job = contract.job_applications?.jobs; // Note: adjusted based on previous fix
-    // Wait, in previous step I simplified the home page query, but here we are fetching differently.
-    // The query above fetches job_applications as an object (single due to !inner logic usually, but here it's 1:1 if defined correctly)
-    // However, Supabase returns array if relation is 1:many. job_individual_contracts -> job_applications is M:1 (contract belongs to application).
-    // So it should be an object. Let's check the type safety.
-    // Actually, contract.job_applications might be an array if not defined as single relation in client generator, 
-    // but typically M:1 returns object.
-
-    // Let's safe guard it to be sure, like I did in notification logic.
+    // Note: Typo fix possibility check here
     const app = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
     const jobData = app?.jobs;
     const client = jobData?.clients;
@@ -158,7 +151,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
                     <div className="p-6 font-serif text-slate-700 leading-relaxed space-y-4">
                         {content.replace(/\\n/g, '\n').split('\n').map((line: string, i: number) => {
                             if (line.startsWith('# ')) {
-                                <h2 key={i} className="text-lg font-bold mt-6 mb-2">{line.replace('# ', '')}</h2>;
+                                return <h2 key={i} className="text-lg font-bold mt-6 mb-2">{line.replace('# ', '')}</h2>;
                             }
                             if (line.trim() === '') {
                                 return <br key={i} />;
