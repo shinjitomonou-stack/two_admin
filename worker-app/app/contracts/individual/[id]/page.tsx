@@ -21,7 +21,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
     // Fetch the worker profile
     const { data: worker } = await supabase
         .from("workers")
-        .select("full_name")
+        .select("full_name, address")
         .eq("id", workerId)
         .single();
 
@@ -100,7 +100,9 @@ export default async function IndividualContractPage({ params }: { params: Promi
 
     // 1. Worker and Company Variables (Always available)
     if (worker) {
-        content = content.replace(/{{worker_name}}/g, worker.full_name);
+        content = content
+            .replace(/{{worker_name}}/g, worker.full_name || "")
+            .replace(/{{worker_address}}/g, worker.address || "");
     }
     if (company) {
         content = content
