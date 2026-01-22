@@ -118,14 +118,15 @@ export default async function Home() {
         .limit(1)
         .maybeSingle();
 
-      if (!contract || contract.status === 'PENDING') {
+      if (contract && contract.status === 'SIGNED') {
+        profileCompletion += 1;
+      } else {
         showContractAlert = true;
         incompleteItems.push("利用規約");
-      } else {
-        profileCompletion += 1;
       }
     }
-    profileCompletion = Math.round((profileCompletion / 6) * 100);
+    const totalPossiblePoints = template ? 6 : 5;
+    profileCompletion = Math.round((profileCompletion / totalPossiblePoints) * 100);
 
     // Process Stats
     workDaysThisMonth = completedWork?.length || 0;
