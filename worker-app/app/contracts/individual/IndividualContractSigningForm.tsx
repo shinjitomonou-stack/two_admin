@@ -25,7 +25,11 @@ export default function IndividualContractSigningForm({ contractId }: Props) {
             if (result?.error) {
                 alert(result.error);
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Ignore NEXT_REDIRECT errors (these are expected when redirect() is called in server actions)
+            if (error && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' && error.digest.includes('NEXT_REDIRECT')) {
+                return;
+            }
             console.error(error);
             alert("エラーが発生しました");
         } finally {
