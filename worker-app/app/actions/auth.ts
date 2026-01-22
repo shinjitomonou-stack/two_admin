@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function createWorkerProfile(formData: FormData) {
     try {
@@ -157,7 +158,15 @@ export async function resetPasswordRequest(formData: FormData) {
 
     const supabase = await createClient();
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://support.teo-work.com";
+    const headersList = await headers();
+    const host = headersList.get("host");
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+
+    // Use environment variable if set, otherwise fallback to dynamic host
+    // This prevents redirecting to admin domain (default fallback was support.teo-work.com)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+
+    console.log("Reset password request from:", siteUrl);
     const redirectTo = `${siteUrl}/api/auth/callback?next=/update-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
