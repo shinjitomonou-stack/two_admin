@@ -6,8 +6,8 @@ export function LineConnectButton() {
     const redirectUri = encodeURIComponent(`${siteUrl}/api/auth/line/callback`);
     const state = Math.random().toString(36).substring(7);
 
-    // OAuth URL with prompt=consent to encourage app-to-app
-    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid&prompt=consent`;
+    // OAuth URL - Removed prompt=consent to prioritize automatic app-to-app transition
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid`;
 
     return (
         <a
