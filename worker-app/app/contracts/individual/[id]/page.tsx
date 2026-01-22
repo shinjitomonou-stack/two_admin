@@ -18,6 +18,20 @@ export default async function IndividualContractPage({ params }: { params: Promi
         redirect(`/login?redirectTo=/contracts/individual/${id}`);
     }
 
+    // Fetch the worker profile
+    const { data: worker } = await supabase
+        .from("workers")
+        .select("full_name")
+        .eq("id", workerId)
+        .single();
+
+    // Fetch company settings
+    const { data: company } = await supabase
+        .from("company_settings")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
     // Fetch the contract request
     const { data: contract, error } = await supabase
         .from("job_individual_contracts")
@@ -81,10 +95,30 @@ export default async function IndividualContractPage({ params }: { params: Promi
 
     const isSigned = contract.status === "SIGNED";
 
-    // Replace placeholders in template with actual job data
-    // Note: In a real app, use a proper template engine. Here we do simple replacement.
+    // Replace placeholders in template
     let content = contract.contract_templates?.content_template || "";
-    // Note: Typo fix possibility check here
+
+    // 1. Worker and Company Variables (Always available)
+    if (worker) {
+        content = content.replace(/{{worker_name}}/g, worker.full_name);
+    }
+    if (company) {
+        content = content
+            .replace(/{{company_name}}/g, company.name)
+            .replace(/{{company_address}}/g, company.address)
+            .replace(/{{company_rep}}/g, company.representative_name);
+    }
+
+    // 2. Date Variables
+    content = content.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+        const today = new Date();
+        if (p2) {
+            today.setDate(today.getDate() + parseInt(p2, 10));
+        }
+        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+    });
+
+    // 3. Job-specific Variables
     const app = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
     const jobData = app?.jobs;
     const client = jobData?.clients;
@@ -96,15 +130,6 @@ export default async function IndividualContractPage({ params }: { params: Promi
             .replace(/{{reward_amount}}/g, jobData.reward_amount.toLocaleString())
             .replace(/{{start_time}}/g, new Date(jobData.start_time).toLocaleString())
             .replace(/{{address}}/g, jobData.address_text || "未定");
-
-        // Date calculation for {{TODAY+n}}
-        content = content.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
-            const today = new Date();
-            if (p2) {
-                today.setDate(today.getDate() + parseInt(p2, 10));
-            }
-            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
-        });
     }
 
     return (
