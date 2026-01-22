@@ -38,13 +38,21 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         notFound();
     }
 
-    // Determine worker: Try direct relationship first, fallback to application's worker (migration support)
-    // Note: The direct 'worker' relation assumes the migration has been run and foreign key exists.
-    // If not yet run, 'worker' field in contract might be null, but 'workers' object from select might be present if inferred.
-    // However, since we used 'worker:workers', it expects 'worker_id' on contract.
-    // Fallback logic:
+    // 1. Try to get worker from job_applications join
     // @ts-ignore
-    const worker = contract.worker || contract.job_applications?.workers;
+    let worker = contract.job_applications?.workers;
+
+    // 2. If not found (e.g., contract not linked to an app), fetch directly using worker_id
+    if (!worker && contract.worker_id) {
+        const { data: directWorker } = await supabase
+            .from("workers")
+            .select("id, full_name, email, address, phone")
+            .eq("id", contract.worker_id)
+            .single();
+        if (directWorker) {
+            worker = directWorker;
+        }
+    }
 
     // Determine job: Only exists if linked via application
     // @ts-ignore
@@ -53,8 +61,11 @@ export default async function IndividualContractDetailPage(props: { params: Prom
     if (!worker) {
         return (
             <AdminLayout>
-                <div className="p-8 text-center text-red-500">
-                    ワーカー情報が見つかりません。
+                <div className="p-8 text-center space-y-4">
+                    <div className="text-red-500 font-bold">ワーカー情報が見つかりません。</div>
+                    <div className="text-sm text-slate-500 max-w-sm mx-auto">
+                        この契約書にはワーカーが紐付けられていないか、DBのマイグレーション（worker_idカラムの追加）が完了していない可能性があります。
+                    </div>
                 </div>
             </AdminLayout>
         );
