@@ -71,7 +71,7 @@ export default async function Home() {
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, title, reward_amount), reports(id, status)").eq("worker_id", workerId).eq("status", "COMPLETED").not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(5),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
-      supabase.from("job_individual_contracts").select("id, job_applications!inner(worker_id, jobs(title))").eq("status", "PENDING").eq("job_applications.worker_id", workerId),
+      supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
     ]);
 
@@ -318,7 +318,7 @@ export default async function Home() {
               <div>
                 <h3 className="font-bold text-red-800 text-sm">個別契約の確認依頼があります</h3>
                 <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                  案件: {contract.job_applications?.jobs?.title || "案件名不明"}
+                  案件: {Array.isArray(contract.job_applications) ? contract.job_applications[0]?.jobs?.title : contract.job_applications?.jobs?.title || "案件名不明"}
                   <br />
                   内容をご確認の上、署名をお願いします。
                 </p>
