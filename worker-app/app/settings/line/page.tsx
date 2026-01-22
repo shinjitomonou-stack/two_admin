@@ -56,9 +56,13 @@ export default async function LineSettingsPage() {
                     {!worker?.line_id && <LineConnectButton />}
 
                     {worker?.line_id && (
-                        <div className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg">
-                            <div className="font-medium mb-1">連携済みLINE ID</div>
-                            <div className="font-mono text-xs">{worker.line_id}</div>
+                        <div className="pt-4">
+                            <Link
+                                href="/"
+                                className="block w-full bg-slate-900 text-white text-center font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                            >
+                                ホームへ戻る
+                            </Link>
                         </div>
                     )}
                 </div>

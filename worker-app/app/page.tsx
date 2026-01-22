@@ -63,7 +63,7 @@ export default async function Home() {
       assignedAppsRes
     ] = await Promise.all([
       supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
-      supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).limit(1).single(),
+      supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", startOfMonth.toISOString()).lte("actual_work_start", endOfMonth.toISOString()),
       supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", startOfMonth.toISOString()).lte("scheduled_work_start", endOfMonth.toISOString()),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),

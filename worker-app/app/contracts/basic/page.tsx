@@ -42,7 +42,9 @@ export default async function BasicContractPage() {
         .select("id, status")
         .eq("worker_id", workerId)
         .eq("template_id", template.id)
-        .single();
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
     if (existingContract && existingContract.status === 'SIGNED') {
         return (
