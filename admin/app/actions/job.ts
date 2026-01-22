@@ -228,16 +228,22 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
                 return parseFloat(clean) || 0;
             };
 
+            // Tax Mode Parsing
+            const parseTaxMode = (val: any) => {
+                if (!val) return 'EXCL';
+                const str = String(val).trim();
+                if (str === '税込' || str === 'INCL') return 'INCL';
+                return 'EXCL'; // Default to EXCL
+            };
+
             if (!job.title) throw new Error("案件タイトルが未入力の行があります。");
             if (!job.address_text) throw new Error(`住所が未入力です: ${job.title}`);
 
             const maxWorkers = parseNumber(job.max_workers);
             if (maxWorkers <= 0) throw new Error(`募集人数は1人以上に設定してください: ${job.title}`);
 
-            // Calculate inclusive amounts if needed (for bulk import, we assume EXCL or handle specifically)
-            // For now, bulk import remains as is but supports the columns if provided
-            const rewardTaxMode = job.reward_tax_mode || "EXCL";
-            const billingTaxMode = job.billing_tax_mode || "EXCL";
+            const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
+            const billingTaxMode = parseTaxMode(job.billing_tax_mode);
 
             return {
                 title: job.title,
@@ -246,8 +252,8 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
                 address_text: job.address_text,
                 reward_amount: parseNumber(job.reward_amount),
                 billing_amount: job.billing_amount ? parseNumber(job.billing_amount) : null,
-                reward_tax_mode: job.reward_tax_mode || 'EXCL',
-                billing_tax_mode: job.billing_tax_mode || 'EXCL',
+                reward_tax_mode: rewardTaxMode,
+                billing_tax_mode: billingTaxMode,
                 max_workers: maxWorkers,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),

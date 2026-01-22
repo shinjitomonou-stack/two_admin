@@ -36,6 +36,11 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .eq("id", id)
         .single();
 
+    const { data: company } = await supabase
+        .from("company_settings")
+        .select("*")
+        .single();
+
     if (error || !contract) {
         notFound();
     }
@@ -167,17 +172,59 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                             </div>
 
                             <div className="mt-8 pt-8 border-t border-border">
-                                <div className="flex justify-between items-end">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Ko (Company) */}
                                     <div>
-                                        <p className="text-sm font-bold mb-1">乙（受託者）</p>
-                                        <p className="text-lg">{worker.full_name} 殿</p>
-                                        <p className="text-sm text-muted-foreground">{worker.email}</p>
-                                    </div>
-                                    {contract.status === 'SIGNED' && (
-                                        <div className="h-20 w-20 border-2 border-red-200 rounded-full flex items-center justify-center text-red-300 font-serif transform -rotate-12 select-none">
-                                            電子署名済
+                                        <p className="text-sm font-bold mb-4 border-b border-border pb-2">甲（委託者）</p>
+                                        <div className="space-y-4">
+                                            {company ? (
+                                                <>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground mb-1">住所</p>
+                                                        <p className="text-sm">{company.address}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground mb-1">会社名</p>
+                                                        <p className="font-bold">{company.name}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground mb-1">代表者</p>
+                                                        <p className="text-sm">{company.representative_name}</p>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground italic">企業情報が設定されていません</p>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+
+                                    {/* Otsu (Worker) */}
+                                    <div className="relative">
+                                        <p className="text-sm font-bold mb-4 border-b border-border pb-2">乙（受託者）</p>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground mb-1">住所</p>
+                                                <p className="text-sm">{worker.address || "（未登録）"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground mb-1">氏名</p>
+                                                <p className="font-bold">{worker.full_name}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground mb-1">メールアドレス</p>
+                                                <p className="text-sm font-mono">{worker.email}</p>
+                                            </div>
+                                        </div>
+
+                                        {contract.status === 'SIGNED' && (
+                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-200 rounded-full flex items-center justify-center text-red-300 font-serif transform -rotate-12 select-none pointer-events-none opacity-80">
+                                                <div className="text-center">
+                                                    <span className="block text-xs">電子署名済</span>
+                                                    <span className="block text-xs mt-1">{formatDate(contract.signed_at)}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

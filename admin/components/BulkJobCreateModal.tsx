@@ -125,9 +125,9 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
     };
 
     const downloadSampleCSV = () => {
-        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,billing_amount,max_workers,address_text,description,template_name,status";
-        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,8000,1,東京都渋谷区...,現場の清掃です,清掃報告書,OPEN";
-        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,,2,東京都世田谷区...,巡回清掃です,,DRAFT";
+        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,reward_tax_mode,billing_amount,billing_tax_mode,max_workers,address_text,description,template_name,status";
+        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,税込,8000,税抜,1,東京都渋谷区...,現場の清掃です,清掃報告書,OPEN";
+        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,税抜,9500,税込,2,東京都世田谷区...,巡回清掃です,,DRAFT";
         const csvContent = `${headers}\n${sample1}\n${sample2}`;
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -216,6 +216,7 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                                 <th className="px-4 py-3 border-b border-slate-200">種別</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">日付/期間</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">報酬</th>
+                                                <th className="px-4 py-3 border-b border-slate-200">請求</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">人数</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">テンプレート</th>
                                             </tr>
@@ -235,7 +236,26 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                                             ? `${row.period_start}${row.period_end && row.period_end !== row.period_start ? ` ~ ${row.period_end}` : ""}`
                                                             : (row.date || row.period_start)}
                                                     </td>
-                                                    <td className="px-4 py-3 text-slate-600">¥{(parseInt(row.reward_amount) || 0).toLocaleString()}</td>
+                                                    <td className="px-4 py-3 text-slate-600">
+                                                        <div className="flex flex-col text-xs">
+                                                            <span>¥{(parseInt(row.reward_amount) || 0).toLocaleString()}</span>
+                                                            <span className="text-[10px] text-slate-400">
+                                                                {row.reward_tax_mode === '税込' || row.reward_tax_mode === 'INCL' ? '(税込)' : '(税抜)'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-600">
+                                                        {row.billing_amount ? (
+                                                            <div className="flex flex-col text-xs">
+                                                                <span>¥{(parseInt(row.billing_amount) || 0).toLocaleString()}</span>
+                                                                <span className="text-[10px] text-slate-400">
+                                                                    {row.billing_tax_mode === '税込' || row.billing_tax_mode === 'INCL' ? '(税込)' : '(税抜)'}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-300">-</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-4 py-3 text-slate-600">{row.max_workers}人</td>
                                                     <td className="px-4 py-3 text-slate-400 italic">{row.template_name || "-"}</td>
                                                 </tr>
