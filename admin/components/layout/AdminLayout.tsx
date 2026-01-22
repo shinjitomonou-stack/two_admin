@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState, useEffect, Suspense } from "react";
 import { logout } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: "ダッシュボード", href: "/" },
@@ -82,7 +83,19 @@ function AdminLayoutContent({
     const searchParams = useSearchParams();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
     const tradingType = searchParams.get("trading_type");
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                setUserEmail(user.email);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const toggleExpanded = (href: string) => {
         setExpandedItems(prev =>
@@ -222,10 +235,18 @@ function AdminLayoutContent({
                         })}
                     </nav>
 
-                    <div className="p-4 border-t border-primary-foreground/10">
+                    <div className="p-4 border-t border-primary-foreground/10 space-y-3">
+                        {userEmail && (
+                            <div className="px-3 py-2 bg-white/10 rounded-lg">
+                                <p className="text-xs text-primary-foreground/70 mb-1">ログイン中:</p>
+                                <p className="text-sm font-bold text-white truncate" title={userEmail}>
+                                    {userEmail}
+                                </p>
+                            </div>
+                        )}
                         <button
                             onClick={() => logout()}
-                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-bold text-red-600 hover:bg-white/10 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-bold text-red-100 hover:bg-white/10 hover:text-white transition-colors"
                         >
                             <LogOut className="w-5 h-5" />
                             ログアウト
