@@ -16,20 +16,9 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .from("job_individual_contracts")
         .select(`
             *,
-            party_a_signed_at,
-            party_a_signer_id,
-            party_a_ip_address,
-            party_a_user_agent,
             contract_templates(title, version),
-            worker:workers (
-                id,
-                full_name,
-                email,
-                address,
-                phone
-            ),
             job_applications (
-                workers (full_name, email),
+                workers (id, full_name, email, address, phone),
                 jobs (
                     title,
                     reward_amount,
