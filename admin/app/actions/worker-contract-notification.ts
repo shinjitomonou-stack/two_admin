@@ -57,7 +57,8 @@ export async function sendWorkerContractNotification(contractId: string) {
         const WORKER_APP_URL = process.env.WORKER_APP_URL || "https://support.teo-work.com";
 
         // 2. Send LINE message
-        const contractUrl = `${WORKER_APP_URL}/contracts/individual/${contractId}`;
+        // Add ?openExternalBrowser=1 to force opening in external browser (Safari/Chrome)
+        const contractUrl = `${WORKER_APP_URL}/contracts/individual/${contractId}?openExternalBrowser=1`;
         const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n案件「${jobTitle}」に関する個別契約書が発行されました。\n\n以下のURLより内容をご確認の上、署名をお願いいたします。\n${contractUrl}`;
 
         const result = await sendLineMessage(lineUserId, message);

@@ -14,7 +14,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
     const workerId = user?.id;
 
     if (!workerId) {
-        redirect("/login");
+        redirect(`/login?redirectTo=/contracts/individual/${id}`);
     }
 
     // Fetch the contract request
