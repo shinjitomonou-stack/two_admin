@@ -6,7 +6,12 @@ export async function GET(request: NextRequest) {
     const code = requestUrl.searchParams.get("code");
     const token_hash = requestUrl.searchParams.get("token_hash");
     const type = requestUrl.searchParams.get("type") || "recovery";
-    const next = requestUrl.searchParams.get("next") ?? "/";
+    let next = requestUrl.searchParams.get("next") ?? "/";
+
+    // If it's a password recovery flow and next is root, default to update-password
+    if (type === "recovery" && next === "/") {
+        next = "/update-password";
+    }
 
     console.log(`Worker Auth callback: code=${!!code}, token_hash=${!!token_hash}, type=${type}, next=${next}`);
 
