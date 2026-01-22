@@ -69,6 +69,7 @@ const sidebarItems = [
         label: "設定",
         href: "/settings",
         subItems: [
+            { label: "自社情報設定", href: "/settings/company" },
             { label: "管理者管理", href: "/settings/admins" },
         ]
     },
