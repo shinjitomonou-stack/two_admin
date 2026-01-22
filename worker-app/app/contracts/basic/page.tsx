@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle } from "lucide-react";
 import ContractSigningForm from "@/app/contracts/basic/ContractSigningForm";
 
 export default async function BasicContractPage() {
@@ -49,15 +49,31 @@ export default async function BasicContractPage() {
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-xl shadow-sm text-center max-w-md w-full">
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        <CheckCircle className="w-8 h-8" />
                     </div>
-                    <h1 className="text-xl font-bold mb-2">契約締結済み</h1>
-                    <p className="text-slate-500 mb-6">この契約書は既に同意されています。</p>
+                    <h1 className="text-xl font-bold mb-2">利用規約に同意済み</h1>
+                    <p className="text-slate-500 mb-6">利用規約には既に同意されています。</p>
                     <Link href="/" className="block w-full bg-slate-900 text-white py-3 rounded-lg font-bold">トップページへ戻る</Link>
                 </div>
             </div>
         );
     }
+
+    let content = template.content_template || "";
+
+    // Variable Replacement for Basic Contract (Terms)
+    content = content
+        .replace(/{{worker_name}}/g, user.user_metadata?.full_name || "（未設定）")
+        .replace(/{{worker_address}}/g, user.user_metadata?.address || "（未設定）");
+
+    // Date calculation for {{TODAY+n}}
+    content = content.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+        const today = new Date();
+        if (p2) {
+            today.setDate(today.getDate() + parseInt(p2, 10));
+        }
+        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+    });
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -66,7 +82,7 @@ export default async function BasicContractPage() {
                     <Link href="/" className="p-2 -ml-2 hover:bg-slate-50 rounded-full">
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
-                    <h1 className="font-bold text-lg text-slate-900">基本契約の確認</h1>
+                    <h1 className="font-bold text-lg text-slate-900">利用規約の確認</h1>
                 </div>
             </header>
 
@@ -80,7 +96,7 @@ export default async function BasicContractPage() {
                     <div className="p-6 bg-slate-50/50 max-h-[60vh] overflow-y-auto prose prose-sm max-w-none">
                         {/* Simple markdown-like rendering */}
                         <div className="font-serif text-slate-700 leading-relaxed space-y-4">
-                            {template.content_template.replace(/\\n/g, '\n').split('\n').map((line: string, i: number) => {
+                            {content.replace(/\\n/g, '\n').split('\n').map((line: string, i: number) => {
                                 if (line.startsWith('# ')) {
                                     return <h2 key={i} className="text-lg font-bold mt-6 mb-2">{line.replace('# ', '')}</h2>;
                                 }

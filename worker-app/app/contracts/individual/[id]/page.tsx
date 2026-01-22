@@ -67,6 +67,15 @@ export default async function IndividualContractPage({ params }: { params: Promi
             .replace(/{{reward_amount}}/g, job.reward_amount.toLocaleString())
             .replace(/{{start_time}}/g, new Date(job.start_time).toLocaleString())
             .replace(/{{address}}/g, job.address_text || "未定");
+
+        // Date calculation for {{TODAY+n}}
+        content = content.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+            const today = new Date();
+            if (p2) {
+                today.setDate(today.getDate() + parseInt(p2, 10));
+            }
+            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
     }
 
     return (

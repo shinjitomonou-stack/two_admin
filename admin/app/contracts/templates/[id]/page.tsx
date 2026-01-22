@@ -276,6 +276,31 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
                                         ))}
                                     </div>
                                 </div>
+
+                                <div>
+                                    <span className="text-[10px] text-slate-500 font-medium mb-1 block">日付変数 (自動計算)</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {[
+                                            { key: '{{TODAY}}', label: '今日' },
+                                            { key: '{{TODAY+1}}', label: '明日' },
+                                            { key: '{{TODAY+30}}', label: '30日後' },
+                                        ].map((item) => (
+                                            <button
+                                                key={item.key}
+                                                type="button"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(item.key);
+                                                    alert(`「${item.key}」をコピーしました`);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs hover:bg-slate-100 hover:border-slate-300 transition-colors group"
+                                            >
+                                                <code className="font-mono text-green-600">{item.key}</code>
+                                                <span className="text-slate-600 text-[10px]">({item.label})</span>
+                                                <Copy className="w-3 h-3 text-slate-400 group-hover:text-slate-600 ml-1" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

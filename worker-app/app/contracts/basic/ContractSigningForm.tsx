@@ -41,10 +41,10 @@ export default function ContractSigningForm({ templateId }: { templateId: string
                     className="mt-1 w-5 h-5 text-slate-900 focus:ring-slate-900 rounded border-gray-300"
                 />
                 <span className="text-sm text-slate-700">
-                    私は上記の契約内容を十分に理解し、これに同意します。
+                    私は上記の利用規約を十分に理解し、これに同意します。
                     <br />
                     <span className="text-xs text-slate-500">
-                        ※ 同意ボタンを押すことで、電子署名として記録されます。
+                        ※ 同意ボタンを押すことで、同意の記録が保存されます。
                     </span>
                 </span>
             </label>
@@ -57,7 +57,7 @@ export default function ContractSigningForm({ templateId }: { templateId: string
                 {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                    "契約内容に同意して締結する"
+                    "利用規約に同意する"
                 )}
             </button>
         </div>
