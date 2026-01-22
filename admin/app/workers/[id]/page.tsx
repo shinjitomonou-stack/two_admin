@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatDateTime } from "@/lib/utils";
+import ResetWorkerPassword from "@/components/ResetWorkerPassword";
 
 export default async function WorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -260,6 +261,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                             <button className="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
                                 ステータスを更新
                             </button>
+                            <ResetWorkerPassword workerId={worker.id} />
                         </div>
                     </div>
                 </div>

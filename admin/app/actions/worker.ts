@@ -165,3 +165,25 @@ export async function bulkCreateWorkersAction(workersData: any[]) {
     };
 }
 
+export async function resetWorkerPasswordAction(id: string, newPassword: string) {
+    await verifyAdmin();
+    const supabaseAdmin = await createAdminClient();
+
+    try {
+        if (!newPassword || newPassword.length < 6) {
+            throw new Error("パスワードは6文字以上である必要があります");
+        }
+
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+            password: newPassword
+        });
+
+        if (error) throw error;
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error resetting worker password:", error);
+        return { success: false, error: error.message || "パスワードの変更に失敗しました" };
+    }
+}
+
