@@ -242,8 +242,8 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
 
             if (isFlexible) {
                 if (!normalizedPeriodStart) throw new Error(`期間開始日が未入力です: ${job.title || "不明な案件"}`);
-                startDateTime = new Date(`${normalizedPeriodStart}T00:00:00`);
-                endDateTime = new Date(`${normalizedPeriodEnd || normalizedPeriodStart}T23:59:59`);
+                startDateTime = new Date(`${normalizedPeriodStart}T00:00:00+09:00`);
+                endDateTime = new Date(`${normalizedPeriodEnd || normalizedPeriodStart}T23:59:59+09:00`);
 
                 if (isNaN(startDateTime.getTime())) {
                     throw new Error(`期間開始日が正しくありません: ${job.title} (${normalizedPeriodStart})`);
@@ -259,8 +259,8 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
                 const startTime = formatISOTime(job.start_time, "00:00");
                 const endTime = formatISOTime(job.end_time, "23:59");
 
-                startDateTime = new Date(`${normalizedDate}T${startTime}`);
-                endDateTime = new Date(`${normalizedDate}T${endTime}`);
+                startDateTime = new Date(`${normalizedDate}T${startTime}+09:00`);
+                endDateTime = new Date(`${normalizedDate}T${endTime}+09:00`);
 
                 if (isNaN(startDateTime.getTime())) {
                     throw new Error(`開始時間が正しくありません: ${job.title} (${normalizedDate}T${startTime})`);
