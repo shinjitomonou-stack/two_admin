@@ -115,7 +115,7 @@ export function CalendarWithStats({ jobs }: CalendarWithStatsProps) {
             </div>
 
             {/* Calendar Component */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-slate-900">
@@ -175,7 +175,7 @@ export function CalendarWithStats({ jobs }: CalendarWithStatsProps) {
                             return (
                                 <div
                                     key={day}
-                                    className={`min-h-[120px] border border-slate-200 rounded-lg p-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white'
+                                    className={`min-h-[120px] border border-slate-200 rounded-lg p-2 relative group flex flex-col ${isToday ? 'bg-blue-50 border-blue-300' : 'bg-white'
                                         }`}
                                 >
                                     <div
@@ -190,16 +190,31 @@ export function CalendarWithStats({ jobs }: CalendarWithStatsProps) {
                                     >
                                         {day}
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 flex-1">
                                         {dayJobs.slice(0, 3).map((job) => (
                                             <JobEventCard key={job.id} job={job} />
                                         ))}
                                         {dayJobs.length > 3 && (
-                                            <div className="text-xs text-slate-500 text-center py-1">
-                                                +{dayJobs.length - 3} 件
+                                            <div className="text-[10px] text-slate-500 text-center py-1 font-medium bg-slate-50 rounded border border-dashed border-slate-200">
+                                                他 {dayJobs.length - 3} 件
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Popover for all jobs on hover */}
+                                    {dayJobs.length > 0 && (
+                                        <div className="invisible group-hover:visible absolute top-0 left-0 w-[calc(100%+2px)] -ml-[1px] -mt-[1px] bg-white border border-slate-300 shadow-xl rounded-lg z-50 p-2 min-h-full">
+                                            <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+                                                <span className={`text-sm font-bold ${isToday ? 'text-blue-600' : 'text-slate-700'}`}>{day}日</span>
+                                                <span className="text-[10px] text-slate-400 font-medium">{dayJobs.length}件の案件</span>
+                                            </div>
+                                            <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                                {dayJobs.map((job) => (
+                                                    <JobEventCard key={job.id} job={job} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
