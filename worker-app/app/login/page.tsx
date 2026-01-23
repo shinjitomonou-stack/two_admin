@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { loginWithEmail } from "@/app/actions/auth";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
@@ -11,6 +11,21 @@ function LoginContent() {
     const [error, setError] = useState<string | null>(null);
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
+
+    // Sync URL errors to local state
+    useEffect(() => {
+        const urlError = searchParams.get("error");
+        const urlMessage = searchParams.get("message");
+        if (urlError) {
+            if (urlError === "auth-callback-failed") {
+                setError(urlMessage || "認証に失敗しました。リンクの期限が切れているか、既に使用されている可能性があります。");
+            } else if (urlError === "no-auth-code") {
+                setError("認証コードが見つかりません。");
+            } else {
+                setError(urlMessage || "エラーが発生しました。");
+            }
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
