@@ -27,6 +27,8 @@ const sidebarItems = [
         label: "案件管理",
         href: "/jobs",
         subItems: [
+            { label: "本日のダッシュボード", href: "/jobs/today" },
+            { label: "明日のダッシュボード", href: "/jobs/tomorrow" },
             { label: "案件一覧", href: "/jobs" },
             { label: "作業報告一覧", href: "/reports" },
             { label: "作業報告管理", href: "/report-templates" },
