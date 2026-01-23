@@ -33,7 +33,23 @@ export async function GET(request: NextRequest) {
             type: type as any,
         });
         if (!error) {
-            console.log("OTP verified successfully. Redirecting to:", next);
+            console.log("OTP verified successfully. Checking user role...");
+
+            // Check if user is a worker
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: worker } = await supabase.from('workers').select('id').eq('id', user.id).maybeSingle();
+                const { data: admin } = await supabase.from('admin_users').select('id').eq('id', user.id).maybeSingle();
+
+                if (worker && !admin) {
+                    console.log("User is a worker, redirecting to worker app");
+                    const workerAppUrl = process.env.NEXT_PUBLIC_WORKER_APP_URL || "https://support.teo-work.com";
+                    const workerUrl = new URL(next, workerAppUrl);
+                    return NextResponse.redirect(workerUrl);
+                }
+            }
+
+            console.log("Redirecting to:", next);
             return NextResponse.redirect(new URL(next, request.url));
         }
         console.error("Verify OTP error:", error);

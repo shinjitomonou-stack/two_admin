@@ -14,9 +14,14 @@ export async function createClient() {
                 },
                 setAll(cookiesToSet) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
-                        )
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            const newOptions = { ...options };
+                            if (process.env.NEXT_PUBLIC_SITE_URL?.includes('teo-work.com')) {
+                                newOptions.domain = '.teo-work.com';
+                                newOptions.path = '/';
+                            }
+                            cookieStore.set(name, value, newOptions);
+                        });
                     } catch {
                         // The `setAll` method was called from a Server Component.
                         // This can be ignored if you have middleware refreshing
@@ -42,9 +47,14 @@ export async function createAdminClient() {
                 },
                 setAll(cookiesToSet) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
-                        )
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            const newOptions = { ...options };
+                            if (process.env.NEXT_PUBLIC_SITE_URL?.includes('teo-work.com')) {
+                                newOptions.domain = '.teo-work.com';
+                                newOptions.path = '/';
+                            }
+                            cookieStore.set(name, value, newOptions);
+                        });
                     } catch {
                         // Ignore
                     }
