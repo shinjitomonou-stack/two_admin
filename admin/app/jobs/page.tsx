@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Pagination from "@/components/ui/Pagination";
 import BulkJobCreateModal from "@/components/BulkJobCreateModal";
+import { JobCopyDialog } from "@/components/JobCopyDialog";
 import { FileUp } from "lucide-react";
 
 const ITEMS_PER_PAGE = 100;
@@ -63,6 +64,8 @@ export default function JobsPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
+    const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[] } | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const router = useRouter();
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
@@ -178,14 +181,34 @@ export default function JobsPage() {
         setPaginatedJobs(filteredJobs.slice(startIndex, endIndex));
     }, [filteredJobs, currentPage]);
 
-    const handleDuplicate = async (id: string) => {
-        if (!confirm("この案件を複製しますか？")) return;
-        setProcessingId(id);
+    const handleDuplicate = (job: Job) => {
+        const assignedWorkerIds = job.job_applications
+            ?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED")
+            .map(app => (app as any).worker_id) || [];
+
+        setJobToCopy({
+            id: job.id,
+            title: job.title,
+            address_text: job.address_text || "",
+            assignedWorkerIds,
+        });
+        setIsCopyDialogOpen(true);
+    };
+
+    const handleCopySubmit = async (data: { title: string; address_text: string; workerIds: string[] }) => {
+        if (!jobToCopy) return;
+
+        setProcessingId(jobToCopy.id);
         try {
-            const result = await duplicateJob(id);
+            const result = await duplicateJob(jobToCopy.id, {
+                title: data.title,
+                address_text: data.address_text,
+                workerIds: data.workerIds,
+            });
             if (result.success) {
                 toast.success("案件を複製しました");
-                router.push(`/jobs/${result.data.id}/edit`);
+                setIsCopyDialogOpen(false);
+                router.push(`/jobs/${result.data.id}`);
             } else {
                 toast.error("案件の複製に失敗しました");
             }
@@ -461,6 +484,16 @@ export default function JobsPage() {
                         fetchData();
                     }}
                 />
+                {jobToCopy && (
+                    <JobCopyDialog
+                        isOpen={isCopyDialogOpen}
+                        onClose={() => setIsCopyDialogOpen(false)}
+                        onCopy={handleCopySubmit}
+                        defaultTitle={jobToCopy.title}
+                        defaultAddress={jobToCopy.address_text}
+                        assignedWorkerIds={jobToCopy.assignedWorkerIds}
+                    />
+                )}
             </div>
         </AdminLayout>
     );
