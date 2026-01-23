@@ -2,7 +2,7 @@
 
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Plus, MapPin, Calendar, Eye, Edit, Users, Copy, Trash2, Loader2 } from "lucide-react";
-import { deleteJob, duplicateJob } from "@/app/actions/job";
+import { deleteJob, duplicateJob, updateJob } from "@/app/actions/job";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -239,6 +239,26 @@ export default function JobsPage() {
         }
     };
 
+    const handleStatusChange = async (jobId: string, newStatus: string) => {
+        setProcessingId(jobId);
+        try {
+            const result = await updateJob(jobId, { status: newStatus });
+            if (result.success) {
+                toast.success("ステータスを更新しました");
+                // Update local state
+                setJobs(prev => prev.map(job => job.id === jobId ? { ...job, status: newStatus } : job));
+                setFilteredJobs(prev => prev.map(job => job.id === jobId ? { ...job, status: newStatus } : job));
+            } else {
+                toast.error("更新に失敗しました");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("エラーが発生しました");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     if (loading) {
         return (
             <AdminLayout>
@@ -426,18 +446,26 @@ export default function JobsPage() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] ||
-                                                        STATUS_STYLES.DRAFT
-                                                        }`}
+                                                <select
+                                                    value={job.status}
+                                                    onChange={(e) => handleStatusChange(job.id, e.target.value)}
+                                                    disabled={processingId === job.id}
+                                                    className={cn(
+                                                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border-none focus:ring-2 focus:ring-slate-400 cursor-pointer disabled:opacity-50 appearance-none bg-transparent",
+                                                        STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] || STATUS_STYLES.DRAFT
+                                                    )}
                                                 >
-                                                    {STATUS_LABELS[job.status as keyof typeof STATUS_LABELS] || job.status}
-                                                </span>
+                                                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                                                        <option key={value} value={value} className="bg-white text-slate-900">
+                                                            {label}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleDuplicate(job.id)}
+                                                        onClick={() => handleDuplicate(job)}
                                                         disabled={processingId === job.id}
                                                         className="p-2 hover:bg-slate-100 rounded-md transition-colors text-slate-500 hover:text-blue-600 disabled:opacity-50"
                                                         title="複製"
