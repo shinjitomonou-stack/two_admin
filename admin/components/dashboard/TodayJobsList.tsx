@@ -11,7 +11,7 @@ const STATUS_OPTIONS = [
     { value: "DRAFT", label: "下書き", color: "bg-gray-100 text-gray-700" },
     { value: "OPEN", label: "募集中", color: "bg-green-100 text-green-700" },
     { value: "FILLED", label: "満員", color: "bg-blue-100 text-blue-700" },
-    { value: "IN_PROGRESS", label: "作業中", color: "bg-orange-100 text-orange-700" },
+    { value: "IN_PROGRESS", label: "実施待ち", color: "bg-orange-100 text-orange-700" },
     { value: "COMPLETED", label: "完了", color: "bg-slate-100 text-slate-700" },
     { value: "CANCELLED", label: "中止", color: "bg-red-100 text-red-700" },
 ];

@@ -636,7 +636,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                         >
                             <option value="DRAFT">下書き (DRAFT)</option>
                             <option value="OPEN">募集中 (OPEN)</option>
-                            <option value="IN_PROGRESS">進行中 (IN_PROGRESS)</option>
+                            <option value="IN_PROGRESS">実施待ち (IN_PROGRESS)</option>
                             <option value="COMPLETED">完了 (COMPLETED)</option>
                             <option value="CANCELLED">キャンセル (CANCELLED)</option>
                         </select>

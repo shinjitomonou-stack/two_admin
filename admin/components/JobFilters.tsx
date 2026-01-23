@@ -19,7 +19,7 @@ export interface FilterState {
 const STATUS_OPTIONS = [
     { value: "OPEN", label: "募集中" },
     { value: "FILLED", label: "満員" },
-    { value: "IN_PROGRESS", label: "作業中" },
+    { value: "IN_PROGRESS", label: "実施待ち" },
     { value: "COMPLETED", label: "完了" },
     { value: "CANCELLED", label: "中止" },
     { value: "DRAFT", label: "下書き" },

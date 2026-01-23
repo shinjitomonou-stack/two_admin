@@ -30,7 +30,7 @@ const STATUS_STYLES = {
 const STATUS_LABELS = {
     OPEN: "募集中",
     FILLED: "満員",
-    IN_PROGRESS: "作業中",
+    IN_PROGRESS: "実施待ち",
     COMPLETED: "完了",
     CANCELLED: "中止",
     DRAFT: "下書き",

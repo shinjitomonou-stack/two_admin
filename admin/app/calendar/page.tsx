@@ -96,7 +96,7 @@ export default async function CalendarPage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded bg-orange-100 border border-orange-200"></div>
-                            <span>作業中</span>
+                            <span>実施待ち</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded bg-green-100 border border-green-200"></div>
