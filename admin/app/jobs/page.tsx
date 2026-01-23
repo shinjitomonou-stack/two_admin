@@ -53,6 +53,7 @@ interface Job {
         scheduled_work_start: string | null;
         actual_work_start: string | null;
         workers: { full_name: string } | null;
+        worker_id: string;
     }>;
 }
 
@@ -87,7 +88,8 @@ export default function JobsPage() {
                     status,
                     scheduled_work_start,
                     actual_work_start,
-                    workers(full_name)
+                    workers(full_name),
+                    worker_id
                 ),
                 client_job_contracts!job_id (
                     id,
