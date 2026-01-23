@@ -29,13 +29,24 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: "このワーカーは既に応募しています" }, { status: 400 });
             }
 
-            // Create new application with ASSIGNED status
+            // Fetch job info for auto-set schedule logic
+            const { data: job } = await supabase
+                .from("jobs")
+                .select("auto_set_schedule, is_flexible, start_time, end_time")
+                .eq("id", jobId)
+                .single();
+
+            const isAutoSet = job?.auto_set_schedule && !job.is_flexible;
+
+            // Create new application
             const { error } = await supabase
                 .from("job_applications")
                 .insert({
                     job_id: jobId,
                     worker_id: workerId,
-                    status: "ASSIGNED",
+                    status: isAutoSet ? "CONFIRMED" : "ASSIGNED",
+                    scheduled_work_start: isAutoSet ? job.start_time : null,
+                    scheduled_work_end: isAutoSet ? job.end_time : null,
                 });
 
             if (error) {

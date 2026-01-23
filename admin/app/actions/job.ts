@@ -113,10 +113,14 @@ export async function duplicateJob(
 
         // Copy assigned workers if workerIds are provided
         if (options?.workerIds && options.workerIds.length > 0) {
+            const isAutoSet = newJob.auto_set_schedule && !newJob.is_flexible;
+
             const applications = options.workerIds.map(workerId => ({
                 job_id: newJob.id,
                 worker_id: workerId,
-                status: "ASSIGNED",
+                status: isAutoSet ? "CONFIRMED" : "ASSIGNED",
+                scheduled_work_start: isAutoSet ? newJob.start_time : null,
+                scheduled_work_end: isAutoSet ? newJob.end_time : null,
             }));
 
             const { error: appError } = await supabase
