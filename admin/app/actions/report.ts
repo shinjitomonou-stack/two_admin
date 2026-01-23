@@ -9,18 +9,48 @@ export async function updateReportStatusAction(id: string, status: string) {
     const supabase = await createClient();
 
     try {
-        const { data, error } = await supabase
+        const { data: reportData, error: reportError } = await supabase
             .from("reports")
             .update({ status })
             .eq("id", id)
-            .select()
+            .select("*, job_applications(job_id)")
             .single();
 
-        if (error) throw error;
+        if (reportError) throw reportError;
+
+        // Auto-complete job if all reports are approved
+        if (status === "APPROVED" && reportData.job_applications?.job_id) {
+            const jobId = reportData.job_applications.job_id;
+
+            // 1. Get all assigned/confirmed applications for this job
+            const { data: apps, error: appsError } = await supabase
+                .from("job_applications")
+                .select("id, status, reports(id, status)")
+                .eq("job_id", jobId)
+                .in("status", ["ASSIGNED", "CONFIRMED"]);
+
+            if (appsError) throw appsError;
+
+            // 2. Check if every application has an approved report
+            const allApproved = apps.length > 0 && apps.every(app =>
+                app.reports && app.reports.some((r: any) => r.status === "APPROVED")
+            );
+
+            if (allApproved) {
+                const { error: jobError } = await supabase
+                    .from("jobs")
+                    .update({ status: "COMPLETED" })
+                    .eq("id", jobId);
+
+                if (jobError) throw jobError;
+                revalidatePath("/jobs");
+                revalidatePath(`/jobs/${jobId}`);
+            }
+        }
 
         revalidatePath("/reports");
         revalidatePath(`/reports/${id}`);
-        return { success: true, data };
+        return { success: true, data: reportData };
     } catch (error) {
         console.error("Error updating report status:", error);
         return { success: false, error };
