@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 
 function LoginContent() {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<{ message: string; details?: string } | null>(null);
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
 
@@ -17,13 +17,24 @@ function LoginContent() {
         const urlError = searchParams.get("error");
         const urlMessage = searchParams.get("message");
         if (urlError) {
+            let userMessage = "エラーが発生しました。";
+            let details = urlMessage || undefined;
+
             if (urlError === "auth-callback-failed") {
-                setError(urlMessage || "認証に失敗しました。リンクの期限が切れているか、既に使用されている可能性があります。");
+                if (urlMessage?.includes("pkce_code_verifier_not_found")) {
+                    userMessage = "認証のセキュリティチェックに失敗しました。パスワード再設定をリクエストした時と同じブラウザでリンクを開いてください。";
+                } else if (urlMessage?.includes("Email link is invalid or has expired")) {
+                    userMessage = "認証リンクが無効か、期限が切れています。再度リクエストしてください。";
+                } else {
+                    userMessage = "認証に失敗しました。リンクの期限が切れているか、既に使用されている可能性があります。";
+                }
             } else if (urlError === "no-auth-code") {
-                setError("認証コードが見つかりません。");
-            } else {
-                setError(urlMessage || "エラーが発生しました。");
+                userMessage = "認証コードが見つかりません。";
+            } else if (urlError === "login-failed") {
+                userMessage = urlMessage || "ログインに失敗しました。";
             }
+
+            setError({ message: userMessage, details });
         }
     }, [searchParams]);
 
@@ -33,7 +44,7 @@ function LoginContent() {
 
         const result = await loginWithEmail(formData);
         if (result?.error) {
-            setError(result.error);
+            setError({ message: result.error });
             setIsLoading(false);
         }
     };
@@ -50,7 +61,13 @@ function LoginContent() {
 
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-lg">
-                        {error}
+                        <p className="font-bold mb-1">{error.message}</p>
+                        {error.details && (
+                            <details className="mt-2 text-xs opacity-70">
+                                <summary className="cursor-pointer hover:underline">技術的な詳細</summary>
+                                <p className="mt-1 font-mono break-all">{error.details}</p>
+                            </details>
+                        )}
                     </div>
                 )}
 

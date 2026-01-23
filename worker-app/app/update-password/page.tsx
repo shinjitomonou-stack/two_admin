@@ -6,7 +6,7 @@ import { Loader2, Lock, CheckCircle } from "lucide-react";
 
 export default function UpdatePasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<{ message: string; details?: string } | null>(null);
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true);
@@ -15,7 +15,7 @@ export default function UpdatePasswordPage() {
         const result = await updatePassword(formData);
 
         if (result?.error) {
-            setError(result.error);
+            setError({ message: result.error });
             setIsLoading(false);
         }
         // If success, server action redirects to login
@@ -37,7 +37,13 @@ export default function UpdatePasswordPage() {
                 <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-                            {error}
+                            <p className="font-bold mb-1">{error.message}</p>
+                            {error.details && (
+                                <details className="mt-2 text-xs opacity-70">
+                                    <summary className="cursor-pointer hover:underline">技術的な詳細</summary>
+                                    <p className="mt-1 font-mono break-all">{error.details}</p>
+                                </details>
+                            )}
                         </div>
                     )}
 
