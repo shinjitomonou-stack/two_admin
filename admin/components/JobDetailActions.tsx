@@ -78,7 +78,7 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
     };
 
     const handleDelete = async () => {
-        if (!confirm("本当にこの案件を削除しますか?\nこの操作は取り消せません。")) return;
+        if (!confirm("本当にこの案件を削除しますか?\nこの案件に紐付く「応募データ」「作業報告」「契約書」などもすべて削除されます。\nこの操作は取り消せません。")) return;
         setIsProcessing(true);
         try {
             const result = await deleteJob(jobId);

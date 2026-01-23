@@ -54,9 +54,29 @@ export async function deleteJob(id: string) {
     const supabase = await createClient();
 
     try {
-        // In a real application, you might want to handle dependent records 
-        // (applications, contracts) based on business rules.
-        // For now, we perform a direct deletion.
+        // 1. Get all application IDs for this job to delete their child records
+        const { data: applications } = await supabase
+            .from("job_applications")
+            .select("id")
+            .eq("job_id", id);
+
+        if (applications && applications.length > 0) {
+            const appIds = applications.map(app => app.id);
+
+            // 2. Delete reports linked to these applications
+            await supabase.from("reports").delete().in("application_id", appIds);
+
+            // 3. Delete individual contracts linked to these applications
+            await supabase.from("job_individual_contracts").delete().in("application_id", appIds);
+
+            // 4. Delete the applications themselves
+            await supabase.from("job_applications").delete().eq("job_id", id);
+        }
+
+        // 5. Delete client_job_contracts (Partners/toB contracts) linked to this job
+        await supabase.from("client_job_contracts").delete().eq("job_id", id);
+
+        // 6. Finally delete the job
         const { error } = await supabase
             .from("jobs")
             .delete()
