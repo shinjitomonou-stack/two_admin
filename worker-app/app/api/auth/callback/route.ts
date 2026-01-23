@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
     const type = requestUrl.searchParams.get("type") || "recovery";
     let next = requestUrl.searchParams.get("next") ?? "/";
 
-    // If it's a password recovery flow and next is root, default to update-password
-    if (type === "recovery" && next === "/") {
+    // If it's a password recovery flow and next is root or default, default to update-password
+    if (type === "recovery" && (next === "/" || next === "")) {
         next = "/update-password";
     }
 
