@@ -125,9 +125,9 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
     };
 
     const downloadSampleCSV = () => {
-        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,reward_tax_mode,billing_amount,billing_tax_mode,max_workers,address_text,description,template_name,status";
-        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,税込,8000,税抜,1,東京都渋谷区...,現場の清掃です,清掃報告書,OPEN";
-        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,税抜,9500,税込,2,東京都世田谷区...,巡回清掃です,,DRAFT";
+        const headers = "title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,reward_tax_mode,billing_amount,billing_tax_mode,max_workers,address_text,description,template_name,auto_set_schedule,status";
+        const sample1 = "定期清掃Aビル,株式会社レオ,いいえ,2025-05-01,,,09:00,12:00,5000,税込,8000,税抜,1,東京都渋谷区...,現場の清掃です,清掃報告書,はい,OPEN";
+        const sample2 = "期間清掃Bパーク,株式会社レオ,はい,,2025-05-01,2025-05-07,13:00,17:00,6000,税抜,9500,税込,2,東京都世田谷区...,巡回清掃です,,いいえ,DRAFT";
         const csvContent = `${headers}\n${sample1}\n${sample2}`;
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -219,6 +219,7 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                                 <th className="px-4 py-3 border-b border-slate-200">請求</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">人数</th>
                                                 <th className="px-4 py-3 border-b border-slate-200">テンプレート</th>
+                                                <th className="px-4 py-3 border-b border-slate-200">予定反映</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -258,6 +259,13 @@ export default function BulkJobCreateModal({ isOpen, onClose }: BulkJobCreateMod
                                                     </td>
                                                     <td className="px-4 py-3 text-slate-600">{row.max_workers}人</td>
                                                     <td className="px-4 py-3 text-slate-400 italic">{row.template_name || "-"}</td>
+                                                    <td className="px-4 py-3 text-center">
+                                                        {row.auto_set_schedule === "はい" ? (
+                                                            <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
+                                                        ) : (
+                                                            <span className="text-slate-300">-</span>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
