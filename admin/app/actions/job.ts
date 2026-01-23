@@ -73,7 +73,14 @@ export async function deleteJob(id: string) {
     }
 }
 
-export async function duplicateJob(id: string) {
+export async function duplicateJob(
+    id: string,
+    options?: {
+        title?: string;
+        address_text?: string;
+        workerIds?: string[];
+    }
+) {
     await verifyAdmin();
     const supabase = await createClient();
 
@@ -91,11 +98,12 @@ export async function duplicateJob(id: string) {
         const { id: _, created_at: __, ...rest } = job;
         const payload = {
             ...rest,
-            title: `${job.title} (コピー)`,
+            title: options?.title || job.title,
+            address_text: options?.address_text || job.address_text,
             status: "DRAFT", // Reset to draft for safety
         };
 
-        const { data, error: insertError } = await supabase
+        const { data: newJob, error: insertError } = await supabase
             .from("jobs")
             .insert(payload)
             .select()
@@ -103,9 +111,27 @@ export async function duplicateJob(id: string) {
 
         if (insertError) throw insertError;
 
+        // Copy assigned workers if workerIds are provided
+        if (options?.workerIds && options.workerIds.length > 0) {
+            const applications = options.workerIds.map(workerId => ({
+                job_id: newJob.id,
+                worker_id: workerId,
+                status: "ASSIGNED",
+            }));
+
+            const { error: appError } = await supabase
+                .from("job_applications")
+                .insert(applications);
+
+            if (appError) {
+                console.error("Error copying workers:", appError);
+                // Don't throw - job was created successfully
+            }
+        }
+
         revalidatePath("/jobs");
         revalidatePath("/");
-        return { success: true, data };
+        return { success: true, data: newJob };
     } catch (error) {
         console.error("Error duplicating job:", error);
         return { success: false, error };
