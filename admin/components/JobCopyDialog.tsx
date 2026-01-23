@@ -179,31 +179,32 @@ export function JobCopyDialog({
                                 />
                             </div>
 
-                            {(searchTerm || isFetchingWorkers) && (
-                                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm max-h-40 overflow-y-auto">
-                                    {isFetchingWorkers ? (
-                                        <div className="p-4 flex justify-center">
-                                            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                                        </div>
-                                    ) : filteredWorkers.length === 0 ? (
-                                        <p className="p-3 text-sm text-slate-500 text-center italic">候補が見つかりません</p>
-                                    ) : (
-                                        filteredWorkers.map((worker) => (
-                                            <button
-                                                key={worker.id}
-                                                onClick={() => addWorker(worker.id)}
-                                                className="w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between text-sm transition-colors border-b last:border-b-0 border-slate-100"
-                                            >
-                                                <div>
-                                                    <span className="font-medium text-slate-900">{worker.full_name}</span>
-                                                    <span className="text-xs text-slate-500 ml-2">{worker.email}</span>
-                                                </div>
-                                                <Plus className="w-4 h-4 text-blue-600" />
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            )}
+                            <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm max-h-48 overflow-y-auto">
+                                {isFetchingWorkers ? (
+                                    <div className="p-4 flex justify-center">
+                                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                                    </div>
+                                ) : filteredWorkers.length === 0 ? (
+                                    <p className="p-3 text-sm text-slate-500 text-center italic">
+                                        {searchTerm ? "候補が見つかりません" : "追加できるスタッフがいません"}
+                                    </p>
+                                ) : (
+                                    filteredWorkers.map((worker) => (
+                                        <button
+                                            key={worker.id}
+                                            type="button"
+                                            onClick={() => addWorker(worker.id)}
+                                            className="w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between text-sm transition-colors border-b last:border-b-0 border-slate-100"
+                                        >
+                                            <div>
+                                                <span className="font-medium text-slate-900">{worker.full_name}</span>
+                                                <span className="text-xs text-slate-500 ml-2">{worker.email}</span>
+                                            </div>
+                                            <Plus className="w-4 h-4 text-blue-600" />
+                                        </button>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
