@@ -13,6 +13,7 @@ import { updateReportStatusAction } from "@/app/actions/report";
 export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [id, setId] = useState<string | null>(null);
     const [report, setReport] = useState<any>(null);
+    const [template, setTemplate] = useState<any>(null);
     const [templateFields, setTemplateFields] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -61,14 +62,15 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
 
         // Fetch template if exists
         if (reportData.job_applications?.jobs?.report_template_id) {
-            const { data: template } = await supabase
+            const { data: templateData } = await supabase
                 .from("report_templates")
-                .select("fields")
+                .select("*")
                 .eq("id", reportData.job_applications.jobs.report_template_id)
                 .single();
 
-            if (template?.fields) {
-                setTemplateFields(template.fields);
+            if (templateData) {
+                setTemplate(templateData);
+                setTemplateFields(templateData.fields || []);
             }
         }
 
@@ -167,6 +169,14 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                 <span>{report.job_applications.workers.full_name}</span>
                                 <span>•</span>
                                 <span>{report.job_applications.jobs.title}</span>
+                                {template && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                                            {template.name}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -196,18 +206,35 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                         {/* Custom Fields */}
                         {Object.keys(report.custom_fields || {}).length > 0 && (
                             <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-4">
-                                <h3 className="font-semibold">詳細項目</h3>
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                <h3 className="font-semibold">{template?.name || "詳細項目"}</h3>
+                                <div className="grid gap-6 sm:grid-cols-2">
                                     {Object.entries(report.custom_fields).map(([key, value]) => {
                                         const field = templateFields.find(f => f.id === key);
+                                        const isPhoto = field?.type === 'photo' && Array.isArray(value);
+
                                         return (
-                                            <div key={key} className="space-y-1">
+                                            <div key={key} className={isPhoto ? "sm:col-span-2 space-y-2" : "space-y-1"}>
                                                 <label className="text-xs font-medium text-muted-foreground">
-                                                    {getFieldLabel(key)}
+                                                    {field?.label || key}
                                                 </label>
-                                                <div className="text-sm font-medium">
-                                                    {formatCustomValue(value, field?.type)}
-                                                </div>
+                                                {isPhoto ? (
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                                                        {(value as string[]).map((url, idx) => (
+                                                            <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-slate-50 border border-slate-100">
+                                                                <img
+                                                                    src={url}
+                                                                    alt={`${field.label} ${idx + 1}`}
+                                                                    className="w-full h-full object-cover cursor-zoom-in"
+                                                                    onClick={() => window.open(url, '_blank')}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-sm font-medium">
+                                                        {formatCustomValue(value, field?.type)}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
