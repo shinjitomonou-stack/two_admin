@@ -53,7 +53,6 @@ export default async function ReportsPage() {
         if (applications) {
             applications.forEach((app: any) => {
                 const report = app.reports && app.reports.length > 0 ? app.reports[0] : null;
-                const isPast = new Date(app.scheduled_work_end) < new Date();
 
                 if (report) {
                     // Normalize the report object to match original structure used in UI
@@ -61,8 +60,8 @@ export default async function ReportsPage() {
                         ...report,
                         job_applications: app // Include application info
                     });
-                } else if (isPast && app.status !== "COMPLETED") {
-                    // Pending report: past end time, no report record, and not yet marked as completed
+                } else if (app.status !== "COMPLETED") {
+                    // Pending report: any assigned/confirmed job without a report record
                     pendingReports.push(app);
                 }
             });

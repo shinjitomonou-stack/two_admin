@@ -191,8 +191,8 @@ export default async function Home() {
           if (isRecentOrFuture) {
             applicationsNeedingSchedule.push(app);
           }
-        } else if (scheduledEnd && isRecentOrFuture && scheduledEnd < new Date(nowIso)) {
-          // Recent past job without report
+        } else {
+          // Any assigned/confirmed job that doesn't have a report yet
           const { data: report } = await supabase
             .from("reports")
             .select("id")
