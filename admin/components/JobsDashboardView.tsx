@@ -96,11 +96,30 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         let filtered = [...jobs];
         if (filters.search) {
             const searchLower = filters.search.toLowerCase();
-            filtered = filtered.filter(j =>
-                j.title.toLowerCase().includes(searchLower) ||
-                j.clients?.name?.toLowerCase().includes(searchLower) ||
-                j.job_applications?.some((app: any) => app.workers?.full_name?.toLowerCase().includes(searchLower))
-            );
+            filtered = filtered.filter(j => {
+                // Job title
+                if (j.title?.toLowerCase().includes(searchLower)) return true;
+
+                // Client name (the ones who ordered)
+                if (j.clients?.name?.toLowerCase().includes(searchLower)) return true;
+
+                // Address
+                if (j.address_text?.toLowerCase().includes(searchLower)) return true;
+
+                // Directly assigned workers
+                if (j.job_applications?.some((app: any) =>
+                    app.workers?.full_name?.toLowerCase().includes(searchLower)
+                )) return true;
+
+                // Partner companies (業者)
+                if ((j as any).client_job_contracts?.some((c: any) =>
+                    c.clients?.name?.toLowerCase().includes(searchLower)
+                )) return true;
+
+                if ((j as any).linked_contract?.clients?.name?.toLowerCase().includes(searchLower)) return true;
+
+                return false;
+            });
         }
         if (filters.status.length > 0) {
             filtered = filtered.filter(j => filters.status.includes(j.status));

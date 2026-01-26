@@ -29,7 +29,7 @@ export default function JobsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
-    const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[] } | null>(null);
+    const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[]; start_time: string; end_time: string } | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const router = useRouter();
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
@@ -93,12 +93,26 @@ export default function JobsPage() {
         // Search filter
         if (filters.search) {
             const searchLower = filters.search.toLowerCase();
-            filtered = filtered.filter(
-                (job) =>
-                    job.title.toLowerCase().includes(searchLower) ||
-                    (job.clients?.name || "").toLowerCase().includes(searchLower) ||
-                    (job.address_text || "").toLowerCase().includes(searchLower)
-            );
+            filtered = filtered.filter(job => {
+                // Job title etc.
+                if (job.title?.toLowerCase().includes(searchLower)) return true;
+                if (job.clients?.name?.toLowerCase().includes(searchLower)) return true;
+                if (job.address_text?.toLowerCase().includes(searchLower)) return true;
+
+                // Workers
+                if (job.job_applications?.some((app: any) =>
+                    app.workers?.full_name?.toLowerCase().includes(searchLower)
+                )) return true;
+
+                // Partners
+                if ((job as any).client_job_contracts?.some((c: any) =>
+                    c.clients?.name?.toLowerCase().includes(searchLower)
+                )) return true;
+
+                if ((job as any).linked_contract?.clients?.name?.toLowerCase().includes(searchLower)) return true;
+
+                return false;
+            });
         }
 
         // Status filter
@@ -156,20 +170,18 @@ export default function JobsPage() {
             title: job.title,
             address_text: job.address_text || "",
             assignedWorkerIds,
+            start_time: job.start_time,
+            end_time: job.end_time,
         });
         setIsCopyDialogOpen(true);
     };
 
-    const handleCopySubmit = async (data: { title: string; address_text: string; workerIds: string[] }) => {
+    const handleCopySubmit = async (data: { title: string; address_text: string; workerIds: string[]; start_time?: string; end_time?: string }) => {
         if (!jobToCopy) return;
 
         setProcessingId(jobToCopy.id);
         try {
-            const result = await duplicateJob(jobToCopy.id, {
-                title: data.title,
-                address_text: data.address_text,
-                workerIds: data.workerIds,
-            });
+            const result = await duplicateJob(jobToCopy.id, data);
             if (result.success) {
                 toast.success("案件を複製しました");
                 setIsCopyDialogOpen(false);
@@ -302,6 +314,8 @@ export default function JobsPage() {
                         onCopy={handleCopySubmit}
                         defaultTitle={jobToCopy.title}
                         defaultAddress={jobToCopy.address_text}
+                        defaultStartDate={jobToCopy.start_time}
+                        defaultEndDate={jobToCopy.end_time}
                         assignedWorkerIds={jobToCopy.assignedWorkerIds}
                     />
                 )}
