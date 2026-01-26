@@ -114,10 +114,17 @@ export async function signIndividualContract(formData: FormData) {
     const ip = headersList.get("x-forwarded-for") || "unknown";
     const userAgent = headersList.get("user-agent") || "unknown";
 
-    // Fetch template content to snapshot (re-fetch to ensure integrity)
+    // Fetch template content and job title
     const { data: contract } = await supabase
         .from("job_individual_contracts")
-        .select("template_id, contract_templates(content_template)")
+        .select(`
+            template_id, 
+            contract_templates(content_template),
+            job_applications(
+                jobs(title),
+                workers(full_name)
+            )
+        `)
         .eq("id", contractId)
         .single();
 
@@ -125,7 +132,7 @@ export async function signIndividualContract(formData: FormData) {
         return { error: "契約情報が見つかりません" };
     }
 
-    // Handle contract_templates being an array or object depending on client generation
+    // Handle contract_templates being an array or object
     const templateContent = Array.isArray(contract.contract_templates)
         ? contract.contract_templates[0]?.content_template
         // @ts-ignore
@@ -139,7 +146,7 @@ export async function signIndividualContract(formData: FormData) {
     const { error } = await supabase
         .from("job_individual_contracts")
         .update({
-            signed_content_snapshot: templateContent, // Snapshot current template
+            signed_content_snapshot: templateContent,
             signed_at: new Date().toISOString(),
             ip_address: ip,
             user_agent: userAgent,
@@ -151,6 +158,20 @@ export async function signIndividualContract(formData: FormData) {
     if (error) {
         console.error("Signing error:", error);
         return { error: "署名に失敗しました" };
+    }
+
+    // Send Slack notification (non-blocking)
+    try {
+        const jobApps = contract.job_applications as any;
+        const job = jobApps?.jobs;
+        const worker = jobApps?.workers;
+        const workerName = worker?.full_name || "不明なワーカー";
+        const jobTitle = job?.title || "不明な案件";
+
+        const { sendSlackNotification } = await import("@/lib/slack");
+        await sendSlackNotification(`🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*案件:* ${jobTitle}\n\nワーカーが個別契約に署名しました。`);
+    } catch (slackError) {
+        console.error("Failed to send Slack notification:", slackError);
     }
 
     revalidatePath(`/contracts/individual/${contractId}`);

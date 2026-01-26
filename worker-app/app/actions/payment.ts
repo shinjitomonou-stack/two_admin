@@ -32,6 +32,24 @@ export async function approvePaymentNotice(id: string) {
 
         if (error) throw error;
 
+        // Send Slack notification (non-blocking)
+        try {
+            const { data: worker } = await supabase
+                .from("workers")
+                .select("full_name")
+                .eq("id", user.id)
+                .single();
+
+            const workerName = worker?.full_name || "不明なワーカー";
+            const month = data?.month || "不明な月";
+            const totalAmount = Math.round((data?.total_amount || 0) + (data?.tax_amount || 0)).toLocaleString();
+
+            const { sendSlackNotification } = await import("@/lib/slack");
+            await sendSlackNotification(`💰 *支払通知承認のお知らせ*\n\n*ワーカー:* ${workerName}\n*対象月:* ${month}\n*合計金額:* ¥${totalAmount}\n\nワーカーが支払通知を承認しました。`);
+        } catch (slackError) {
+            console.error("Failed to send Slack notification:", slackError);
+        }
+
         revalidatePath(`/payments/${id}`);
         revalidatePath("/payments");
         return { success: true, data };
