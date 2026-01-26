@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, Search, Plus } from "lucide-react";
+import { X, Loader2, Search, Plus, Calendar, Clock } from "lucide-react";
 
 type Worker = {
     id: string;
@@ -12,9 +12,11 @@ type Worker = {
 type JobCopyDialogProps = {
     isOpen: boolean;
     onClose: () => void;
-    onCopy: (data: { title: string; address_text: string; workerIds: string[] }) => Promise<void>;
+    onCopy: (data: { title: string; address_text: string; workerIds: string[]; start_time?: string; end_time?: string }) => Promise<void>;
     defaultTitle: string;
     defaultAddress: string;
+    defaultStartDate?: string; // ISO string
+    defaultEndDate?: string;   // ISO string
     assignedWorkerIds: string[];
 };
 
@@ -24,10 +26,19 @@ export function JobCopyDialog({
     onCopy,
     defaultTitle,
     defaultAddress,
+    defaultStartDate,
+    defaultEndDate,
     assignedWorkerIds,
 }: JobCopyDialogProps) {
     const [title, setTitle] = useState(defaultTitle);
     const [address, setAddress] = useState(defaultAddress);
+
+    // Date/Time States
+    const [startDate, setStartDate] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [endTime, setEndTime] = useState("");
+
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [selectedWorkerIds, setSelectedWorkerIds] = useState<string[]>(assignedWorkerIds);
     const [searchTerm, setSearchTerm] = useState("");
@@ -40,9 +51,57 @@ export function JobCopyDialog({
             setAddress(defaultAddress);
             setSelectedWorkerIds(assignedWorkerIds);
             setSearchTerm("");
+
+            // Initialize dates
+            if (defaultStartDate) {
+                const start = new Date(defaultStartDate);
+                // Adjust to JST for display (assuming simple YYYY-MM-DD format works or using utils if available, 
+                // but explicit parsing of ISO string is safer for inputs)
+                // Actually inputs expect "YYYY-MM-DD" and "HH:mm" based on local time?
+                // The browser input type="date" uses local time. 
+                // We should parse the ISO string (UTC) to what the user expects (JST).
+                // Given previous context, let's strictly handle timezone if possible, but for MVP standard parsing:
+
+                // Trick: to get local string matching JST from a UTC ISO string if we assume the user is in JST:
+                // We used utils.ts getJSTDateString logic before.
+                // Let's rely on simple Date parsing which follows browser timezone (JST for this user).
+
+                // Helper to format date for input "YYYY-MM-DD"
+                const toInputDate = (d: Date) => {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+                const toInputTime = (d: Date) => {
+                    const h = String(d.getHours()).padStart(2, '0');
+                    const m = String(d.getMinutes()).padStart(2, '0');
+                    return `${h}:${m}`;
+                };
+
+                setStartDate(toInputDate(start));
+                setStartTime(toInputTime(start));
+
+                if (defaultEndDate) {
+                    const end = new Date(defaultEndDate);
+                    setEndDate(toInputDate(end));
+                    setEndTime(toInputTime(end));
+                }
+            } else {
+                // Default to today/now if no defaults provided
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+                setStartDate(`${y}-${m}-${d}`);
+                setStartTime("09:00");
+                setEndDate(`${y}-${m}-${d}`);
+                setEndTime("18:00");
+            }
+
             fetchWorkers();
         }
-    }, [isOpen, defaultTitle, defaultAddress, assignedWorkerIds]);
+    }, [isOpen, defaultTitle, defaultAddress, assignedWorkerIds, defaultStartDate, defaultEndDate]);
 
     const fetchWorkers = async () => {
         setIsFetchingWorkers(true);
@@ -73,13 +132,23 @@ export function JobCopyDialog({
             alert("場所を入力してください");
             return;
         }
+        if (!startDate || !startTime || !endDate || !endTime) {
+            alert("日時をすべて入力してください");
+            return;
+        }
 
         setIsLoading(true);
         try {
+            // Reconstruct ISO strings
+            const startISO = new Date(`${startDate}T${startTime}:00`).toISOString();
+            const endISO = new Date(`${endDate}T${endTime}:00`).toISOString();
+
             await onCopy({
                 title: title.trim(),
                 address_text: address.trim(),
                 workerIds: selectedWorkerIds,
+                start_time: startISO,
+                end_time: endISO,
             });
         } finally {
             setIsLoading(false);
@@ -112,7 +181,7 @@ export function JobCopyDialog({
 
                 <div className="space-y-4 overflow-y-auto pr-2 flex-grow">
                     {/* Title and Address */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium">タイトル</label>
                             <input
@@ -122,6 +191,48 @@ export function JobCopyDialog({
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                 placeholder="案件タイトル"
                             />
+                        </div>
+
+                        {/* Date and Time */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium flex items-center gap-1">
+                                    <Calendar className="w-3.5 h-3.5" /> 開始日時
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                    <input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium flex items-center gap-1">
+                                    <Calendar className="w-3.5 h-3.5" /> 終了日時
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                    <input
+                                        type="time"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-1.5">
@@ -137,7 +248,7 @@ export function JobCopyDialog({
                     </div>
 
                     {/* Staff Selection Section */}
-                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <div className="space-y-3 pt-4 border-t border-slate-100">
                         <label className="text-sm font-medium flex items-center justify-between">
                             <span>アサインするスタッフ</span>
                             <span className="text-xs font-normal text-slate-500">{selectedWorkerIds.length}名選択中</span>

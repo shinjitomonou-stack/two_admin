@@ -99,6 +99,8 @@ export async function duplicateJob(
         title?: string;
         address_text?: string;
         workerIds?: string[];
+        start_time?: string;
+        end_time?: string;
     }
 ) {
     await verifyAdmin();
@@ -120,6 +122,8 @@ export async function duplicateJob(
             ...rest,
             title: options?.title || job.title,
             address_text: options?.address_text || job.address_text,
+            start_time: options?.start_time || job.start_time,
+            end_time: options?.end_time || job.end_time,
             status: "DRAFT", // Reset to draft for safety
         };
 

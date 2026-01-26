@@ -15,10 +15,10 @@ import AdminLayout from "@/components/layout/AdminLayout";
 interface JobsDashboardViewProps {
     title: string;
     description: string;
-    targetDate: Date;
+    targetDateStr: string; // YYYY-MM-DD
 }
 
-export function JobsDashboardView({ title, description, targetDate }: JobsDashboardViewProps) {
+export function JobsDashboardView({ title, description, targetDateStr }: JobsDashboardViewProps) {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
@@ -26,21 +26,22 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
-    const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[] } | null>(null);
+    const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[]; start_time: string; end_time: string } | null>(null);
 
     const router = useRouter();
     const supabase = createClient();
 
-    useEffect(() => {
-        fetchData();
-    }, [targetDate]);
 
     const fetchData = async () => {
         setLoading(true);
-        const startOfDay = new Date(targetDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(targetDate);
-        endOfDay.setHours(23, 59, 59, 999);
+
+        // Construct JST Start/End times
+        // targetDateStr is "YYYY-MM-DD"
+        // Start: YYYY-MM-DDT00:00:00+09:00 (JST midnight) -> Converted to UTC by ISOString (automatically handles offset)
+        // End: YYYY-MM-DDT23:59:59.999+09:00 (JST end of day)
+
+        const startOfDay = new Date(`${targetDateStr}T00:00:00+09:00`);
+        const endOfDay = new Date(`${targetDateStr}T23:59:59.999+09:00`);
 
         const [jobsRes, clientsRes] = await Promise.all([
             supabase.from("jobs").select(`
@@ -87,6 +88,10 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
         setLoading(false);
     };
 
+    useEffect(() => {
+        fetchData();
+    }, [targetDateStr]);
+
     const handleFilterChange = (filters: FilterState) => {
         let filtered = [...jobs];
         if (filters.search) {
@@ -131,11 +136,13 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
             title: job.title,
             address_text: job.address_text || "",
             assignedWorkerIds,
+            start_time: job.start_time,
+            end_time: job.end_time,
         });
         setIsCopyDialogOpen(true);
     };
 
-    const handleCopySubmit = async (data: { title: string; address_text: string; workerIds: string[] }) => {
+    const handleCopySubmit = async (data: { title: string; address_text: string; workerIds: string[]; start_time?: string; end_time?: string }) => {
         if (!jobToCopy) return;
         setProcessingId(jobToCopy.id);
         try {
@@ -284,6 +291,8 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
                         onCopy={handleCopySubmit}
                         defaultTitle={jobToCopy.title}
                         defaultAddress={jobToCopy.address_text}
+                        defaultStartDate={jobToCopy.start_time}
+                        defaultEndDate={jobToCopy.end_time}
                         assignedWorkerIds={jobToCopy.assignedWorkerIds}
                     />
                 )}
