@@ -11,11 +11,13 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const supabase = await createClient();
 
-  // 1. Prepare Dates
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = new Date(startOfToday);
-  endOfToday.setHours(23, 59, 59, 999);
+  // 1. Prepare Dates (aligned to JST)
+  // Get current JST date string (YYYY-MM-DD)
+  const jstNow = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
+  const jstTodayStr = jstNow.toISOString().split('T')[0];
+
+  const startOfToday = `${jstTodayStr}T00:00:00+09:00`;
+  const endOfToday = `${jstTodayStr}T23:59:59+09:00`;
 
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
@@ -54,7 +56,7 @@ export default async function Home() {
       end_time,
       address_text,
       clients(name)
-    `).gte("start_time", startOfToday.toISOString()).lte("start_time", endOfToday.toISOString()).order("start_time", { ascending: true }),
+    `).gte("start_time", startOfToday).lte("start_time", endOfToday).order("start_time", { ascending: true }),
     // Recent Applications
     supabase.from("job_applications").select(`
       id,

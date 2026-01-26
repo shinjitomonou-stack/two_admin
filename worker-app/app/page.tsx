@@ -28,10 +28,19 @@ export default async function Home() {
   let applicationsNeedingSchedule: any[] = [];
   let applicationsOverdue: any[] = [];
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  // Dashboard statistics setup (JST aware)
+  const jstNow = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
+  const jstNowStr = jstNow.toISOString();
+  const jstTodayStart = jstNowStr.split('T')[0] + 'T00:00:00+09:00';
+  const jstMonthStart = jstNowStr.substring(0, 7) + '-01T00:00:00+09:00';
+
+  // End of month calculation
+  const nextMonth = new Date(jstNow.getUTCFullYear(), jstNow.getUTCMonth() + 1, 1);
+  const jstMonthEnd = new Date(nextMonth.getTime() - 1).toISOString(); // Last ms of current month in UTC/JST alignment
+
+  const sevenDaysLater = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const nowIso = new Date().toISOString();
 
   // Parallel fetch: Base data
   const [authData, jobsData] = await Promise.all([
@@ -64,12 +73,12 @@ export default async function Home() {
     ] = await Promise.all([
       supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
       supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", startOfMonth.toISOString()).lte("actual_work_start", endOfMonth.toISOString()),
-      supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", startOfMonth.toISOString()).lte("scheduled_work_start", endOfMonth.toISOString()),
+      supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", jstMonthStart).lte("actual_work_start", jstMonthEnd),
+      supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", now.toISOString()).lte("scheduled_work_start", sevenDaysLater.toISOString()).order("scheduled_work_start"),
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", nowIso).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, title, reward_amount), reports(id, status)").eq("worker_id", workerId).eq("status", "COMPLETED").not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(5),
-      supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${now.toISOString()}`).order("created_at", { ascending: false }).limit(3),
+      supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
@@ -182,7 +191,7 @@ export default async function Home() {
           if (isRecentOrFuture) {
             applicationsNeedingSchedule.push(app);
           }
-        } else if (scheduledEnd && isRecentOrFuture && scheduledEnd < now) {
+        } else if (scheduledEnd && isRecentOrFuture && scheduledEnd < new Date(nowIso)) {
           // Recent past job without report
           const { data: report } = await supabase
             .from("reports")
