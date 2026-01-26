@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { headers, cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { sendSlackNotification } from "@/lib/slack";
 
 export async function signBasicContract(templateId: string) {
     const supabase = await createClient();
@@ -168,7 +169,6 @@ export async function signIndividualContract(formData: FormData) {
         const workerName = worker?.full_name || "不明なワーカー";
         const jobTitle = job?.title || "不明な案件";
 
-        const { sendSlackNotification } = await import("@/lib/slack");
         await sendSlackNotification(`🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*案件:* ${jobTitle}\n\nワーカーが個別契約に署名しました。`);
     } catch (slackError) {
         console.error("Failed to send Slack notification:", slackError);

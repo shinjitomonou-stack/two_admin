@@ -6,12 +6,13 @@ export async function sendSlackNotification(message: string) {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
     if (!webhookUrl) {
-        console.error("CRITICAL: SLACK_WEBHOOK_URL is not defined in environment variables.");
+        console.error("❌ CRITICAL: SLACK_WEBHOOK_URL is not defined in worker-app environment variables.");
         return { success: false, error: "SLACK_WEBHOOK_URL_MISSING" };
     }
 
     try {
-        console.log(`Sending Slack notification: ${message.substring(0, 50)}...`);
+        console.log(`📡 Attempting to send Slack notification: "${message.substring(0, 50)}..."`);
+
         const response = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
@@ -24,13 +25,14 @@ export async function sendSlackNotification(message: string) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error("Slack notification failed:", errorText);
+            console.error(`❌ Slack API returned error (${response.status}):`, errorText);
             return { success: false, error: errorText };
         }
 
+        console.log("✅ Slack notification sent successfully.");
         return { success: true };
     } catch (error) {
-        console.error("Error sending Slack notification:", error);
+        console.error("❌ Unexpected error sending Slack notification:", error);
         return { success: false, error };
     }
 }

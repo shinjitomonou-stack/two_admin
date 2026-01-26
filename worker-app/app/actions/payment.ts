@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { sendSlackNotification } from "@/lib/slack";
 
 export async function approvePaymentNotice(id: string) {
     const supabase = await createClient();
@@ -44,7 +45,6 @@ export async function approvePaymentNotice(id: string) {
             const month = data?.month || "不明な月";
             const totalAmount = Math.round((data?.total_amount || 0) + (data?.tax_amount || 0)).toLocaleString();
 
-            const { sendSlackNotification } = await import("@/lib/slack");
             await sendSlackNotification(`💰 *支払通知承認のお知らせ*\n\n*ワーカー:* ${workerName}\n*対象月:* ${month}\n*合計金額:* ¥${totalAmount}\n\nワーカーが支払通知を承認しました。`);
         } catch (slackError) {
             console.error("Failed to send Slack notification:", slackError);
