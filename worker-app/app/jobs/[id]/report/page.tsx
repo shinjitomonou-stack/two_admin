@@ -64,24 +64,26 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
     // Fetch template fields if template ID exists
     let template = undefined;
+    let templateDiagnostic = { id: job.report_template_id, status: "NONE", error: null as any };
+
     if (job.report_template_id) {
+        templateDiagnostic.status = "FETCHING";
         const { data: templateData, error: templateError } = await supabase
             .from("report_templates")
-            .select("id, fields")
+            .select("id, name, fields")
             .eq("id", job.report_template_id)
             .single();
 
         if (templateError) {
             console.error("Error fetching report template:", templateError);
-        }
-
-        if (templateData) {
+            templateDiagnostic.status = "ERROR";
+            templateDiagnostic.error = templateError;
+        } else if (templateData) {
             template = templateData;
+            templateDiagnostic.status = "SUCCESS";
         } else {
-            console.log("No template data found for ID:", job.report_template_id);
+            templateDiagnostic.status = "NOT_FOUND";
         }
-    } else {
-        console.log("No report_template_id found for job:", id);
     }
 
     // Format default dates for datetime-local input
@@ -111,6 +113,12 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                     <p className="text-sm text-slate-500 mt-1">
                         作業が完了したら、以下のフォームから報告を提出してください。
                     </p>
+                </div>
+
+                {/* Template Diagnostics (Visible only for debugging) */}
+                <div className="mb-4 p-2 bg-slate-100 rounded text-[10px] text-slate-400 font-mono break-all font-bold">
+                    TID: {templateDiagnostic.id || "NULL"} | Status: {templateDiagnostic.status}
+                    {templateDiagnostic.error && ` | Err: ${JSON.stringify(templateDiagnostic.error)}`}
                 </div>
 
                 <ReportForm
