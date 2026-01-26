@@ -72,12 +72,83 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
         }
     };
 
+    const handleCustomPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldId: string) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setUploading(true);
+        const file = e.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${applicationId}/custom/${fieldId}/${fileName}`;
+
+        const supabase = createClient();
+
+        try {
+            const { error: uploadError } = await supabase.storage
+                .from('report-photos')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('report-photos')
+                .getPublicUrl(filePath);
+
+            const currentPhotos = customFields[fieldId] || [];
+            setCustomFields({
+                ...customFields,
+                [fieldId]: Array.isArray(currentPhotos) ? [...currentPhotos, data.publicUrl] : [data.publicUrl]
+            });
+        } catch (error: any) {
+            console.error('Error uploading custom field photo:', error);
+            alert(`写真のアップロードに失敗しました: ${error.message || '不明なエラー'}`);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const removeCustomPhoto = (fieldId: string, photoIndex: number) => {
+        const currentPhotos = customFields[fieldId] || [];
+        if (Array.isArray(currentPhotos)) {
+            setCustomFields({
+                ...customFields,
+                [fieldId]: currentPhotos.filter((_, i) => i !== photoIndex)
+            });
+        }
+    };
+
     const removePhoto = (index: number) => {
         setPhotos(photos.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate required custom fields
+        if (template) {
+            for (const field of template.fields) {
+                if (field.required) {
+                    const val = customFields[field.id];
+                    if (field.type === 'photo') {
+                        if (!val || !Array.isArray(val) || val.length === 0) {
+                            alert(`「${field.label}」は必須項目です。写真をアップロードしてください。`);
+                            return;
+                        }
+                    } else if (field.type === 'checkbox') {
+                        if (!val) {
+                            alert(`「${field.label}」は必須項目です。チェックを入れてください。`);
+                            return;
+                        }
+                    } else {
+                        if (!val || String(val).trim() === '') {
+                            alert(`「${field.label}」は必須項目です。入力してください。`);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         setIsLoading(true);
 
         try {
@@ -270,6 +341,40 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                         />
                                         <label htmlFor={field.id} className="text-sm text-slate-700 cursor-pointer">
                                             はい
+                                        </label>
+                                    </div>
+                                )}
+
+                                {field.type === "photo" && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {(customFields[field.id] || []).map((url: string, pIdx: number) => (
+                                            <div key={pIdx} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100">
+                                                <img src={url} alt={`${field.label} ${pIdx + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeCustomPhoto(field.id, pIdx)}
+                                                    className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white hover:bg-black/70"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <label className="aspect-square rounded-lg border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                                            {uploading ? (
+                                                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Upload className="w-6 h-6 text-slate-400" />
+                                                    <span className="text-xs text-slate-500 mt-1">追加</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={(e) => handleCustomPhotoUpload(e, field.id)}
+                                                disabled={uploading}
+                                            />
                                         </label>
                                     </div>
                                 )}
