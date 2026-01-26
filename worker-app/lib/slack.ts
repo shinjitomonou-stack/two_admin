@@ -1,19 +1,17 @@
-"use client";
-
 /**
  * Utility to send Slack notifications via Webhook.
- * This can be used from both client and server components (if used in server actions).
- * For server actions, use the server-side fetch.
+ * This MUST be run on the server to access non-public environment variables.
  */
 export async function sendSlackNotification(message: string) {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
     if (!webhookUrl) {
-        console.warn("SLACK_WEBHOOK_URL is not defined. Skipping notification.");
+        console.error("CRITICAL: SLACK_WEBHOOK_URL is not defined in environment variables.");
         return { success: false, error: "SLACK_WEBHOOK_URL_MISSING" };
     }
 
     try {
+        console.log(`Sending Slack notification: ${message.substring(0, 50)}...`);
         const response = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
