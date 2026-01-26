@@ -271,7 +271,7 @@ export default async function ReportsPage() {
                                                         <div className="flex items-center justify-between p-2 bg-green-50 rounded">
                                                             <span className="text-green-700">報酬金額</span>
                                                             <span className="text-green-900 font-bold">
-                                                                ¥{(job.reward_amount || 0).toLocaleString()}
+                                                                ¥{Math.round(job.reward_amount || 0).toLocaleString()}
                                                             </span>
                                                         </div>
                                                     )}

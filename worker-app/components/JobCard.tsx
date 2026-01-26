@@ -62,7 +62,7 @@ export function JobCard({ job }: { job: Job }) {
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-slate-900 dark:text-white shadow-sm">
-                        ¥{reward.toLocaleString()}
+                        ¥{Math.round(reward).toLocaleString()}
                     </div>
                 </div>
                 <div className="p-4 space-y-3">

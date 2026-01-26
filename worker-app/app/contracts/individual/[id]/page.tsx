@@ -130,7 +130,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
         content = content
             .replace(/{{job_title}}/g, jobData.title)
             .replace(/{{client_name}}/g, client.name)
-            .replace(/{{reward_amount}}/g, jobData.reward_amount.toLocaleString())
+            .replace(/{{reward_amount}}/g, Math.round(jobData.reward_amount).toLocaleString())
             .replace(/{{start_time}}/g, new Date(jobData.start_time).toLocaleString())
             .replace(/{{address}}/g, jobData.address_text || "未定");
     }

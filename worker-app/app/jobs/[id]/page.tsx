@@ -146,7 +146,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                             <div className="text-xs text-slate-500 font-medium">報酬</div>
                             <div className="flex items-center gap-1 font-bold text-slate-900">
                                 <JapaneseYen className="w-4 h-4 text-slate-400" />
-                                <span>¥{(job.reward_amount || 0).toLocaleString()}</span>
+                                <span>¥{Math.round(job.reward_amount || 0).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="bg-slate-50 p-3 rounded-xl space-y-1">

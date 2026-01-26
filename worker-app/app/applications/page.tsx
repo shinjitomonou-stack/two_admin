@@ -237,7 +237,7 @@ export default function ApplicationsPage() {
                                                 )}
                                                 <div className="flex items-center gap-2">
                                                     <Briefcase className="w-4 h-4 shrink-0 text-slate-400" />
-                                                    <span>報酬: ¥{(job?.reward_amount || 0).toLocaleString()}</span>
+                                                    <span>報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
                                                 </div>
                                             </div>
                                             <div className="mt-4 flex items-center justify-end text-blue-600 text-sm font-bold">
@@ -262,11 +262,11 @@ export default function ApplicationsPage() {
                             </div>
                             <div className="mb-6">
                                 <div className="text-sm opacity-80 mb-1">今月の報酬合計</div>
-                                <div className="text-4xl font-bold tracking-tight">¥{monthlyReward.toLocaleString()}</div>
+                                <div className="text-4xl font-bold tracking-tight">¥{Math.round(monthlyReward).toLocaleString()}</div>
                             </div>
                             <div className="pt-4 border-t border-white/20 flex items-center justify-between">
                                 <div className="text-sm opacity-80">累計報酬</div>
-                                <div className="text-lg font-bold">¥{totalReward.toLocaleString()}</div>
+                                <div className="text-lg font-bold">¥{Math.round(totalReward).toLocaleString()}</div>
                             </div>
                         </div>
 
@@ -300,7 +300,7 @@ export default function ApplicationsPage() {
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-xs text-slate-500">報酬</span>
                                                         <span className={`text-sm font-bold ${isCompleted ? 'text-green-600' : 'text-slate-400'}`}>
-                                                            ¥{(job?.reward_amount || 0).toLocaleString()}
+                                                            ¥{Math.round(job?.reward_amount || 0).toLocaleString()}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -332,7 +332,7 @@ export default function ApplicationsPage() {
                                         <h3 className="font-bold text-slate-900 mb-2">{job?.title}</h3>
                                         <div className="flex items-center gap-2 text-sm text-slate-600">
                                             <Briefcase className="w-4 h-4 text-slate-400" />
-                                            <span>報酬: ¥{(job?.reward_amount || 0).toLocaleString()}</span>
+                                            <span>報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
                                         </div>
                                     </Link>
                                 );

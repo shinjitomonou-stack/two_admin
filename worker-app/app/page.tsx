@@ -473,7 +473,7 @@ export default async function Home() {
                   <TrendingUp className="w-4 h-4" />
                   <span className="text-xs font-medium">報酬見込み</span>
                 </div>
-                <div className="text-2xl font-bold text-green-900">¥{earningsThisMonth.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-900">¥{Math.round(earningsThisMonth).toLocaleString()}</div>
               </div>
               <div className="bg-purple-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-purple-600 mb-1">
@@ -611,7 +611,7 @@ export default async function Home() {
                       <span className="text-xs text-slate-500">{formattedDate}完了</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-green-600 font-medium">報酬: ¥{job?.reward_amount?.toLocaleString()}</span>
+                      <span className="text-green-600 font-medium">報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
                       {report ? (
                         <span className="text-blue-600">📋 報告済み</span>
                       ) : (
