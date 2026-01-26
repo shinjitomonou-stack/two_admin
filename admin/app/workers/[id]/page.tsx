@@ -1,10 +1,11 @@
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, ShieldCheck, ShieldAlert, Mail, Phone, Calendar, CreditCard, Edit, FileText, Tag } from "lucide-react";
+import { ArrowLeft, ShieldCheck, ShieldAlert, Mail, Phone, Calendar, CreditCard, Edit, FileText, Tag, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import ResetWorkerPassword from "@/components/ResetWorkerPassword";
+import WorkerDetailActions from "@/components/WorkerDetailActions"; // We need to create this
 
 export default async function WorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -21,11 +22,10 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .eq("worker_id", id)
         .order("created_at", { ascending: false })
         .limit(1)
-
         .maybeSingle();
 
-
-
+    // ... (rest of data fetching remains same) ...
+    // Note: To keep replace simple, we are re-implementing the necessary parts.
     // 1. Get application IDs for this worker
     const { data: applications } = await supabase
         .from("job_applications")
@@ -34,11 +34,6 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
 
     const applicationIds = applications?.map(app => app.id) || [];
 
-    // 2. Get contracts
-    // Fetch directly by worker_id (new schema) and also include those by application_id (legacy support if needed, but worker_id backfill should cover it)
-    // Actually, simply fetching by worker_id is sufficient if we assume backfill.
-    // However, to be safe during transition, we can query both... but easier to just rely on worker_id being populated.
-    // If we strictly follow the new schema:
     const { data: individualContracts } = await supabase
         .from("job_individual_contracts")
         .select(`
@@ -50,6 +45,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         `)
         .eq("worker_id", id)
         .order("created_at", { ascending: false });
+
 
     if (error || !worker) {
         notFound();
@@ -76,13 +72,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                         <p className="text-muted-foreground text-[10px] font-mono mt-1 opacity-50">System ID: {worker.id}</p>
                     </div>
                     <div className="ml-auto">
-                        <Link
-                            href={`/workers/${worker.id}/edit?returnTo=/workers/${worker.id}`}
-                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
-                        >
-                            <Edit className="w-4 h-4" />
-                            編集する
-                        </Link>
+                        <WorkerDetailActions workerId={worker.id} workerName={worker.full_name} />
                     </div>
                 </div>
 

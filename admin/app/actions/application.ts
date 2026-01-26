@@ -160,3 +160,105 @@ export async function assignMultipleWorkers(applicationIds: string[]) {
         return { success: false, error };
     }
 }
+
+export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        const results = {
+            success: 0,
+            failed: 0,
+            alreadyExists: 0,
+        };
+
+        const notifications: { job: any; worker: any }[] = [];
+
+        for (const jobId of jobIds) {
+            // Check if application already exists
+            const { data: existingApp } = await supabase
+                .from("job_applications")
+                .select("id, status")
+                .eq("job_id", jobId)
+                .eq("worker_id", workerId)
+                .maybeSingle();
+
+            if (existingApp) {
+                if (existingApp.status === "ASSIGNED" || existingApp.status === "CONFIRMED") {
+                    results.alreadyExists++;
+                    continue;
+                } else {
+                    // Re-activate if cancelled or rejected
+                    const { error } = await supabase
+                        .from("job_applications")
+                        .update({ status: "ASSIGNED" })
+                        .eq("id", existingApp.id);
+
+                    if (!error) results.success++;
+                    else results.failed++;
+                }
+            } else {
+                // Create new application
+                const { data: newApp, error } = await supabase
+                    .from("job_applications")
+                    .insert({
+                        job_id: jobId,
+                        worker_id: workerId,
+                        status: "ASSIGNED",
+                    })
+                    .select("id")
+                    .single();
+
+                if (!error) results.success++;
+                else results.failed++;
+            }
+
+            // Prepare for notification (fetch details after successful operation)
+            // Ideally we do this in bulk, but for loop is simpler to construct list
+            if (results.success > notifications.length) { // Verify we just succeeded
+                // Fetch job details for notification
+                const { data: job } = await supabase
+                    .from("jobs")
+                    .select("title, start_time, address_text")
+                    .eq("id", jobId)
+                    .single();
+
+                if (job) {
+                    notifications.push({ job, worker: null }); // Worker fetched later
+                }
+            }
+        }
+
+        // Fetch worker details once
+        const { data: worker } = await supabase
+            .from("workers")
+            .select("full_name, line_user_id")
+            .eq("id", workerId)
+            .single();
+
+        // Send Notifications if enabled
+        const { data: settings } = await supabase
+            .from("company_settings")
+            .select("enable_line_notifications")
+            .single();
+
+        if (settings?.enable_line_notifications !== false && worker?.line_user_id && notifications.length > 0) {
+            const { sendLineMessage } = await import("@/lib/line");
+
+            await Promise.all(notifications.map(async ({ job }) => {
+                const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
+                try {
+                    await sendLineMessage(worker.line_user_id, message);
+                } catch (e) {
+                    console.error(`Failed to send LINE message:`, e);
+                }
+            }));
+        }
+
+        revalidatePath("/workers/[id]", "page");
+        return { success: true, results };
+    } catch (error) {
+        console.error("Error assigning worker to jobs:", error);
+        return { success: false, error };
+    }
+}
