@@ -97,7 +97,7 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
         try {
             const result = await assignWorkerToJobs(workerId, selectedJobIds);
             if (result.success) {
-                toast.success(`${result.results.success}件の案件にアサインしました`);
+                toast.success(`${result.results?.success ?? 0}件の案件にアサインしました`);
                 onClose();
             } else {
                 toast.error("アサインに失敗しました");
@@ -173,8 +173,8 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
                                         key={job.id}
                                         onClick={() => toggleJobSelection(job.id)}
                                         className={`p-4 rounded-xl border cursor-pointer transition-all ${isSelected
-                                                ? 'bg-blue-50 border-blue-200 shadow-sm'
-                                                : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'
+                                            ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                            : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'
                                             }`}
                                     >
                                         <div className="flex items-start gap-4">
