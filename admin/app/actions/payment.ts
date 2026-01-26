@@ -80,6 +80,15 @@ export async function updatePaymentNoticeStatus(id: string, status: string) {
 
         if (error) throw error;
 
+        // Automatically send notification if status is updated to ISSUED
+        if (status === "ISSUED") {
+            try {
+                await sendPaymentNoticeNotification(id);
+            } catch (notifyError) {
+                console.error("Failed to send automatic notification in updatePaymentNoticeStatus:", notifyError);
+            }
+        }
+
         revalidatePath("/workers/payment/notices");
         return { success: true, data };
     } catch (error) {

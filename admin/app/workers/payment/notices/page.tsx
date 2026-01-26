@@ -127,13 +127,9 @@ export default function PaymentNoticesPage() {
         setIsLoading(true);
         let successCount = 0;
         for (const notice of draftNotices) {
-            // First update status to ISSUED
+            // update status to ISSUED (notifies automatically now)
             const issueResult = await updatePaymentNoticeStatus(notice.id, "ISSUED");
-            if (issueResult.success) {
-                // Then send notification
-                const notifyResult = await sendPaymentNoticeNotification(notice.id);
-                if (notifyResult.success) successCount++;
-            }
+            if (issueResult.success) successCount++;
         }
         toast.success(`${successCount}件の発行と通知が完了しました`);
         fetchNotices();
