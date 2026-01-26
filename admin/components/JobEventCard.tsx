@@ -4,6 +4,7 @@ import Link from "next/link";
 
 interface CalendarJob {
     id: string;
+    job_id: string;
     title: string;
     status: string;
     scheduled_work_start: string;
@@ -38,7 +39,7 @@ export function JobEventCard({ job }: JobEventCardProps) {
 
     return (
         <Link
-            href={`/jobs/${job.id}?return=calendar`}
+            href={`/jobs/${job.job_id}?return=calendar`}
             className={`block text-xs p-2 rounded border ${statusColors[job.status] || statusColors.OPEN
                 } hover:opacity-80 transition-opacity`}
         >

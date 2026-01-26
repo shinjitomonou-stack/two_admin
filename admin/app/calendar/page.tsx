@@ -42,6 +42,7 @@ export default async function CalendarPage() {
                 const worker = Array.isArray(app.workers) ? app.workers[0] : app.workers;
                 calendarJobs.push({
                     id: `${job.id}-${app.id}`,
+                    job_id: job.id,
                     title: job.title,
                     status: job.status,
                     scheduled_work_start: app.scheduled_work_start,
@@ -56,6 +57,7 @@ export default async function CalendarPage() {
             // No scheduled applications, show the job itself using fallback dates
             calendarJobs.push({
                 id: job.id,
+                job_id: job.id,
                 title: job.title,
                 status: job.status,
                 scheduled_work_start: job.start_time,

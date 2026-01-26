@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, XCircle, Loader2, Calendar, Clock, Save, FileText, UserMinus } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Calendar, Clock, Save, FileText, UserMinus, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -281,6 +281,18 @@ export function ApplicationRow({
                             title="採用解除 (キャンセル)"
                         >
                             {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserMinus className="w-5 h-5" />}
+                        </button>
+                    </div>
+                )}
+                {app.status === 'CANCELLED' && (
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            onClick={() => handleStatusUpdate('ASSIGNED')}
+                            disabled={isUpdating}
+                            className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors disabled:opacity-50"
+                            title="再採用"
+                        >
+                            {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
                         </button>
                     </div>
                 )}

@@ -6,6 +6,7 @@ import { JobEventCard } from "@/components/JobEventCard";
 
 interface CalendarJob {
     id: string;
+    job_id: string;
     title: string;
     status: string;
     scheduled_work_start: string;

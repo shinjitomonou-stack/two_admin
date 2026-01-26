@@ -39,8 +39,13 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
 
         if (error) throw error;
 
-        // Send LINE notification
-        if (application?.workers?.line_user_id) {
+        // Send LINE notification (if enabled)
+        const { data: settings } = await supabase
+            .from("company_settings")
+            .select("enable_line_notifications")
+            .single();
+
+        if (application?.workers?.line_user_id && settings?.enable_line_notifications !== false) {
             const { sendLineMessage } = await import("@/lib/line");
             const job = application.jobs;
             const worker = application.workers;
@@ -124,8 +129,13 @@ export async function assignMultipleWorkers(applicationIds: string[]) {
             }
         }
 
-        // Send LINE notifications
-        if (applications) {
+        // Send LINE notifications (if enabled)
+        const { data: settings } = await supabase
+            .from("company_settings")
+            .select("enable_line_notifications")
+            .single();
+
+        if (applications && settings?.enable_line_notifications !== false) {
             const { sendLineMessage } = await import("@/lib/line");
 
             await Promise.all(applications.map(async (app) => {
