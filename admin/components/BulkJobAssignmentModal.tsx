@@ -50,7 +50,7 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
                 id, title, start_time, end_time, address_text, status, max_workers,
                 job_applications(count)
             `)
-            .eq("status", "OPEN") // Only show open jobs? Maybe also ASSIGNED if distinct from FULL?
+            .in("status", ["OPEN", "ASSIGNED", "IN_PROGRESS"])
             .order("start_time", { ascending: true });
 
         if (searchDate) {
