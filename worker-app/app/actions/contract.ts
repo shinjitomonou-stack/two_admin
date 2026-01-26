@@ -165,7 +165,7 @@ export async function signIndividualContract(formData: FormData) {
     try {
         const jobApps = contract.job_applications;
         // Supabase returns an array for 1-to-many relations
-        const app = Array.isArray(jobApps) ? jobApps[0] : jobApps;
+        const app: any = Array.isArray(jobApps) ? jobApps[0] : jobApps;
 
         const job = app?.jobs;
         const worker = app?.workers;
