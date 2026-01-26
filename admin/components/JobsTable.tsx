@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, MapPin, Users, Copy, Trash2, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, Copy, Trash2, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -197,30 +197,44 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                         {assignedApps.length > 0 ? (
                                             <div className="space-y-2">
                                                 <div className={cn(
-                                                    "text-[10px] px-1.5 py-0.5 rounded-sm font-medium inline-block",
+                                                    "text-[10px] px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1",
                                                     assignedApps.every(app => app.reports?.some(r => r.status === 'APPROVED'))
-                                                        ? "bg-blue-100 text-blue-700"
+                                                        ? "bg-blue-100 text-blue-700 border border-blue-200"
                                                         : assignedApps.some(app => (app.reports?.length || 0) > 0)
-                                                            ? "bg-orange-100 text-orange-700"
-                                                            : "bg-slate-100 text-slate-500"
+                                                            ? "bg-orange-100 text-orange-700 border border-orange-200"
+                                                            : "bg-slate-100 text-slate-500 border border-slate-200"
                                                 )}>
-                                                    提出:{assignedApps.filter(app => (app.reports?.length || 0) > 0).length} /
-                                                    承認:{assignedApps.filter(app => app.reports?.some(r => r.status === 'APPROVED')).length} /
-                                                    全:{assignedApps.length}
+                                                    <FileText className="w-3 h-3" />
+                                                    <span>
+                                                        提出:{assignedApps.filter(app => (app.reports?.length || 0) > 0).length} / 承認:{assignedApps.filter(app => app.reports?.some(r => r.status === 'APPROVED')).length} / 全:{assignedApps.length}
+                                                    </span>
                                                 </div>
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {assignedApps.map((app, idx) => {
                                                         const report = app.reports?.[0];
-                                                        if (!report) return <div key={idx} title={`${app.workers?.full_name}: 未提出`} className="w-2 h-2 rounded-full bg-slate-200" />;
+                                                        const workerName = app.workers?.full_name || "不明なユーザー";
 
+                                                        if (!report) {
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    title={`${workerName}: 未提出`}
+                                                                    className="w-3 h-3 rounded-full bg-slate-200 border border-slate-300 shadow-sm"
+                                                                />
+                                                            );
+                                                        }
+
+                                                        const isApproved = report.status === 'APPROVED';
                                                         return (
                                                             <Link
                                                                 key={idx}
                                                                 href={`/reports/${report.id}`}
-                                                                title={`${app.workers?.full_name}: ${report.status === 'APPROVED' ? '承認済み' : '提出済み'}`}
+                                                                title={`${workerName}: ${isApproved ? '承認済み' : '提出済み'}`}
                                                                 className={cn(
-                                                                    "w-2 h-2 rounded-full transition-transform hover:scale-125",
-                                                                    report.status === 'APPROVED' ? "bg-blue-500" : "bg-orange-500"
+                                                                    "w-3 h-3 rounded-full border shadow-sm transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1",
+                                                                    isApproved
+                                                                        ? "bg-blue-500 border-blue-600 focus:ring-blue-400"
+                                                                        : "bg-orange-500 border-orange-600 focus:ring-orange-400"
                                                                 )}
                                                             />
                                                         );

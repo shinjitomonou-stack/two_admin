@@ -25,7 +25,8 @@ export async function createClient() {
                         cookiesToSet.forEach(({ name, value, options }) => {
                             // Enable cross-subdomain cookies for teo-work.com
                             const newOptions = { ...options };
-                            if (process.env.NEXT_PUBLIC_SITE_URL?.includes('teo-work.com')) {
+                            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+                            if (siteUrl?.includes('teo-work.com') && !siteUrl.includes('localhost')) {
                                 newOptions.domain = '.teo-work.com';
                                 newOptions.path = '/';
                             }

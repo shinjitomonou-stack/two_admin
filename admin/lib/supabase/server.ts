@@ -16,7 +16,8 @@ export async function createClient() {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
                             const newOptions = { ...options };
-                            if (process.env.NEXT_PUBLIC_SITE_URL?.includes('teo-work.com')) {
+                            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+                            if (siteUrl?.includes('teo-work.com') && !siteUrl.includes('localhost')) {
                                 newOptions.domain = '.teo-work.com';
                                 newOptions.path = '/';
                             }
@@ -49,7 +50,8 @@ export async function createAdminClient() {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
                             const newOptions = { ...options };
-                            if (process.env.NEXT_PUBLIC_SITE_URL?.includes('teo-work.com')) {
+                            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+                            if (siteUrl?.includes('teo-work.com') && !siteUrl.includes('localhost')) {
                                 newOptions.domain = '.teo-work.com';
                                 newOptions.path = '/';
                             }

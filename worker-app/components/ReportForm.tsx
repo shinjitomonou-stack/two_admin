@@ -64,9 +64,9 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                 .getPublicUrl(filePath);
 
             setPhotos([...photos, data.publicUrl]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading photo:', error);
-            alert('写真のアップロードに失敗しました');
+            alert(`写真のアップロードに失敗しました: ${error.message || '不明なエラー'}`);
         } finally {
             setUploading(false);
         }

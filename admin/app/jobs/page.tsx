@@ -73,6 +73,7 @@ export default function JobsPage() {
         if (jobsRes.error) {
             console.error("Error fetching jobs:", jobsRes.error);
         } else {
+            console.log(`Fetched ${jobsRes.data?.length || 0} jobs`);
             setJobs(jobsRes.data || []);
             setFilteredJobs(jobsRes.data || []);
         }
@@ -108,8 +109,9 @@ export default function JobsPage() {
         // Client filter
         if (filters.clientId) {
             filtered = filtered.filter((job) => {
-                const clientData = job.clients as any;
-                return clientData?.id === filters.clientId;
+                // job.clients can be an object { name: string } based on the select query
+                // but client_job_contracts or other relations might hold the ID
+                return (job as any).client_id === filters.clientId;
             });
         }
 
