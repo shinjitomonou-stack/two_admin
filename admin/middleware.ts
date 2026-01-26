@@ -66,6 +66,28 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
+    // 6. Check if user is an admin
+    // We need to use a Service Role client or ensure RLS allows reading own record
+    // Using the authenticated client is safer as it respects RLS.
+    // We assume RLS is set up so users can read their own record in admin_users.
+    const { data: adminUser } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+    if (!adminUser) {
+        console.warn(`Middleware: Unauthorized access attempt by user ${user.id} (${user.email})`);
+        // Basic sign out is handled by client-side usually, but we force redirect to login
+        // We can also clear the cookie manually if needed, but redirecting with error is a good start.
+        const url = new URL("/login", request.url);
+        url.searchParams.set("error", "unauthorized");
+
+        // Optionally sign out the user by clearing cookies in the response
+        // But for now, just redirecting prevents access.
+        return NextResponse.redirect(url);
+    }
+
     // If logged in and on a public page (but we already handled public pages above, 
     // this part only runs if we didn't return 'response' in step 3. 
     // Since Step 3 handles ALL public paths, this part is technically unreachable 
