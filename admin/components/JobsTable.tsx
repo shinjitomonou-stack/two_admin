@@ -84,9 +84,12 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                 (c: any) => c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT'
                             );
 
-                            // Add linked contract if it exists and is active
+                            // Add linked contract if it exists and is active, and NOT already in activePlacements
                             if (linkedContract && (linkedContract.status === 'ACTIVE' || linkedContract.status === 'PENDING' || linkedContract.status === 'DRAFT')) {
-                                activePlacements.push(linkedContract);
+                                const alreadyIn = activePlacements.some((c: any) => c.id === linkedContract.id);
+                                if (!alreadyIn) {
+                                    activePlacements.push(linkedContract);
+                                }
                             }
 
                             const totalApps = applications.length;

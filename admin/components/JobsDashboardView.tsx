@@ -45,7 +45,7 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
         const [jobsRes, clientsRes] = await Promise.all([
             supabase.from("jobs").select(`
                 *,
-                clients(name),
+                clients(id, name),
                 job_applications(
                     id,
                     status,
@@ -59,13 +59,13 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
                     id,
                     status,
                     trading_type,
-                    clients(name)
+                    clients(id, name)
                 ),
                 linked_contract: client_job_contracts!assigned_contract_id (
                     id,
                     status,
                     trading_type,
-                    clients(name)
+                    clients(id, name)
                 )
             `)
                 .gte("start_time", startOfDay.toISOString())
@@ -100,7 +100,7 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
             filtered = filtered.filter(j => filters.status.includes(j.status));
         }
         if (filters.clientId) {
-            filtered = filtered.filter(j => (j as any).clients?.id === filters.clientId);
+            filtered = filtered.filter(j => (j as any).clients?.id === filters.clientId || (j as any).client_id === filters.clientId);
         }
         setFilteredJobs(filtered);
     };
@@ -168,20 +168,40 @@ export function JobsDashboardView({ title, description, targetDate }: JobsDashbo
     const totalJobs = jobs.length;
     const totalMaxWorkers = jobs.reduce((sum, j) => sum + j.max_workers, 0);
     const assignedCount = jobs.reduce((sum, j) => {
-        const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED").length || 0;
-        const placementContracts = (j as any).client_job_contracts?.filter((c: any) => c.trading_type === 'PLACING' && (c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT')).length || 0;
-        const linkedContractCount = (j as any).linked_contract ? 1 : 0;
-        return sum + assignedApps + placementContracts + linkedContractCount;
+        const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
+        const placementContracts = (j as any).client_job_contracts?.filter((c: any) =>
+            c.trading_type === 'PLACING' &&
+            (c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT')
+        ) || [];
+        const linkedContract = (j as any).linked_contract;
+
+        // Start with individual workers
+        let count = assignedApps.length;
+
+        // Add placement contracts, ensuring no double counting if linked_contract is already in placementContracts
+        const placementIds = new Set(placementContracts.map((c: any) => c.id));
+        count += placementContracts.length;
+
+        if (linkedContract &&
+            (linkedContract.status === 'ACTIVE' || linkedContract.status === 'PENDING' || linkedContract.status === 'DRAFT') &&
+            !placementIds.has(linkedContract.id)
+        ) {
+            count += 1;
+        }
+
+        return sum + count;
     }, 0);
 
     const startedJobs = jobs.filter(j =>
         j.job_applications?.some(app => app.actual_work_start !== null)
     ).length;
 
-    const completedJobs = jobs.filter(j =>
-        j.status === "COMPLETED" ||
-        (j.job_applications?.length > 0 && j.job_applications.every((app: any) => (app.reports?.length || 0) > 0))
-    ).length;
+    const completedJobs = jobs.filter(j => {
+        if (j.status === "COMPLETED") return true;
+        const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
+        if (assignedApps.length === 0) return false;
+        return assignedApps.every((app: any) => (app.reports?.length || 0) > 0);
+    }).length;
 
     return (
         <AdminLayout>

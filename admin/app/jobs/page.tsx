@@ -45,7 +45,7 @@ export default function JobsPage() {
         const [jobsRes, clientsRes] = await Promise.all([
             supabase.from("jobs").select(`
                 *,
-                clients(name),
+                clients(id, name),
                 job_applications(
                     id,
                     status,
@@ -58,13 +58,13 @@ export default function JobsPage() {
                     id,
                     status,
                     trading_type,
-                    clients(name)
+                    clients(id, name)
                 ),
                 linked_contract: client_job_contracts!assigned_contract_id (
                     id,
                     status,
                     trading_type,
-                    clients(name)
+                    clients(id, name)
                 )
             `).order("created_at", { ascending: false }),
             supabase.from("clients").select("id, name").order("name")
@@ -109,9 +109,7 @@ export default function JobsPage() {
         // Client filter
         if (filters.clientId) {
             filtered = filtered.filter((job) => {
-                // job.clients can be an object { name: string } based on the select query
-                // but client_job_contracts or other relations might hold the ID
-                return (job as any).client_id === filters.clientId;
+                return (job as any).client_id === filters.clientId || (job as any).clients?.id === filters.clientId;
             });
         }
 
