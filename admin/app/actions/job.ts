@@ -335,3 +335,102 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
         return { success: false, error: error.message || "一括登録中にエラーが発生しました" };
     }
 }
+export async function bulkUpdateJobs(jobs: any[]) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        // Resolve references (Clients and Templates)
+        const clientNames = Array.from(new Set(jobs.map(j => j.client_name?.trim()).filter(Boolean)));
+        let clientMap = new Map<string, string>();
+        if (clientNames.length > 0) {
+            const { data: clients } = await supabase.from("clients").select("id, name").in("name", clientNames);
+            clientMap = new Map(clients?.map(c => [c.name, c.id]));
+        }
+
+        const templateNames = Array.from(new Set(jobs.map(j => j.template_name?.trim()).filter(Boolean)));
+        let templateMap = new Map<string, string>();
+        if (templateNames.length > 0) {
+            const { data: templates } = await supabase.from("report_templates").select("id, name").in("name", templateNames);
+            templateMap = new Map(templates?.map(t => [t.name, t.id]));
+        }
+
+        const payloads = jobs.map(job => {
+            const isFlexible = job.is_flexible === "はい" || job.is_flexible === true;
+
+            // Date normalization (reusing logic from bulkCreateJobs)
+            const formatISO = (d: string) => {
+                if (!d) return "";
+                const parts = d.replace(/\//g, "-").split("-");
+                if (parts.length !== 3) return d;
+                return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+            };
+
+            const formatISOTime = (t: string, def: string) => {
+                const parts = (t || def).split(":");
+                return `${parts[0].padStart(2, "0")}:${(parts[1] || "00").padStart(2, "0")}:00`;
+            };
+
+            let startDateTime: Date;
+            let endDateTime: Date;
+            if (isFlexible) {
+                const start = formatISO(job.period_start || job.date);
+                const end = formatISO(job.period_end || start);
+                startDateTime = new Date(`${start}T00:00:00+09:00`);
+                endDateTime = new Date(`${end}T23:59:59+09:00`);
+            } else {
+                const date = formatISO(job.date || job.period_start);
+                startDateTime = new Date(`${date}T${formatISOTime(job.start_time, "00:00")}+09:00`);
+                endDateTime = new Date(`${date}T${formatISOTime(job.end_time, "23:59")}+09:00`);
+            }
+
+            const payload: any = {
+                title: job.title,
+                description: job.description || null,
+                address_text: job.address_text,
+                reward_amount: parseFloat(String(job.reward_amount).replace(/[^\d.]/g, '')) || 0,
+                billing_amount: job.billing_amount ? parseFloat(String(job.billing_amount).replace(/[^\d.]/g, '')) : null,
+                reward_tax_mode: (job.reward_tax_mode === '税込' || job.reward_tax_mode === 'INCL') ? 'INCL' : 'EXCL',
+                billing_tax_mode: (job.billing_tax_mode === '税込' || job.billing_tax_mode === 'INCL') ? 'INCL' : 'EXCL',
+                max_workers: parseInt(job.max_workers) || 1,
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                is_flexible: isFlexible,
+                work_period_start: isFlexible ? startDateTime.toISOString() : null,
+                work_period_end: isFlexible ? endDateTime.toISOString() : null,
+                auto_set_schedule: job.auto_set_schedule === "はい" || job.auto_set_schedule === true,
+                status: job.status || "DRAFT",
+            };
+
+            if (job.id) payload.id = job.id;
+
+            if (job.client_name) {
+                const cid = clientMap.get(job.client_name.trim());
+                if (!cid) throw new Error(`クライアントが見つかりません: ${job.client_name}`);
+                payload.client_id = cid;
+            }
+
+            if (job.template_name) {
+                const tid = templateMap.get(job.template_name.trim());
+                if (!tid) throw new Error(`レポートテンプレートが見つかりません: ${job.template_name}`);
+                payload.report_template_id = tid;
+            }
+
+            return payload;
+        });
+
+        const { data, error } = await supabase
+            .from("jobs")
+            .upsert(payloads, { onConflict: 'id' })
+            .select();
+
+        if (error) throw error;
+
+        revalidatePath("/jobs");
+        revalidatePath("/");
+        return { success: true, count: data.length };
+    } catch (error: any) {
+        console.error("Error bulk updating jobs:", error);
+        return { success: false, error: error.message || "一括更新中にエラーが発生しました" };
+    }
+}

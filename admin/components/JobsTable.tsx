@@ -28,11 +28,20 @@ export interface Job {
     status: string;
     reward_amount: number;
     billing_amount: number | null;
+    reward_tax_mode: string;
+    billing_tax_mode: string;
     max_workers: number;
     start_time: string;
     end_time: string;
+    is_flexible: boolean;
+    work_period_start: string | null;
+    work_period_end: string | null;
     address_text: string | null;
+    description: string | null;
+    auto_set_schedule: boolean;
+    report_template_id: string | null;
     clients: { name: string } | null;
+    report_templates?: { name: string } | null;
     job_applications: Array<{
         id: string;
         status: string;

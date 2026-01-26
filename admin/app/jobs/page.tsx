@@ -13,8 +13,9 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Pagination from "@/components/ui/Pagination";
 import BulkJobCreateModal from "@/components/BulkJobCreateModal";
+import BulkJobUpdateModal from "@/components/BulkJobUpdateModal";
 import { JobCopyDialog } from "@/components/JobCopyDialog";
-import { FileUp } from "lucide-react";
+import { FileUp, Download, FileEdit } from "lucide-react";
 
 import { JobsTable, Job } from "@/components/JobsTable";
 
@@ -28,6 +29,7 @@ export default function JobsPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [isBulkUpdateModalOpen, setIsBulkUpdateModalOpen] = useState(false);
     const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
     const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[]; start_time: string; end_time: string } | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -65,6 +67,10 @@ export default function JobsPage() {
                     status,
                     trading_type,
                     clients(id, name)
+                ),
+                report_templates (
+                    id,
+                    name
                 )
             `).order("created_at", { ascending: false }),
             supabase.from("clients").select("id, name").order("name")
@@ -158,6 +164,55 @@ export default function JobsPage() {
 
         setFilteredJobs(filtered);
         setCurrentPage(1); // Reset to first page when filters change
+    };
+
+    const handleExportCSV = () => {
+        const headers = "id,title,client_name,is_flexible,date,period_start,period_end,start_time,end_time,reward_amount,reward_tax_mode,billing_amount,billing_tax_mode,max_workers,address_text,description,template_name,auto_set_schedule,status";
+
+        const rows = filteredJobs.map(job => {
+            const isFlex = job.is_flexible ? "はい" : "いいえ";
+            const date = !job.is_flexible && job.start_time ? new Date(job.start_time).toISOString().split('T')[0] : "";
+            const periodStart = job.work_period_start ? job.work_period_start.split('T')[0] : "";
+            const periodEnd = job.work_period_end ? job.work_period_end.split('T')[0] : "";
+            const startTime = !job.is_flexible && job.start_time ? new Date(job.start_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false }) : "";
+            const endTime = !job.is_flexible && job.end_time ? new Date(job.end_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false }) : "";
+
+            const clientName = job.clients?.name || "";
+            const templateName = job.report_templates?.name || "";
+
+            const fields = [
+                job.id,
+                job.title,
+                clientName,
+                isFlex,
+                date,
+                periodStart,
+                periodEnd,
+                startTime,
+                endTime,
+                job.reward_amount,
+                job.reward_tax_mode === 'INCL' ? '税込' : '税抜',
+                job.billing_amount || "",
+                job.billing_tax_mode === 'INCL' ? '税込' : '税抜',
+                job.max_workers,
+                job.address_text || "",
+                job.description || "",
+                templateName,
+                job.auto_set_schedule ? "はい" : "いいえ",
+                job.status
+            ];
+
+            return fields.map(f => `"${String(f || "").replace(/"/g, '""')}"`).join(",");
+        });
+
+        const csvContent = `${headers}\n${rows.join("\n")}`;
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `jobs_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.click();
+        toast.success("CSVを出力しました。");
     };
 
     // Update paginated jobs when filteredJobs or currentPage changes
@@ -264,20 +319,34 @@ export default function JobsPage() {
                             登録されている案件の確認・編集・新規作成を行います。
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={handleExportCSV}
+                            className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm text-sm"
+                        >
+                            <Download className="w-4 h-4" />
+                            CSV出力
+                        </button>
+                        <button
+                            onClick={() => setIsBulkUpdateModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-amber-700 px-3 py-2 rounded-lg hover:bg-amber-50 transition-colors font-medium shadow-sm text-sm"
+                        >
+                            <FileEdit className="w-4 h-4" />
+                            一括更新
+                        </button>
                         <button
                             onClick={() => setIsBulkModalOpen(true)}
-                            className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm"
+                            className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm text-sm"
                         >
                             <FileUp className="w-4 h-4" />
                             一括登録
                         </button>
                         <Link
                             href="/jobs/create?returnTo=/jobs"
-                            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-sm"
+                            className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-sm text-sm"
                         >
                             <Plus className="w-4 h-4" />
-                            新規案件作成
+                            新規作成
                         </Link>
                     </div>
                 </div>
@@ -311,6 +380,13 @@ export default function JobsPage() {
                     isOpen={isBulkModalOpen}
                     onClose={() => {
                         setIsBulkModalOpen(false);
+                        fetchData();
+                    }}
+                />
+                <BulkJobUpdateModal
+                    isOpen={isBulkUpdateModalOpen}
+                    onClose={() => {
+                        setIsBulkUpdateModalOpen(false);
                         fetchData();
                     }}
                 />
