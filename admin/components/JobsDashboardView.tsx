@@ -27,6 +27,13 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
     const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[]; start_time: string; end_time: string } | null>(null);
+    const [currentFilters, setCurrentFilters] = useState<FilterState>({
+        search: "",
+        status: [],
+        clientId: "",
+        dateFrom: "",
+        dateTo: "",
+    });
 
     const router = useRouter();
     const supabase = createClient();
@@ -79,7 +86,6 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             toast.error("データの取得に失敗しました");
         } else {
             setJobs(jobsRes.data || []);
-            setFilteredJobs(jobsRes.data || []);
         }
 
         if (clientsRes.data) {
@@ -92,8 +98,10 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         fetchData();
     }, [targetDateStr]);
 
-    const handleFilterChange = (filters: FilterState) => {
+    useEffect(() => {
         let filtered = [...jobs];
+        const filters = currentFilters;
+
         if (filters.search) {
             const keywords = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
             filtered = filtered.filter(j => {
@@ -135,6 +143,10 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             filtered = filtered.filter(j => (j as any).clients?.id === filters.clientId || (j as any).client_id === filters.clientId);
         }
         setFilteredJobs(filtered);
+    }, [jobs, currentFilters]);
+
+    const handleFilterChange = (filters: FilterState) => {
+        setCurrentFilters(filters);
     };
 
     const handleStatusChange = async (jobId: string, newStatus: string) => {
