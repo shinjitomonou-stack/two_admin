@@ -115,12 +115,6 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                     </p>
                 </div>
 
-                {/* Template Diagnostics (Visible only for debugging) */}
-                <div className="mb-4 p-2 bg-slate-100 rounded text-[10px] text-slate-400 font-mono break-all font-bold">
-                    TID: {templateDiagnostic.id || "NULL"} | Status: {templateDiagnostic.status}
-                    {templateDiagnostic.error && ` | Err: ${JSON.stringify(templateDiagnostic.error)}`}
-                </div>
-
                 <ReportForm
                     applicationId={application.id}
                     jobId={job.id}
