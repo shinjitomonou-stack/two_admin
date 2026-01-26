@@ -52,7 +52,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                     status,
                     scheduled_work_start,
                     actual_work_start,
-                    workers(full_name),
+                    workers(full_name, name_kana),
                     worker_id,
                     reports(id, status)
                 ),
@@ -95,30 +95,37 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     const handleFilterChange = (filters: FilterState) => {
         let filtered = [...jobs];
         if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
+            const keywords = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
             filtered = filtered.filter(j => {
-                // Job title
-                if (j.title?.toLowerCase().includes(searchLower)) return true;
+                return keywords.every(kw => {
+                    // Job title
+                    if (j.title?.toLowerCase().includes(kw)) return true;
 
-                // Client name (the ones who ordered)
-                if (j.clients?.name?.toLowerCase().includes(searchLower)) return true;
+                    // Client name
+                    if (j.clients?.name?.toLowerCase().includes(kw)) return true;
 
-                // Address
-                if (j.address_text?.toLowerCase().includes(searchLower)) return true;
+                    // Address
+                    if (j.address_text?.toLowerCase().includes(kw)) return true;
 
-                // Directly assigned workers
-                if (j.job_applications?.some((app: any) =>
-                    app.workers?.full_name?.toLowerCase().includes(searchLower)
-                )) return true;
+                    // Directly assigned workers
+                    const hasWorkerMatch = j.job_applications?.some((app: any) => {
+                        const fullName = app.workers?.full_name?.toLowerCase() || "";
+                        const nameKana = app.workers?.name_kana?.toLowerCase() || "";
+                        return fullName.includes(kw) || nameKana.includes(kw);
+                    });
+                    if (hasWorkerMatch) return true;
 
-                // Partner companies (業者)
-                if ((j as any).client_job_contracts?.some((c: any) =>
-                    c.clients?.name?.toLowerCase().includes(searchLower)
-                )) return true;
+                    // Partner companies (業者)
+                    const hasPartnerMatch = (j as any).client_job_contracts?.some((c: any) =>
+                        c.clients?.name?.toLowerCase().includes(kw)
+                    );
+                    if (hasPartnerMatch) return true;
 
-                if ((j as any).linked_contract?.clients?.name?.toLowerCase().includes(searchLower)) return true;
+                    const hasLinkedPartnerMatch = (j as any).linked_contract?.clients?.name?.toLowerCase().includes(kw);
+                    if (hasLinkedPartnerMatch) return true;
 
-                return false;
+                    return false;
+                });
             });
         }
         if (filters.status.length > 0) {

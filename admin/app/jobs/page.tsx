@@ -51,7 +51,7 @@ export default function JobsPage() {
                     status,
                     scheduled_work_start,
                     actual_work_start,
-                    workers(full_name),
+                    workers(full_name, name_kana),
                     worker_id
                 ),
                 client_job_contracts!job_id (
@@ -92,26 +92,33 @@ export default function JobsPage() {
 
         // Search filter
         if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
+            const keywords = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
             filtered = filtered.filter(job => {
-                // Job title etc.
-                if (job.title?.toLowerCase().includes(searchLower)) return true;
-                if (job.clients?.name?.toLowerCase().includes(searchLower)) return true;
-                if (job.address_text?.toLowerCase().includes(searchLower)) return true;
+                return keywords.every(kw => {
+                    // Job title etc.
+                    if (job.title?.toLowerCase().includes(kw)) return true;
+                    if (job.clients?.name?.toLowerCase().includes(kw)) return true;
+                    if (job.address_text?.toLowerCase().includes(kw)) return true;
 
-                // Workers
-                if (job.job_applications?.some((app: any) =>
-                    app.workers?.full_name?.toLowerCase().includes(searchLower)
-                )) return true;
+                    // Workers
+                    const hasWorkerMatch = job.job_applications?.some((app: any) => {
+                        const fullName = app.workers?.full_name?.toLowerCase() || "";
+                        const nameKana = app.workers?.name_kana?.toLowerCase() || "";
+                        return fullName.includes(kw) || nameKana.includes(kw);
+                    });
+                    if (hasWorkerMatch) return true;
 
-                // Partners
-                if ((job as any).client_job_contracts?.some((c: any) =>
-                    c.clients?.name?.toLowerCase().includes(searchLower)
-                )) return true;
+                    // Partners
+                    const hasPartnerMatch = (job as any).client_job_contracts?.some((c: any) =>
+                        c.clients?.name?.toLowerCase().includes(kw)
+                    );
+                    if (hasPartnerMatch) return true;
 
-                if ((job as any).linked_contract?.clients?.name?.toLowerCase().includes(searchLower)) return true;
+                    const hasLinkedPartnerMatch = (job as any).linked_contract?.clients?.name?.toLowerCase().includes(kw);
+                    if (hasLinkedPartnerMatch) return true;
 
-                return false;
+                    return false;
+                });
             });
         }
 
