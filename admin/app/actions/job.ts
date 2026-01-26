@@ -284,11 +284,25 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
 
             // Tax Mode Parsing
             const parseTaxMode = (val: any) => {
-                if (!val) return 'EXCL';
-                const str = String(val).trim();
-                if (str === '税込' || str === 'INCL') return 'INCL';
-                return 'EXCL'; // Default to EXCL
+                const str = String(val || "").trim();
+                if (str === '税込' || str === 'INCL') return 'INCL' as const;
+                return 'EXCL' as const;
             };
+
+            const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
+            const billingTaxMode = parseTaxMode(job.billing_tax_mode);
+
+            let rewardAmount = parseNumber(job.reward_amount);
+            if (rewardTaxMode === 'INCL') {
+                rewardAmount = Math.ceil((rewardAmount / 1.1) * 101) / 101; // Match form logic or use standard conversion
+                // Actually, the form uses: Math.ceil((rewardAmount / 1.1) * 100) / 100;
+                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
+            }
+
+            let billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
+            if (billingAmount !== null && billingTaxMode === 'INCL') {
+                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
+            }
 
             if (!job.title) throw new Error("案件タイトルが未入力の行があります。");
             if (!job.address_text) throw new Error(`住所が未入力です: ${job.title}`);
@@ -296,16 +310,13 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
             const maxWorkers = parseNumber(job.max_workers);
             if (maxWorkers <= 0) throw new Error(`募集人数は1人以上に設定してください: ${job.title}`);
 
-            const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
-            const billingTaxMode = parseTaxMode(job.billing_tax_mode);
-
             return {
                 title: job.title,
                 client_id: clientId,
                 description: job.description || null,
                 address_text: job.address_text,
-                reward_amount: parseNumber(job.reward_amount),
-                billing_amount: job.billing_amount ? parseNumber(job.billing_amount) : null,
+                reward_amount: rewardAmount,
+                billing_amount: billingAmount,
                 reward_tax_mode: rewardTaxMode,
                 billing_tax_mode: billingTaxMode,
                 max_workers: maxWorkers,
@@ -384,14 +395,39 @@ export async function bulkUpdateJobs(jobs: any[]) {
                 endDateTime = new Date(`${date}T${formatISOTime(job.end_time, "23:59")}+09:00`);
             }
 
+            const parseNumber = (val: any) => {
+                if (typeof val === 'number') return val;
+                if (!val) return 0;
+                const clean = String(val).replace(/[^\d.]/g, '');
+                return parseFloat(clean) || 0;
+            };
+
+            const parseTaxMode = (val: any) => {
+                const str = String(val || "").trim();
+                return (str === '税込' || str === 'INCL') ? 'INCL' : 'EXCL';
+            };
+
+            const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
+            const billingTaxMode = parseTaxMode(job.billing_tax_mode);
+
+            let rewardAmount = parseNumber(job.reward_amount);
+            if (rewardTaxMode === 'INCL') {
+                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
+            }
+
+            let billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
+            if (billingAmount !== null && billingTaxMode === 'INCL') {
+                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
+            }
+
             const payload: any = {
                 title: job.title,
                 description: job.description || null,
                 address_text: job.address_text,
-                reward_amount: parseFloat(String(job.reward_amount).replace(/[^\d.]/g, '')) || 0,
-                billing_amount: job.billing_amount ? parseFloat(String(job.billing_amount).replace(/[^\d.]/g, '')) : null,
-                reward_tax_mode: (job.reward_tax_mode === '税込' || job.reward_tax_mode === 'INCL') ? 'INCL' : 'EXCL',
-                billing_tax_mode: (job.billing_tax_mode === '税込' || job.billing_tax_mode === 'INCL') ? 'INCL' : 'EXCL',
+                reward_amount: rewardAmount,
+                billing_amount: billingAmount,
+                reward_tax_mode: rewardTaxMode,
+                billing_tax_mode: billingTaxMode,
                 max_workers: parseInt(job.max_workers) || 1,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
