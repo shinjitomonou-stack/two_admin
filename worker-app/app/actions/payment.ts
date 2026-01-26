@@ -45,7 +45,10 @@ export async function approvePaymentNotice(id: string) {
             const month = data?.month || "不明な月";
             const totalAmount = Math.round((data?.total_amount || 0) + (data?.tax_amount || 0)).toLocaleString();
 
-            await sendSlackNotification(`💰 *支払通知承認のお知らせ*\n\n*ワーカー:* ${workerName}\n*対象月:* ${month}\n*合計金額:* ¥${totalAmount}\n\nワーカーが支払通知を承認しました。`);
+            const adminAppUrl = process.env.ADMIN_APP_URL || "https://admin.teo-work.com";
+            const detailUrl = `${adminAppUrl}/workers/payment/notices/${id}`;
+
+            await sendSlackNotification(`<!here> 💰 *支払通知承認のお知らせ*\n\n*ワーカー:* ${workerName}\n*対象月:* ${month}\n*合計金額:* ¥${totalAmount}\n\nワーカーが支払通知を承認しました。\n詳細はこちら: ${detailUrl}`);
         } catch (slackError) {
             console.error("Failed to send Slack notification:", slackError);
         }

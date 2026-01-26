@@ -169,7 +169,10 @@ export async function signIndividualContract(formData: FormData) {
         const workerName = worker?.full_name || "不明なワーカー";
         const jobTitle = job?.title || "不明な案件";
 
-        await sendSlackNotification(`🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*案件:* ${jobTitle}\n\nワーカーが個別契約に署名しました。`);
+        const adminAppUrl = process.env.ADMIN_APP_URL || "https://admin.teo-work.com";
+        const detailUrl = `${adminAppUrl}/contracts/individual/${contractId}`;
+
+        await sendSlackNotification(`<!here> 🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*案件:* ${jobTitle}\n\nワーカーが個別契約に署名しました。\n詳細はこちら: ${detailUrl}`);
     } catch (slackError) {
         console.error("Failed to send Slack notification:", slackError);
     }
