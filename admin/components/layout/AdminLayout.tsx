@@ -147,7 +147,7 @@ function AdminLayoutContent({
                     <img src="/header-logo.png" alt="Teo Admin" className="h-10 w-auto object-contain" />
                 </div>
 
-                <div className="flex flex-col h-[calc(100vh-4rem)]">
+                <div className="flex flex-col h-[calc(100vh-6rem)]">
                     <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                         {sidebarItems.map((item) => {
                             const itemPath = item.href.split('?')[0];
