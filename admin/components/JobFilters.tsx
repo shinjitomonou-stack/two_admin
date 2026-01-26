@@ -76,7 +76,7 @@ export function JobFilters({ onFilterChange, clients }: JobFiltersProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                         type="text"
-                        placeholder="案件名、クライアント名、住所で検索..."
+                        placeholder="案件名、クライアント名、住所、スタッフ名で検索..."
                         value={filters.search}
                         onChange={(e) => updateFilters({ search: e.target.value })}
                         className="w-full pl-9 pr-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"

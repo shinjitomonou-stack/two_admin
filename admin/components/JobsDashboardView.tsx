@@ -98,7 +98,8 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             const searchLower = filters.search.toLowerCase();
             filtered = filtered.filter(j =>
                 j.title.toLowerCase().includes(searchLower) ||
-                j.clients?.name?.toLowerCase().includes(searchLower)
+                j.clients?.name?.toLowerCase().includes(searchLower) ||
+                j.job_applications?.some((app: any) => app.workers?.full_name?.toLowerCase().includes(searchLower))
             );
         }
         if (filters.status.length > 0) {
