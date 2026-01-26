@@ -99,50 +99,68 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
 
                 {/* Status-specific Info */}
                 {notice.status === 'APPROVED' && (
-                    <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                        <div>
-                            <div className="text-sm font-bold text-green-900">確認・承認済み</div>
-                            <div className="text-xs text-green-700 mt-0.5">
-                                {new Date(notice.approved_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })} に承認されました。現在は支払処理待ちです。
+                    <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-start gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                            <div>
+                                <div className="text-sm font-bold text-green-900">確認・承認済み</div>
+                                <div className="text-xs text-green-700 mt-0.5">
+                                    {new Date(notice.approved_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })} に承認されました。現在は支払処理待ちです。
+                                </div>
                             </div>
                         </div>
+                        <Link
+                            href="/"
+                            className="block w-full bg-slate-900 text-white text-center font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                        >
+                            ダッシュボードに戻る
+                        </Link>
                     </div>
                 )}
 
                 {notice.status === 'PAID' && (
-                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
-                        <div className="w-full">
-                            <div className="text-sm font-bold text-purple-900">お支払処理完了</div>
-                            <div className="text-xs text-purple-700 mt-0.5">
-                                この明細の支払処理は完了しています。
-                            </div>
-                            {schedule?.scheduled_payment_date && (
-                                <div className="mt-3 pt-3 border-t border-purple-200">
-                                    <div className="text-xs text-purple-600 mb-1">お支払予定日</div>
-                                    <div className="text-sm font-bold text-purple-900">
-                                        {new Date(schedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </div>
+                    <div className="space-y-4">
+                        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-start gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-purple-600 mt-0.5" />
+                            <div className="w-full">
+                                <div className="text-sm font-bold text-purple-900">お支払処理完了</div>
+                                <div className="text-xs text-purple-700 mt-0.5">
+                                    この明細の支払処理は完了しています。
                                 </div>
-                            )}
+                                {schedule?.scheduled_payment_date && (
+                                    <div className="mt-3 pt-3 border-t border-purple-200">
+                                        <div className="text-xs text-purple-600 mb-1">お支払予定日</div>
+                                        <div className="text-sm font-bold text-purple-900">
+                                            {new Date(schedule.scheduled_payment_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                        <Link
+                            href="/"
+                            className="block w-full bg-slate-900 text-white text-center font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                        >
+                            ダッシュボードに戻る
+                        </Link>
                     </div>
                 )}
             </div>
 
             {/* Bottom Actions */}
-            {notice.status === 'ISSUED' && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-                    <div className="max-w-md mx-auto">
-                        <div className="flex items-start gap-2 mb-4 text-[10px] text-slate-500 px-2">
-                            <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>内容に間違いがないかご確認ください。承認後の変更はできません。</span>
+            {
+                notice.status === 'ISSUED' && (
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
+                        <div className="max-w-md mx-auto">
+                            <div className="flex items-start gap-2 mb-4 text-[10px] text-slate-500 px-2">
+                                <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>内容に間違いがないかご確認ください。承認後の変更はできません。</span>
+                            </div>
+                            <PaymentApprovalButton id={notice.id} />
                         </div>
-                        <PaymentApprovalButton id={notice.id} />
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

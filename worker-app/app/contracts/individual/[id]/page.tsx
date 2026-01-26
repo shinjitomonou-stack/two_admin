@@ -148,14 +148,22 @@ export default async function IndividualContractPage({ params }: { params: Promi
             <main className="max-w-md mx-auto px-4 py-6 space-y-6">
                 {/* Status Banner */}
                 {isSigned ? (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                        <div>
-                            <h2 className="font-bold text-green-800">締結済みです</h2>
-                            <p className="text-xs text-green-700 mt-0.5">
-                                {new Date(contract.signed_at).toLocaleString()} に署名しました
-                            </p>
+                    <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                            <CheckCircle className="w-6 h-6 text-green-600" />
+                            <div>
+                                <h2 className="font-bold text-green-800">締結済みです</h2>
+                                <p className="text-xs text-green-700 mt-0.5">
+                                    {new Date(contract.signed_at).toLocaleString()} に署名しました
+                                </p>
+                            </div>
                         </div>
+                        <Link
+                            href="/"
+                            className="block w-full bg-slate-900 text-white text-center font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                        >
+                            ダッシュボードに戻る
+                        </Link>
                     </div>
                 ) : (
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
