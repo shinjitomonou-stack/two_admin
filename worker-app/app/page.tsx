@@ -193,14 +193,20 @@ export default async function Home() {
           }
         } else {
           // Any assigned/confirmed job that doesn't have a report yet
-          const { data: report } = await supabase
-            .from("reports")
-            .select("id")
-            .eq("application_id", app.id)
-            .maybeSingle();
+          // Only show if the work has at least reached the scheduled start time
+          const scheduledStart = new Date(app.scheduled_work_start);
+          const nowInstance = new Date();
 
-          if (!report) {
-            applicationsOverdue.push(app);
+          if (scheduledStart <= nowInstance) {
+            const { data: report } = await supabase
+              .from("reports")
+              .select("id")
+              .eq("application_id", app.id)
+              .maybeSingle();
+
+            if (!report) {
+              applicationsOverdue.push(app);
+            }
           }
         }
       }

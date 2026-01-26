@@ -65,15 +65,23 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     // Fetch template fields if template ID exists
     let template = undefined;
     if (job.report_template_id) {
-        const { data: templateData } = await supabase
+        const { data: templateData, error: templateError } = await supabase
             .from("report_templates")
             .select("id, fields")
             .eq("id", job.report_template_id)
             .single();
 
+        if (templateError) {
+            console.error("Error fetching report template:", templateError);
+        }
+
         if (templateData) {
             template = templateData;
+        } else {
+            console.log("No template data found for ID:", job.report_template_id);
         }
+    } else {
+        console.log("No report_template_id found for job:", id);
     }
 
     // Format default dates for datetime-local input

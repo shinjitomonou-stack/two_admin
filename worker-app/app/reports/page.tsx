@@ -62,7 +62,13 @@ export default async function ReportsPage() {
                     });
                 } else if (app.status !== "COMPLETED") {
                     // Pending report: any assigned/confirmed job without a report record
-                    pendingReports.push(app);
+                    // Only show if the work has at least reached the scheduled start time
+                    const scheduledStart = app.scheduled_work_start ? new Date(app.scheduled_work_start) : null;
+                    const nowInstance = new Date();
+
+                    if (scheduledStart && scheduledStart <= nowInstance) {
+                        pendingReports.push(app);
+                    }
                 }
             });
         }
