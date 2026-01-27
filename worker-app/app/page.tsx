@@ -83,7 +83,7 @@ export default async function Home() {
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
-      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
     ]);
 
     const worker = workerRes.data;
@@ -199,6 +199,9 @@ export default async function Home() {
       for (const app of assignedApplications) {
         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
         if (!job) continue;
+
+        // Skip if job is completed
+        if (job.status === 'COMPLETED') continue;
 
         const jobStartTime = new Date(job.start_time);
         const scheduledEnd = app.scheduled_work_end ? new Date(app.scheduled_work_end) : null;
