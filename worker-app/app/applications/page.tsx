@@ -57,8 +57,10 @@ export default function ApplicationsPage() {
         actual_work_end,
         jobs(
           id,
+          status,
           title,
           reward_amount,
+          reward_tax_mode,
           address_text,
           clients(name)
         ),
@@ -90,9 +92,10 @@ export default function ApplicationsPage() {
         });
 
         // 2. History (Completed & Cancelled/Rejected) - COMPLETED, REJECTED, CANCELLED
-        const history = applications.filter(app =>
-            app.status === 'COMPLETED' || app.status === 'REJECTED' || app.status === 'CANCELLED'
-        ).sort((a, b) => {
+        const history = applications.filter(app => {
+            const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+            return job?.status === 'COMPLETED' || app.status === 'COMPLETED' || app.status === 'REJECTED' || app.status === 'CANCELLED';
+        }).sort((a, b) => {
             // Sort by actual work end or updated date (descending)
             const dateA = a.actual_work_end ? new Date(a.actual_work_end).getTime() : new Date(a.created_at).getTime();
             const dateB = b.actual_work_end ? new Date(b.actual_work_end).getTime() : new Date(b.created_at).getTime();
@@ -104,9 +107,14 @@ export default function ApplicationsPage() {
         let monthly = 0;
 
         history.forEach(app => {
-            if (app.status === 'COMPLETED') {
-                const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
-                const reward = job?.reward_amount || 0;
+            const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+            const isCompleted = job?.status === 'COMPLETED' || app.status === 'COMPLETED';
+            if (isCompleted) {
+                // Calculate tax-inclusive reward
+                const baseAmount = job?.reward_amount || 0;
+                const isTaxExcluded = job?.reward_tax_mode === 'EXCL';
+                const reward = isTaxExcluded ? Math.round(baseAmount * 1.1) : baseAmount;
+
                 total += reward;
 
                 const completedDate = app.actual_work_end ? new Date(app.actual_work_end) : null;
@@ -279,7 +287,7 @@ export default function ApplicationsPage() {
                                 <div className="space-y-3">
                                     {historyItems.map((app) => {
                                         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
-                                        const isCompleted = app.status === 'COMPLETED';
+                                        const isCompleted = job?.status === 'COMPLETED' || app.status === 'COMPLETED';
                                         const dateLabel = isCompleted ? formatDate(app.actual_work_start) : formatDate(app.created_at);
                                         const statusLabel = isCompleted ? '完了' : app.status === 'REJECTED' ? '不採用' : 'キャンセル';
                                         const statusColor = isCompleted ? 'text-green-600 bg-green-50' : 'text-slate-500 bg-slate-100';
@@ -298,9 +306,11 @@ export default function ApplicationsPage() {
                                                     </div>
                                                     <h4 className="font-bold text-slate-900 text-sm truncate mb-1">{job?.title}</h4>
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-xs text-slate-500">報酬</span>
+                                                        <span className="text-xs text-slate-500">報酬 (税込)</span>
                                                         <span className={`text-sm font-bold ${isCompleted ? 'text-green-600' : 'text-slate-400'}`}>
-                                                            ¥{Math.round(job?.reward_amount || 0).toLocaleString()}
+                                                            ¥{Math.round(
+                                                                (job?.reward_amount || 0) * (job?.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                                            ).toLocaleString()}
                                                         </span>
                                                     </div>
                                                 </div>

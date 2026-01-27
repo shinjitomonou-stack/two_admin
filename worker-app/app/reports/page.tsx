@@ -41,6 +41,7 @@ export default async function ReportsPage() {
                 scheduled_work_end,
                 jobs(
                     id,
+                    status,
                     title,
                     reward_amount
                 ),
@@ -60,14 +61,19 @@ export default async function ReportsPage() {
                         ...report,
                         job_applications: app // Include application info
                     });
-                } else if (app.status !== "COMPLETED") {
-                    // Pending report: any assigned/confirmed job without a report record
-                    // Only show if the work has at least reached the scheduled start time
-                    const scheduledStart = app.scheduled_work_start ? new Date(app.scheduled_work_start) : null;
-                    const nowInstance = new Date();
+                } else {
+                    const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+                    const isCompleted = job?.status === 'COMPLETED' || app.status === 'COMPLETED';
 
-                    if (scheduledStart && scheduledStart <= nowInstance) {
-                        pendingReports.push(app);
+                    if (!isCompleted) {
+                        // Pending report: any assigned/confirmed job without a report record
+                        // Only show if the work has at least reached the scheduled start time
+                        const scheduledStart = app.scheduled_work_start ? new Date(app.scheduled_work_start) : null;
+                        const nowInstance = new Date();
+
+                        if (scheduledStart && scheduledStart <= nowInstance) {
+                            pendingReports.push(app);
+                        }
                     }
                 }
             });

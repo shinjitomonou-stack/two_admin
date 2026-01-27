@@ -76,10 +76,10 @@ export default async function Home() {
       supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
       supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", jstMonthStart).lte("actual_work_start", jstMonthEnd),
-      supabase.from("job_applications").select("status, jobs(reward_amount, reward_tax_mode)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
+      supabase.from("job_applications").select("status, jobs(status, reward_amount, reward_tax_mode)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", nowIso).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
-      supabase.from("job_applications").select("id, actual_work_end, jobs(id, title, reward_amount), reports(id, status)").eq("worker_id", workerId).eq("status", "COMPLETED").not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(5),
+      supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
@@ -150,7 +150,9 @@ export default async function Home() {
         const isTaxExcluded = job.reward_tax_mode === 'EXCL';
         const taxInclusiveAmount = isTaxExcluded ? Math.round(baseAmount * 1.1) : baseAmount;
 
-        if (app.status === 'COMPLETED') {
+        const isCompleted = job.status === 'COMPLETED' || app.status === 'COMPLETED';
+
+        if (isCompleted) {
           completedCount += 1;
           actualEarnings += taxInclusiveAmount;
         } else if (app.status === 'ASSIGNED' || app.status === 'CONFIRMED') {
@@ -165,7 +167,11 @@ export default async function Home() {
     }
 
     upcomingSchedule = schedule || [];
-    recentActivity = recentActivityData || [];
+    // Filter recent activity to only completed jobs
+    recentActivity = (recentActivityData || []).filter((activity: any) => {
+      const job = Array.isArray(activity.jobs) ? activity.jobs[0] : activity.jobs;
+      return job?.status === 'COMPLETED' || activity.status === 'COMPLETED';
+    }).slice(0, 5); // Take top 5 after filtering
     showPaymentNoticeAlert = (pendingNotices?.length || 0) > 0;
     pendingIndividualContracts = myPendingContracts || [];
 
