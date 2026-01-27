@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         let failCount = 0;
         let skippedCount = 0;
 
-        // Allowed columns to update
+        // Allowed columns to update (direct columns)
         const allowedColumns = [
             'full_name',
             'name_kana',
@@ -41,6 +41,17 @@ export async function POST(req: NextRequest) {
             'line_name',
             'schedule_notes',
             'max_workers',
+        ];
+
+        // Bank related columns map (CSV header -> JSON key)
+        const bankColumns = [
+            'bank_name',
+            'branch_name',
+            'bank_code',
+            'branch_code',
+            'account_number',
+            'account_holder',
+            'account_type'
         ];
 
         for (const record of records) {
@@ -67,6 +78,7 @@ export async function POST(req: NextRequest) {
             const updateData: any = {};
             let hasUpdates = false;
 
+            // 1. Process regular columns
             for (const [key, value] of Object.entries(record)) {
                 if (allowedColumns.includes(key) && key !== 'email') {
                     // Empty string -> null (as per user request)
@@ -77,6 +89,39 @@ export async function POST(req: NextRequest) {
                         updateData[key] = value;
                         hasUpdates = true;
                     }
+                }
+            }
+
+            // 2. Process bank account columns
+            // Check if any bank column exists in the CSV record
+            let hasBankColumns = false;
+            const newBankData: any = {};
+            let allBankFieldsEmpty = true;
+
+            for (const col of bankColumns) {
+                if (Object.prototype.hasOwnProperty.call(record, col)) {
+                    hasBankColumns = true;
+                    const val = record[col];
+                    if (val && val.trim() !== '') {
+                        newBankData[col] = val.trim();
+                        allBankFieldsEmpty = false;
+                    } else {
+                        newBankData[col] = '';
+                    }
+                }
+            }
+
+            if (hasBankColumns) {
+                if (allBankFieldsEmpty) {
+                    // If bank columns exist but all are empty, clear the bank_account
+                    updateData['bank_account'] = null;
+                    hasUpdates = true;
+                } else {
+                    // If there is data, update bank_account
+                    // Note: This overwrites the existing JSON with new data from CSV.
+                    // Assuming CSV contains snapshot of desired state.
+                    updateData['bank_account'] = newBankData;
+                    hasUpdates = true;
                 }
             }
 
