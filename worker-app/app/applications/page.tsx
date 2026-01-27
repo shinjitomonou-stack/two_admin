@@ -82,6 +82,15 @@ export default function ApplicationsPage() {
         setLoading(false);
     };
 
+    // Helper to get the reference date for an application (for filtering and display)
+    const getAppTargetDate = (app: any) => {
+        const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+        if (app.scheduled_work_start) return new Date(app.scheduled_work_start);
+        if (job?.start_time) return new Date(job.start_time);
+        if (job?.work_period_start) return new Date(job.work_period_start);
+        return new Date(app.created_at);
+    };
+
     const processApplications = () => {
         const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
         const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
@@ -93,11 +102,11 @@ export default function ApplicationsPage() {
 
             if (!isCompleted) return false;
 
-            const completedDate = app.actual_work_end ? new Date(app.actual_work_end) : new Date(app.created_at);
-            return completedDate >= startOfMonth && completedDate <= endOfMonth;
+            const targetDate = getAppTargetDate(app);
+            return targetDate >= startOfMonth && targetDate <= endOfMonth;
         }).sort((a, b) => {
-            const dateA = a.actual_work_end ? new Date(a.actual_work_end).getTime() : new Date(a.created_at).getTime();
-            const dateB = b.actual_work_end ? new Date(b.actual_work_end).getTime() : new Date(b.created_at).getTime();
+            const dateA = getAppTargetDate(a).getTime();
+            const dateB = getAppTargetDate(b).getTime();
             return dateB - dateA;
         });
 
@@ -109,13 +118,11 @@ export default function ApplicationsPage() {
 
             if (!isAssigned || isCompleted) return false;
 
-            let targetDate = app.scheduled_work_start ? new Date(app.scheduled_work_start) : null;
-            if (!targetDate && job?.start_time) targetDate = new Date(job.start_time);
-
-            return targetDate && targetDate >= startOfMonth && targetDate <= endOfMonth;
+            const targetDate = getAppTargetDate(app);
+            return targetDate >= startOfMonth && targetDate <= endOfMonth;
         }).sort((a, b) => {
-            const dateA = a.scheduled_work_start ? new Date(a.scheduled_work_start).getTime() : 0;
-            const dateB = b.scheduled_work_start ? new Date(b.scheduled_work_start).getTime() : 0;
+            const dateA = getAppTargetDate(a).getTime();
+            const dateB = getAppTargetDate(b).getTime();
             return dateA - dateB;
         });
 
@@ -127,11 +134,6 @@ export default function ApplicationsPage() {
         let monthlyCompleted = 0;
         let monthlyScheduled = 0;
 
-        // Current month bounds (for summary)
-        const now = new Date();
-        const startOfNowMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfNowMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
         applications.forEach(app => {
             const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
             if (!job) return;
@@ -142,19 +144,14 @@ export default function ApplicationsPage() {
             const isCompleted = job.status === 'COMPLETED' || app.status === 'COMPLETED';
             const isAssigned = app.status === 'ASSIGNED' || app.status === 'CONFIRMED';
 
+            const targetDate = getAppTargetDate(app);
+
             if (isCompleted) {
-                const completedDate = app.actual_work_end ? new Date(app.actual_work_end) : new Date(app.created_at);
-                if (completedDate >= startOfMonth && completedDate <= endOfMonth) {
+                if (targetDate >= startOfMonth && targetDate <= endOfMonth) {
                     monthlyCompleted += reward;
                 }
             } else if (isAssigned) {
-                // For scheduled reward, we look at the scheduled date if it's in the CURRENT month view?
-                // Actually user said "今月の報酬見込は完了と予定の合算"
-                // Let's use the selectedMonth for consistent summary view
-                let targetDate = app.scheduled_work_start ? new Date(app.scheduled_work_start) : null;
-                if (!targetDate && job.start_time) targetDate = new Date(job.start_time);
-
-                if (targetDate && targetDate >= startOfMonth && targetDate <= endOfMonth) {
+                if (targetDate >= startOfMonth && targetDate <= endOfMonth) {
                     monthlyScheduled += reward;
                 }
             }
