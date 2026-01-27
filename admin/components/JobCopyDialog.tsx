@@ -124,16 +124,27 @@ export function JobCopyDialog({
             alert("場所を入力してください");
             return;
         }
-        if (!startDate || !startTime || !endDate || !endTime) {
-            alert("日時をすべて入力してください");
+
+        // 日時は任意（期間指定案件の場合は空欄でOK）
+        // ただし、開始日時と終了日時は両方入力するか、両方空欄にする必要がある
+        const hasStartDateTime = startDate && startTime;
+        const hasEndDateTime = endDate && endTime;
+
+        if ((hasStartDateTime && !hasEndDateTime) || (!hasStartDateTime && hasEndDateTime)) {
+            alert("開始日時と終了日時は両方入力するか、両方空欄にしてください");
             return;
         }
 
         setIsLoading(true);
         try {
-            // Reconstruct ISO strings assuming the input is JST
-            const startISO = new Date(`${startDate}T${startTime}:00+09:00`).toISOString();
-            const endISO = new Date(`${endDate}T${endTime}:00+09:00`).toISOString();
+            let startISO: string | undefined;
+            let endISO: string | undefined;
+
+            if (startDate && startTime && endDate && endTime) {
+                // Reconstruct ISO strings assuming the input is JST
+                startISO = new Date(`${startDate}T${startTime}:00+09:00`).toISOString();
+                endISO = new Date(`${endDate}T${endTime}:00+09:00`).toISOString();
+            }
 
             await onCopy({
                 title: title.trim(),
