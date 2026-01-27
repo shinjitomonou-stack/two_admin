@@ -10,8 +10,10 @@ export default async function Home() {
   const supabase = await createClient();
 
   // Dashboard statistics setup
-  let workDaysThisMonth = 0;
-  let earningsThisMonth = 0;
+  let completedCount = 0;
+  let scheduledCount = 0;
+  let actualEarnings = 0;
+  let plannedEarnings = 0;
   let appliedCount = 0;
   let confirmedCount = 0;
   let upcomingSchedule: any[] = [];
@@ -74,7 +76,7 @@ export default async function Home() {
       supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
       supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", jstMonthStart).lte("actual_work_start", jstMonthEnd),
-      supabase.from("job_applications").select("jobs(reward_amount)").eq("worker_id", workerId).in("status", ["CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
+      supabase.from("job_applications").select("status, jobs(reward_amount, reward_tax_mode)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", nowIso).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, title, reward_amount), reports(id, status)").eq("worker_id", workerId).eq("status", "COMPLETED").not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(5),
@@ -138,12 +140,24 @@ export default async function Home() {
     profileCompletion = Math.round((profileCompletion / totalPossiblePoints) * 100);
 
     // Process Stats
-    workDaysThisMonth = completedWork?.length || 0;
     if (earningsData) {
-      earningsThisMonth = earningsData.reduce((sum, app: any) => {
+      earningsData.forEach((app: any) => {
         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
-        return sum + (job?.reward_amount || 0);
-      }, 0);
+        if (!job) return;
+
+        // Calculate tax-inclusive amount
+        const baseAmount = job.reward_amount || 0;
+        const isTaxExcluded = job.reward_tax_mode === 'EXCL';
+        const taxInclusiveAmount = isTaxExcluded ? Math.round(baseAmount * 1.1) : baseAmount;
+
+        if (app.status === 'COMPLETED') {
+          completedCount += 1;
+          actualEarnings += taxInclusiveAmount;
+        } else if (app.status === 'ASSIGNED' || app.status === 'CONFIRMED') {
+          scheduledCount += 1;
+          plannedEarnings += taxInclusiveAmount;
+        }
+      });
     }
     if (applications) {
       appliedCount = applications.filter(app => app.status === "APPLIED").length;
@@ -478,31 +492,33 @@ export default async function Home() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-blue-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
-                  <Calendar className="w-4 h-4" />
-                  <span className="text-xs font-medium">稼働日数</span>
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-xs font-medium">稼働件数</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-900">{workDaysThisMonth}日</div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-green-600 mb-1">
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="text-xs font-medium">報酬見込み</span>
-                </div>
-                <div className="text-2xl font-bold text-green-900">¥{Math.round(earningsThisMonth).toLocaleString()}</div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-purple-600 mb-1">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="text-xs font-medium">応募中</span>
-                </div>
-                <div className="text-2xl font-bold text-purple-900">{appliedCount}件</div>
+                <div className="text-2xl font-bold text-blue-900">{completedCount}件</div>
               </div>
               <div className="bg-orange-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-orange-600 mb-1">
                   <Clock className="w-4 h-4" />
-                  <span className="text-xs font-medium">確定済み</span>
+                  <span className="text-xs font-medium">予定件数</span>
                 </div>
-                <div className="text-2xl font-bold text-orange-900">{confirmedCount}件</div>
+                <div className="text-2xl font-bold text-orange-900">{scheduledCount}件</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-green-600 mb-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-xs font-medium">報酬実績</span>
+                </div>
+                <div className="text-xl font-bold text-green-900">¥{Math.round(actualEarnings).toLocaleString()}</div>
+                <div className="text-[10px] text-green-600/70 mt-0.5">※税込表示</div>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-purple-600 mb-1">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-xs font-medium">報酬予定</span>
+                </div>
+                <div className="text-xl font-bold text-purple-900">¥{Math.round(plannedEarnings).toLocaleString()}</div>
+                <div className="text-[10px] text-purple-600/70 mt-0.5">※税込表示</div>
               </div>
             </div>
           </section>
