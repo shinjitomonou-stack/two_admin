@@ -594,7 +594,7 @@ export default async function Home() {
                 className="flex flex-col items-center gap-2 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
               >
                 <Briefcase className="w-6 h-6 text-purple-600" />
-                <span className="text-xs font-medium text-slate-700">応募履歴</span>
+                <span className="text-xs font-medium text-slate-700">お仕事管理</span>
               </Link>
               <Link
                 href="/reports"
@@ -747,12 +747,6 @@ export default async function Home() {
             <p className="text-xs text-slate-600 mb-3">
               プロフィールを完成させると、案件に採用されやすくなります
             </p>
-            <Link
-              href="/settings"
-              className="block text-center bg-blue-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              プロフィールを編集する
-            </Link>
           </section>
         )}
 
