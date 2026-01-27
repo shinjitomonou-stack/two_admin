@@ -168,43 +168,33 @@ export default function ApplicationsPage() {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-slate-200">
+                <div className="flex px-4 pt-2 pb-0 gap-2 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab(TABS.SCHEDULE)}
-                        className={`flex-1 py-3 text-sm font-bold relative transition-colors ${activeTab === TABS.SCHEDULE ? "text-blue-600" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`flex-1 py-2 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap flex items-center justify-center gap-2 ${activeTab === TABS.SCHEDULE ? "bg-slate-900 text-white shadow-md transform scale-[1.02]" : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"}`}
                     >
                         予定
                         {scheduleItems.length > 0 && (
-                            <span className="ml-1.5 bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded-full inline-block align-middle mb-0.5">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === TABS.SCHEDULE ? "bg-white text-slate-900" : "bg-slate-100 text-slate-600"}`}>
                                 {scheduleItems.length}
                             </span>
-                        )}
-                        {activeTab === TABS.SCHEDULE && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                         )}
                     </button>
                     <button
                         onClick={() => setActiveTab(TABS.HISTORY)}
-                        className={`flex-1 py-3 text-sm font-bold relative transition-colors ${activeTab === TABS.HISTORY ? "text-green-600" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`flex-1 py-2 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeTab === TABS.HISTORY ? "bg-slate-900 text-white shadow-md transform scale-[1.02]" : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"}`}
                     >
                         履歴・報酬
-                        {activeTab === TABS.HISTORY && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600" />
-                        )}
                     </button>
                     <button
                         onClick={() => setActiveTab(TABS.APPLIED)}
-                        className={`flex-1 py-3 text-sm font-bold relative transition-colors ${activeTab === TABS.APPLIED ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`flex-1 py-2 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap flex items-center justify-center gap-2 ${activeTab === TABS.APPLIED ? "bg-slate-900 text-white shadow-md transform scale-[1.02]" : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"}`}
                     >
                         応募中
                         {appliedItems.length > 0 && (
-                            <span className="ml-1.5 bg-slate-100 text-slate-600 text-[10px] px-1.5 py-0.5 rounded-full inline-block align-middle mb-0.5">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === TABS.APPLIED ? "bg-white text-slate-900" : "bg-slate-100 text-slate-600"}`}>
                                 {appliedItems.length}
                             </span>
-                        )}
-                        {activeTab === TABS.APPLIED && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900" />
                         )}
                     </button>
                 </div>
@@ -215,41 +205,51 @@ export default function ApplicationsPage() {
                 {/* --- SCHEDULE TAB --- */}
                 {activeTab === TABS.SCHEDULE && (
                     <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <span className="w-1 h-4 bg-blue-600 rounded-full"></span>
+                            <h2 className="font-bold text-slate-900">確定した予定 ({scheduleItems.length})</h2>
+                        </div>
                         {scheduleItems.length === 0 ? (
-                            <div className="text-center py-10">
-                                <p className="text-slate-500 text-sm">現在、確定している予定はありません。</p>
+                            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                                <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                <p className="text-slate-500 text-sm font-medium">現在、確定している予定はありません</p>
+                                <p className="text-xs text-slate-400 mt-1">新しいお仕事に応募してみましょう</p>
                             </div>
                         ) : (
                             scheduleItems.map((app) => {
                                 const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
-                                const client = job?.clients ? (Array.isArray(job.clients) ? job.clients[0] : job.clients) : null;
                                 return (
-                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-                                        <div className="bg-blue-50 px-4 py-2 border-b border-blue-100 flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-blue-700 font-bold text-sm">
-                                                <Calendar className="w-4 h-4" />
+                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="group block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200">
+                                        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                            <div className="flex items-center gap-2 text-slate-700 font-bold text-sm">
+                                                <Calendar className="w-4 h-4 text-blue-600" />
                                                 <span>{formatDate(app.scheduled_work_start)}</span>
                                             </div>
-                                            <div className="text-xs bg-white text-blue-600 px-2 py-0.5 rounded-full border border-blue-200 font-medium">
+                                            <div className="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full">
                                                 予定
                                             </div>
                                         </div>
-                                        <div className="p-4">
-                                            <h3 className="font-bold text-slate-900 mb-2 leading-snug">{job?.title}</h3>
-                                            <div className="space-y-2 text-sm text-slate-600">
+                                        <div className="p-5">
+                                            <h3 className="font-bold text-slate-900 mb-3 text-lg leading-snug group-hover:text-blue-600 transition-colors">{job?.title}</h3>
+                                            <div className="space-y-2.5 text-sm text-slate-600 mb-4">
                                                 {job?.address_text && (
-                                                    <div className="flex items-start gap-2">
+                                                    <div className="flex items-start gap-2.5">
                                                         <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
-                                                        <span>{job.address_text}</span>
+                                                        <span className="line-clamp-1">{job.address_text}</span>
                                                     </div>
                                                 )}
-                                                <div className="flex items-center gap-2">
-                                                    <Briefcase className="w-4 h-4 shrink-0 text-slate-400" />
-                                                    <span>報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-4 flex justify-center shrink-0">
+                                                        <span className="text-slate-400 font-serif">¥</span>
+                                                    </div>
+                                                    <span className="font-bold text-slate-900 text-base">
+                                                        {Math.round(job?.reward_amount || 0).toLocaleString()}
+                                                        <span className="text-[10px] font-normal text-slate-400 ml-1">(税込)</span>
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div className="mt-4 flex items-center justify-end text-blue-600 text-sm font-bold">
-                                                詳細を見る <ChevronRight className="w-4 h-4" />
+                                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end text-blue-600 text-sm font-bold group-hover:gap-1 transition-all">
+                                                詳細を見る <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                                             </div>
                                         </div>
                                     </Link>
@@ -263,51 +263,95 @@ export default function ApplicationsPage() {
                 {activeTab === TABS.HISTORY && (
                     <div className="space-y-6">
                         {/* Summary Card */}
-                        <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="font-bold text-green-50">報酬サマリー</h2>
-                                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">今月</span>
-                            </div>
-                            <div className="mb-6">
-                                <div className="text-sm opacity-80 mb-1">今月の報酬合計</div>
-                                <div className="text-4xl font-bold tracking-tight">¥{Math.round(monthlyReward).toLocaleString()}</div>
-                            </div>
-                            <div className="pt-4 border-t border-white/20 flex items-center justify-between">
-                                <div className="text-sm opacity-80">累計報酬</div>
-                                <div className="text-lg font-bold">¥{Math.round(totalReward).toLocaleString()}</div>
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                            {/* Decorator */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
+
+                            <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="font-bold text-slate-200 text-sm flex items-center gap-2">
+                                        <Briefcase className="w-4 h-4" />
+                                        報酬サマリー
+                                    </h2>
+                                    <span className="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full border border-white/10">
+                                        {new Date().getMonth() + 1}月度
+                                    </span>
+                                </div>
+                                <div className="mb-6">
+                                    <div className="text-xs font-medium text-slate-400 mb-1">今月の獲得報酬 (税込)</div>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-2xl font-normal opacity-70">¥</span>
+                                        <span className="text-4xl font-bold tracking-tight">{Math.round(monthlyReward).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-slate-400">累計獲得報酬</span>
+                                    </div>
+                                    <div className="text-lg font-bold">¥{Math.round(totalReward).toLocaleString()}</div>
+                                </div>
                             </div>
                         </div>
 
                         {/* History List */}
                         <div>
-                            <h3 className="font-bold text-slate-900 mb-3 text-sm">作業履歴</h3>
+                            <h3 className="font-bold text-slate-900 mb-4 px-1 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                作業履歴
+                            </h3>
                             {historyItems.length === 0 ? (
-                                <p className="text-center text-slate-500 text-sm py-4">履歴はありません。</p>
+                                <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                                    <p className="text-slate-500 text-sm font-medium">まだ履歴はありません</p>
+                                </div>
                             ) : (
                                 <div className="space-y-3">
                                     {historyItems.map((app) => {
                                         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
                                         const isCompleted = job?.status === 'COMPLETED' || app.status === 'COMPLETED';
-                                        const dateLabel = isCompleted ? formatDate(app.actual_work_start) : formatDate(app.created_at);
+                                        const dateLabel = isCompleted ? formatDate(app.actual_work_end) : formatDate(app.created_at);
                                         const statusLabel = isCompleted ? '完了' : app.status === 'REJECTED' ? '不採用' : 'キャンセル';
-                                        const statusColor = isCompleted ? 'text-green-600 bg-green-50' : 'text-slate-500 bg-slate-100';
+
+                                        // Status styles
+                                        let statusStyles = 'bg-slate-100 text-slate-500';
+                                        let statusIcon = <Clock className="w-4 h-4" />;
+
+                                        if (isCompleted) {
+                                            statusStyles = 'bg-green-100 text-green-700 border border-green-200';
+                                            statusIcon = <CheckCircle className="w-4 h-4" />;
+                                        } else if (app.status === 'REJECTED') {
+                                            statusStyles = 'bg-red-50 text-red-600 border border-red-100';
+                                            statusIcon = <div className="w-1.5 h-1.5 rounded-full bg-red-500" />;
+                                        } else if (app.status === 'CANCELLED') {
+                                            statusStyles = 'bg-slate-100 text-slate-500 border border-slate-200';
+                                            statusIcon = <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />;
+                                        }
 
                                         return (
-                                            <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? 'bg-green-100' : 'bg-slate-100'}`}>
-                                                    {isCompleted ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Clock className="w-5 h-5 text-slate-400" />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-xs text-slate-500">{dateLabel}</span>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor}`}>
-                                                            {statusLabel}
-                                                        </span>
+                                            <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="group block bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-slate-300 transition-all duration-200">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                                        {dateLabel}
                                                     </div>
-                                                    <h4 className="font-bold text-slate-900 text-sm truncate mb-1">{job?.title}</h4>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-xs text-slate-500">報酬 (税込)</span>
-                                                        <span className={`text-sm font-bold ${isCompleted ? 'text-green-600' : 'text-slate-400'}`}>
+                                                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${statusStyles}`}>
+                                                        {statusIcon}
+                                                        {statusLabel}
+                                                    </div>
+                                                </div>
+
+                                                <h4 className="font-bold text-slate-900 text-base mb-3 leading-snug group-hover:text-blue-600 transition-colors">
+                                                    {job?.title}
+                                                </h4>
+
+                                                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                                    <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                        <MapPin className="w-3.5 h-3.5" />
+                                                        <span className="line-clamp-1 max-w-[120px]">{job?.address_text || "場所未定"}</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[10px] text-slate-400 font-medium mb-0.5">報酬 (税込)</span>
+                                                        <span className={`text-lg font-bold ${isCompleted ? 'text-slate-900' : 'text-slate-400'}`}>
                                                             ¥{Math.round(
                                                                 (job?.reward_amount || 0) * 1.1
                                                             ).toLocaleString()}
@@ -326,30 +370,36 @@ export default function ApplicationsPage() {
                 {/* --- APPLIED TAB --- */}
                 {activeTab === TABS.APPLIED && (
                     <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <span className="w-1 h-4 bg-slate-400 rounded-full"></span>
+                            <h2 className="font-bold text-slate-900">選考中の案件 ({appliedItems.length})</h2>
+                        </div>
                         {appliedItems.length === 0 ? (
-                            <div className="text-center py-10">
-                                <p className="text-slate-500 text-sm">現在応募中の案件はありません。</p>
+                            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                                <p className="text-slate-500 text-sm font-medium">現在応募中の案件はありません</p>
                             </div>
                         ) : (
                             appliedItems.map((app) => {
                                 const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
                                 return (
-                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="block bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs text-slate-500">応募日: {formatDate(app.created_at)}</span>
-                                            <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">選考中</span>
+                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="group block bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-all duration-200">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs text-slate-500 font-medium">応募日: {formatDate(app.created_at)}</span>
+                                            <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-slate-200">選考中</span>
                                         </div>
-                                        <h3 className="font-bold text-slate-900 mb-2">{job?.title}</h3>
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <Briefcase className="w-4 h-4 text-slate-400" />
-                                            <span>報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
+                                        <h3 className="font-bold text-slate-900 mb-3 text-lg leading-snug group-hover:text-blue-600 transition-colors">{job?.title}</h3>
+                                        <div className="flex items-center gap-2.5 text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <span className="text-xs font-bold text-slate-400">予定報酬</span>
+                                            <span className="font-bold text-slate-900">¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
+                                            <span className="text-[10px] text-slate-400">(税込)</span>
                                         </div>
                                     </Link>
                                 );
                             })
                         )}
-                        <div className="bg-blue-50 p-4 rounded-lg text-xs text-blue-800 leading-relaxed">
-                            <p>※ 採用結果はメールまたはLINEで通知されます。</p>
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-xs text-blue-800 leading-relaxed flex gap-3">
+                            <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-blue-600 font-bold">i</div>
+                            <p className="pt-0.5">採用結果はメールまたはLINEで通知されます。選考には数日かかる場合がありますのでご了承ください。</p>
                         </div>
                     </div>
                 )}
