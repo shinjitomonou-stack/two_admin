@@ -20,14 +20,7 @@ export default function BackButton({
     const router = useRouter();
 
     const handleBack = () => {
-        // Basic check to see if we have history within the app
-        // In a real production app, you might use a more robust logic
-        // but for simple cases, router.back() is usually preferred by users.
-        if (window.history.length > 1) {
-            router.back();
-        } else {
-            router.push(fallbackHref);
-        }
+        router.push(fallbackHref);
     };
 
     const Icon = variant === "arrow" ? ArrowLeft : ChevronLeft;

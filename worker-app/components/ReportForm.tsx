@@ -185,7 +185,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
             }
 
             alert("作業報告を提出しました");
-            router.push(`/jobs/${jobId}`);
+            router.replace(`/jobs/${jobId}`);
             router.refresh();
         } catch (error: any) {
             console.error(error);
