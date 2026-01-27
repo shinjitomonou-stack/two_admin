@@ -9,7 +9,7 @@ import BulkJobCreateModal from "@/components/BulkJobCreateModal";
 import { updateJob, duplicateJob, deleteJob } from "@/app/actions/job";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Briefcase, Users, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { Briefcase, Users, CheckCircle, FileText, Loader2 } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 
 interface JobsDashboardViewProps {
@@ -238,9 +238,18 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         return sum + count;
     }, 0);
 
-    const startedJobs = jobs.filter(j =>
-        j.job_applications?.some(app => app.actual_work_start !== null)
-    ).length;
+    // 作業報告提出件数（ステータス問わず）
+    const submittedReportsCount = jobs.reduce((sum, j) => {
+        const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
+        return sum + reports.length;
+    }, 0);
+
+    // 承認済み報告件数
+    const approvedReportsCount = jobs.reduce((sum, j) => {
+        const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
+        const approved = reports.filter((r: any) => r.status === 'APPROVED');
+        return sum + approved.length;
+    }, 0);
 
     const completedJobs = jobs.filter(j => {
         if (j.status === "COMPLETED") return true;
@@ -258,7 +267,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-5">
                     <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
@@ -286,10 +295,19 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                     <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">開始済み案件</p>
-                                <p className="text-2xl font-bold mt-1">{startedJobs} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-sm font-medium text-muted-foreground">作業報告提出</p>
+                                <p className="text-2xl font-bold mt-1">{submittedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <Clock className="w-8 h-8 text-orange-500 opacity-20" />
+                            <FileText className="w-8 h-8 text-purple-500 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">承認済み報告</p>
+                                <p className="text-2xl font-bold mt-1">{approvedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
                         </div>
                     </div>
                     <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
