@@ -19,6 +19,8 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
     const [jobData, setJobData] = useState<{
         title: string;
         address_text: string;
+        start_time: string;
+        end_time: string;
         assignedWorkerIds: string[];
     } | null>(null);
     const router = useRouter();
@@ -29,7 +31,7 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
         // Fetch job details
         const { data: job } = await supabase
             .from("jobs")
-            .select("title, address_text")
+            .select("title, address_text, start_time, end_time")
             .eq("id", jobId)
             .single();
 
@@ -44,6 +46,8 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
             setJobData({
                 title: job.title,
                 address_text: job.address_text || "",
+                start_time: job.start_time,
+                end_time: job.end_time,
                 assignedWorkerIds: applications?.map(app => app.worker_id) || [],
             });
         }
@@ -54,13 +58,15 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
         setIsDialogOpen(true);
     };
 
-    const handleCopy = async (data: { title: string; address_text: string; workerIds: string[] }) => {
+    const handleCopy = async (data: { title: string; address_text: string; workerIds: string[]; start_time?: string; end_time?: string }) => {
         setIsProcessing(true);
         try {
             const result = await duplicateJob(jobId, {
                 title: data.title,
                 address_text: data.address_text,
                 workerIds: data.workerIds,
+                start_time: data.start_time,
+                end_time: data.end_time,
             });
             if (result.success) {
                 toast.success("案件を複製しました");
@@ -131,6 +137,8 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
                     onCopy={handleCopy}
                     defaultTitle={jobData.title}
                     defaultAddress={jobData.address_text}
+                    defaultStartDate={jobData.start_time}
+                    defaultEndDate={jobData.end_time}
                     assignedWorkerIds={jobData.assignedWorkerIds}
                 />
             )}

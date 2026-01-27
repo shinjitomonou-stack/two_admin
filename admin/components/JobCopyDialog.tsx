@@ -55,37 +55,29 @@ export function JobCopyDialog({
             // Initialize dates
             if (defaultStartDate) {
                 const start = new Date(defaultStartDate);
-                // Adjust to JST for display (assuming simple YYYY-MM-DD format works or using utils if available, 
-                // but explicit parsing of ISO string is safer for inputs)
-                // Actually inputs expect "YYYY-MM-DD" and "HH:mm" based on local time?
-                // The browser input type="date" uses local time. 
-                // We should parse the ISO string (UTC) to what the user expects (JST).
-                // Given previous context, let's strictly handle timezone if possible, but for MVP standard parsing:
+                // Adjust to JST (+9 hours) for display values
+                const jstStart = new Date(start.getTime() + (9 * 60 * 60 * 1000));
 
-                // Trick: to get local string matching JST from a UTC ISO string if we assume the user is in JST:
-                // We used utils.ts getJSTDateString logic before.
-                // Let's rely on simple Date parsing which follows browser timezone (JST for this user).
-
-                // Helper to format date for input "YYYY-MM-DD"
                 const toInputDate = (d: Date) => {
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
+                    const y = d.getUTCFullYear();
+                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(d.getUTCDate()).padStart(2, '0');
                     return `${y}-${m}-${day}`;
                 };
                 const toInputTime = (d: Date) => {
-                    const h = String(d.getHours()).padStart(2, '0');
-                    const m = String(d.getMinutes()).padStart(2, '0');
+                    const h = String(d.getUTCHours()).padStart(2, '0');
+                    const m = String(d.getUTCMinutes()).padStart(2, '0');
                     return `${h}:${m}`;
                 };
 
-                setStartDate(toInputDate(start));
-                setStartTime(toInputTime(start));
+                setStartDate(toInputDate(jstStart));
+                setStartTime(toInputTime(jstStart));
 
                 if (defaultEndDate) {
                     const end = new Date(defaultEndDate);
-                    setEndDate(toInputDate(end));
-                    setEndTime(toInputTime(end));
+                    const jstEnd = new Date(end.getTime() + (9 * 60 * 60 * 1000));
+                    setEndDate(toInputDate(jstEnd));
+                    setEndTime(toInputTime(jstEnd));
                 }
             } else {
                 // Default to today/now if no defaults provided
@@ -139,9 +131,9 @@ export function JobCopyDialog({
 
         setIsLoading(true);
         try {
-            // Reconstruct ISO strings
-            const startISO = new Date(`${startDate}T${startTime}:00`).toISOString();
-            const endISO = new Date(`${endDate}T${endTime}:00`).toISOString();
+            // Reconstruct ISO strings assuming the input is JST
+            const startISO = new Date(`${startDate}T${startTime}:00+09:00`).toISOString();
+            const endISO = new Date(`${endDate}T${endTime}:00+09:00`).toISOString();
 
             await onCopy({
                 title: title.trim(),
