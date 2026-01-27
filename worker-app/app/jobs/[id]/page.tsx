@@ -150,10 +150,12 @@ export default async function JobDetailPage({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-slate-50 p-3 rounded-xl space-y-1">
-                            <div className="text-xs text-slate-500 font-medium">報酬</div>
+                            <div className="text-xs text-slate-500 font-medium">報酬 (税込)</div>
                             <div className="flex items-center gap-1 font-bold text-slate-900">
                                 <JapaneseYen className="w-4 h-4 text-slate-400" />
-                                <span>¥{Math.round(job.reward_amount || 0).toLocaleString()}</span>
+                                <span>¥{Math.round(
+                                    (job.reward_amount || 0) * (job.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                ).toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="bg-slate-50 p-3 rounded-xl space-y-1">

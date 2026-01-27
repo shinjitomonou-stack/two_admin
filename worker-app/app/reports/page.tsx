@@ -43,7 +43,8 @@ export default async function ReportsPage() {
                     id,
                     status,
                     title,
-                    reward_amount
+                    reward_amount,
+                    reward_tax_mode
                 ),
                 reports(*)
             `)
@@ -280,9 +281,11 @@ export default async function ReportsPage() {
                                                     </div>
                                                     {job && (
                                                         <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                                                            <span className="text-green-700">報酬金額</span>
+                                                            <span className="text-green-700">報酬金額 (税込)</span>
                                                             <span className="text-green-900 font-bold">
-                                                                ¥{Math.round(job.reward_amount || 0).toLocaleString()}
+                                                                ¥{Math.round(
+                                                                    (job.reward_amount || 0) * (job.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                                                ).toLocaleString()}
                                                             </span>
                                                         </div>
                                                     )}

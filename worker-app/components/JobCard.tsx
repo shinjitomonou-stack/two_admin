@@ -20,11 +20,14 @@ export type Job = {
     work_period_end?: string;
     max_workers?: number;
     confirmed_count?: number;
+    reward_tax_mode?: string;
 };
 
 export function JobCard({ job, returnTo }: { job: Job, returnTo?: string }) {
     // Normalize data
-    const reward = job.reward_amount ?? job.reward ?? 0;
+    const baseReward = job.reward_amount ?? job.reward ?? 0;
+    const isTaxExcluded = job.reward_tax_mode === 'EXCL';
+    const reward = isTaxExcluded ? Math.round(baseReward * 1.1) : baseReward;
     const location = job.address_text ?? job.location ?? "場所未定";
 
     let dateStr = job.date;

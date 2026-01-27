@@ -79,7 +79,7 @@ export default async function Home() {
       supabase.from("job_applications").select("status, jobs(status, reward_amount, reward_tax_mode)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", nowIso).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
-      supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
+      supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount, reward_tax_mode), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
@@ -648,7 +648,9 @@ export default async function Home() {
                       <span className="text-xs text-slate-500">{formattedDate}完了</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-green-600 font-medium">報酬: ¥{Math.round(job?.reward_amount || 0).toLocaleString()}</span>
+                      <span className="text-green-600 font-medium">報酬: ¥{Math.round(
+                        (job?.reward_amount || 0) * (job?.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                      ).toLocaleString()}</span>
                       {report ? (
                         <span className="text-blue-600">📋 報告済み</span>
                       ) : (
