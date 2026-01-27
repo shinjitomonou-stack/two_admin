@@ -45,27 +45,33 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
         if (!e.target.files || e.target.files.length === 0) return;
 
         setUploading(true);
-        const file = e.target.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${applicationId}/${fileName}`;
+        const files = Array.from(e.target.files);
+        const newPhotoUrls: string[] = [];
 
         const supabase = createClient();
 
         try {
-            const { error: uploadError } = await supabase.storage
-                .from('report-photos')
-                .upload(filePath, file);
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `${applicationId}/${fileName}`;
 
-            if (uploadError) throw uploadError;
+                const { error: uploadError } = await supabase.storage
+                    .from('report-photos')
+                    .upload(filePath, file);
 
-            const { data } = supabase.storage
-                .from('report-photos')
-                .getPublicUrl(filePath);
+                if (uploadError) throw uploadError;
 
-            setPhotos([...photos, data.publicUrl]);
+                const { data } = supabase.storage
+                    .from('report-photos')
+                    .getPublicUrl(filePath);
+
+                newPhotoUrls.push(data.publicUrl);
+            }
+
+            setPhotos([...photos, ...newPhotoUrls]);
         } catch (error: any) {
-            console.error('Error uploading photo:', error);
+            console.error('Error uploading photos:', error);
             alert(`写真のアップロードに失敗しました: ${error.message || '不明なエラー'}`);
         } finally {
             setUploading(false);
@@ -76,31 +82,37 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
         if (!e.target.files || e.target.files.length === 0) return;
 
         setUploading(true);
-        const file = e.target.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${applicationId}/custom/${fieldId}/${fileName}`;
+        const files = Array.from(e.target.files);
+        const newPhotoUrls: string[] = [];
 
         const supabase = createClient();
 
         try {
-            const { error: uploadError } = await supabase.storage
-                .from('report-photos')
-                .upload(filePath, file);
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `${applicationId}/custom/${fieldId}/${fileName}`;
 
-            if (uploadError) throw uploadError;
+                const { error: uploadError } = await supabase.storage
+                    .from('report-photos')
+                    .upload(filePath, file);
 
-            const { data } = supabase.storage
-                .from('report-photos')
-                .getPublicUrl(filePath);
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage
+                    .from('report-photos')
+                    .getPublicUrl(filePath);
+
+                newPhotoUrls.push(data.publicUrl);
+            }
 
             const currentPhotos = customFields[fieldId] || [];
             setCustomFields({
                 ...customFields,
-                [fieldId]: Array.isArray(currentPhotos) ? [...currentPhotos, data.publicUrl] : [data.publicUrl]
+                [fieldId]: Array.isArray(currentPhotos) ? [...currentPhotos, ...newPhotoUrls] : [...newPhotoUrls]
             });
         } catch (error: any) {
-            console.error('Error uploading custom field photo:', error);
+            console.error('Error uploading custom field photos:', error);
             alert(`写真のアップロードに失敗しました: ${error.message || '不明なエラー'}`);
         } finally {
             setUploading(false);
@@ -260,6 +272,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                             <input
                                 type="file"
                                 accept="image/*"
+                                multiple
                                 className="hidden"
                                 onChange={handlePhotoUpload}
                                 disabled={uploading}
@@ -289,7 +302,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                         type="text"
                                         required={field.required}
                                         placeholder={field.placeholder}
-                                        value={customFields[field.id] || ""}
+                                        value={customFields[field.id] ?? ""}
                                         onChange={(e) => setCustomFields({ ...customFields, [field.id]: e.target.value })}
                                         className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
@@ -299,7 +312,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                     <textarea
                                         required={field.required}
                                         placeholder={field.placeholder}
-                                        value={customFields[field.id] || ""}
+                                        value={customFields[field.id] ?? ""}
                                         onChange={(e) => setCustomFields({ ...customFields, [field.id]: e.target.value })}
                                         className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
                                     />
@@ -310,8 +323,11 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                         type="number"
                                         required={field.required}
                                         placeholder={field.placeholder}
-                                        value={customFields[field.id] || ""}
-                                        onChange={(e) => setCustomFields({ ...customFields, [field.id]: Number(e.target.value) })}
+                                        value={customFields[field.id] ?? ""}
+                                        onChange={(e) => setCustomFields({
+                                            ...customFields,
+                                            [field.id]: e.target.value === "" ? "" : Number(e.target.value)
+                                        })}
                                         className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 )}
@@ -371,6 +387,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                multiple
                                                 className="hidden"
                                                 onChange={(e) => handleCustomPhotoUpload(e, field.id)}
                                                 disabled={uploading}
