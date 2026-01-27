@@ -78,11 +78,14 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
             if (templatesData) setTemplates(templatesData);
 
             if (data) {
-                // Format dates for datetime-local input
-                const formatDateTime = (dateStr: string) => {
+                // Format dates for datetime-local input (Converting UTC to JST)
+                const toJSTISOString = (dateStr: string) => {
                     if (!dateStr) return "";
-                    const date = new Date(dateStr);
-                    return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+                    const d = new Date(dateStr);
+                    // Add 9 hours to get JST time value
+                    const jstDate = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+                    // Return ISO string sliced (contains JST time in ISO format)
+                    return jstDate.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
                 };
 
                 const rewardTaxMode = (data.reward_tax_mode as "EXCL" | "INCL") || "EXCL";
@@ -100,13 +103,13 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                     reward_amount: restoreAmount(data.reward_amount, rewardTaxMode),
                     billing_amount: restoreAmount(data.billing_amount, billingTaxMode),
                     max_workers: (data.max_workers || 1).toString(),
-                    start_time: formatDateTime(data.start_time),
-                    end_time: formatDateTime(data.end_time),
+                    start_time: toJSTISOString(data.start_time),
+                    end_time: toJSTISOString(data.end_time),
                     address_text: data.address_text || "",
                     status: data.status,
                     is_flexible: data.is_flexible || false,
-                    work_period_start: data.work_period_start ? formatDateTime(data.work_period_start) : "",
-                    work_period_end: data.work_period_end ? formatDateTime(data.work_period_end) : "",
+                    work_period_start: data.work_period_start ? toJSTISOString(data.work_period_start) : "",
+                    work_period_end: data.work_period_end ? toJSTISOString(data.work_period_end) : "",
                     schedule_notes: data.schedule_notes || "",
                     report_template_id: data.report_template_id || "",
                     auto_set_schedule: data.auto_set_schedule || false,
@@ -160,6 +163,13 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
 
         const supabase = createClient();
 
+        // Helper to convert JST input string back to UTC ISO string
+        const fromJSTToUTC = (dateStr: string) => {
+            if (!dateStr) return null;
+            // Treat the input string as JST by appending offset
+            return new Date(`${dateStr}:00+09:00`).toISOString();
+        };
+
         try {
             let reward_amount = Number(formData.reward_amount);
             let billing_amount = Number(formData.billing_amount);
@@ -192,13 +202,13 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                 reward_quantity: formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_quantity)) : null,
                 reward_tax_mode: formData.rewardTaxMode,
                 billing_tax_mode: formData.billingTaxMode,
-                start_time: new Date(formData.start_time).toISOString(),
-                end_time: new Date(formData.end_time).toISOString(),
+                start_time: fromJSTToUTC(formData.start_time)!, // ! because required
+                end_time: fromJSTToUTC(formData.end_time)!, // ! because required
                 address_text: formData.address_text,
                 status: formData.status,
                 is_flexible: formData.is_flexible,
-                work_period_start: formData.work_period_start ? new Date(formData.work_period_start).toISOString() : null,
-                work_period_end: formData.work_period_end ? new Date(formData.work_period_end).toISOString() : null,
+                work_period_start: fromJSTToUTC(formData.work_period_start),
+                work_period_end: fromJSTToUTC(formData.work_period_end),
                 schedule_notes: formData.schedule_notes,
                 report_template_id: formData.report_template_id || null,
                 auto_set_schedule: formData.auto_set_schedule,
