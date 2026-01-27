@@ -3,6 +3,7 @@
 import { Calendar, MapPin, Users, Copy, Trash2, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 const STATUS_STYLES = {
     OPEN: "bg-green-100 text-green-700",
@@ -62,6 +63,8 @@ interface JobsTableProps {
 }
 
 export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, processingId }: JobsTableProps) {
+    const pathname = usePathname();
+
     return (
         <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="overflow-x-auto max-h-[calc(100vh-24rem)]">
@@ -240,7 +243,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                                         return (
                                                             <Link
                                                                 key={idx}
-                                                                href={`/reports/${report.id}`}
+                                                                href={`/reports/${report.id}?returnTo=${encodeURIComponent(pathname)}`}
                                                                 title={`${workerName}: ${isApproved ? '承認済み' : '提出済み'}`}
                                                                 className={cn(
                                                                     "w-3 h-3 rounded-full border shadow-sm transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1",

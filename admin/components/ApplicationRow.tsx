@@ -2,7 +2,7 @@
 
 import { CheckCircle, XCircle, Loader2, Calendar, Clock, Save, FileText, UserMinus, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { formatDateTime, formatDate, formatTime } from "@/lib/utils";
 import { updateApplicationStatus, updateApplicationSchedule } from "@/app/actions/application";
@@ -60,6 +60,7 @@ export function ApplicationRow({
     const [scheduleDate, setScheduleDate] = useState("");
     const [scheduleStartTime, setScheduleStartTime] = useState("");
     const [scheduleEndTime, setScheduleEndTime] = useState("");
+    const pathname = usePathname();
 
     const handleStatusUpdate = async (newStatus: 'ASSIGNED' | 'REJECTED' | 'CANCELLED') => {
         const confirmMessage = newStatus === 'ASSIGNED' ? "このワーカーを採用しますか？" :
@@ -241,7 +242,7 @@ export function ApplicationRow({
                     {app.reports && app.reports.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-slate-100">
                             <Link
-                                href={`/reports/${app.reports[0].id}`}
+                                href={`/reports/${app.reports[0].id}?returnTo=${encodeURIComponent(pathname)}`}
                                 className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
                             >
                                 <FileText className="w-4 h-4" />

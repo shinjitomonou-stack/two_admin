@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, Edit } fro
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateReportStatusAction } from "@/app/actions/report";
@@ -21,6 +21,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
     const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
     const supabase = createClient();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get('returnTo') || '/reports';
 
     useEffect(() => {
         params.then(p => setId(p.id));
@@ -158,7 +160,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <Link
-                            href="/reports"
+                            href={returnTo}
                             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-500" />
@@ -181,7 +183,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                     </div>
                     <Link
-                        href={`/reports/${id}/edit`}
+                        href={`/reports/${id}/edit?returnTo=${encodeURIComponent(returnTo)}`}
                         className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
                     >
                         <Edit className="w-4 h-4" />
