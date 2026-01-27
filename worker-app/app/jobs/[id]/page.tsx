@@ -5,8 +5,15 @@ import { MapPin, Clock, Calendar, JapaneseYen, Building2 } from "lucide-react";
 import { ApplyButton } from "@/components/ApplyButton";
 import BackButton from "@/components/BackButton";
 
-export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function JobDetailPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>,
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
     const { id } = await params;
+    const { returnTo } = await searchParams;
     const supabase = await createClient();
 
     // Get authenticated user from Supabase Auth
@@ -83,7 +90,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <div className="min-h-screen bg-slate-50 pb-20">
             <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
                 <div className="max-w-md mx-auto px-4 h-14 flex items-center gap-3">
-                    <BackButton fallbackHref="/jobs" />
+                    <BackButton fallbackHref={typeof returnTo === 'string' ? returnTo : "/jobs"} />
                     <h1 className="font-bold text-lg text-slate-900">案件詳細</h1>
                 </div>
             </header>

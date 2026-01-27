@@ -526,7 +526,7 @@ export default async function Home() {
                   return (
                     <Link
                       key={schedule.id}
-                      href={`/jobs/${job?.id}`}
+                      href={`/jobs/${job?.id}?returnTo=/`}
                       className="block border border-slate-100 rounded-lg p-3 hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -615,7 +615,7 @@ export default async function Home() {
                 return (
                   <Link
                     key={activity.id}
-                    href={`/jobs/${job?.id}`}
+                    href={`/jobs/${job?.id}?returnTo=/`}
                     className="block border border-slate-100 rounded-lg p-3 hover:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-2">

@@ -216,7 +216,7 @@ export default function ApplicationsPage() {
                                 const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
                                 const client = job?.clients ? (Array.isArray(job.clients) ? job.clients[0] : job.clients) : null;
                                 return (
-                                    <Link key={app.id} href={`/jobs/${job?.id}`} className="block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
                                         <div className="bg-blue-50 px-4 py-2 border-b border-blue-100 flex items-center justify-between">
                                             <div className="flex items-center gap-2 text-blue-700 font-bold text-sm">
                                                 <Calendar className="w-4 h-4" />
@@ -285,7 +285,7 @@ export default function ApplicationsPage() {
                                         const statusColor = isCompleted ? 'text-green-600 bg-green-50' : 'text-slate-500 bg-slate-100';
 
                                         return (
-                                            <Link key={app.id} href={`/jobs/${job?.id}`} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+                                            <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isCompleted ? 'bg-green-100' : 'bg-slate-100'}`}>
                                                     {isCompleted ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Clock className="w-5 h-5 text-slate-400" />}
                                                 </div>
@@ -324,7 +324,7 @@ export default function ApplicationsPage() {
                             appliedItems.map((app) => {
                                 const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
                                 return (
-                                    <Link key={app.id} href={`/jobs/${job?.id}`} className="block bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
+                                    <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="block bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-xs text-slate-500">応募日: {formatDate(app.created_at)}</span>
                                             <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">選考中</span>

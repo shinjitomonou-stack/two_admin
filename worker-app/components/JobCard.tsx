@@ -22,7 +22,7 @@ export type Job = {
     confirmed_count?: number;
 };
 
-export function JobCard({ job }: { job: Job }) {
+export function JobCard({ job, returnTo }: { job: Job, returnTo?: string }) {
     // Normalize data
     const reward = job.reward_amount ?? job.reward ?? 0;
     const location = job.address_text ?? job.location ?? "場所未定";
@@ -52,8 +52,10 @@ export function JobCard({ job }: { job: Job }) {
     const remainingSlots = Math.max(0, maxWorkers - confirmedCount);
     const isFull = remainingSlots === 0;
 
+    const href = returnTo ? `/jobs/${job.id}?returnTo=${encodeURIComponent(returnTo)}` : `/jobs/${job.id}`;
+
     return (
-        <Link href={`/jobs/${job.id}`}>
+        <Link href={href}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-border shadow-sm active:scale-[0.98] transition-transform duration-200">
                 <div className="relative h-32 bg-slate-200">
                     <img
