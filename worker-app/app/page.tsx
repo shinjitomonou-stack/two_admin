@@ -147,8 +147,8 @@ export default async function Home() {
 
         // Calculate tax-inclusive amount
         const baseAmount = job.reward_amount || 0;
-        const isTaxExcluded = job.reward_tax_mode === 'EXCL';
-        const taxInclusiveAmount = isTaxExcluded ? Math.round(baseAmount * 1.1) : baseAmount;
+        // DB always stores tax-excluded amount regardless of tax mode setting in Admin
+        const taxInclusiveAmount = Math.round(baseAmount * 1.1);
 
         const isCompleted = job.status === 'COMPLETED' || app.status === 'COMPLETED';
 
@@ -649,7 +649,7 @@ export default async function Home() {
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-green-600 font-medium">報酬: ¥{Math.round(
-                        (job?.reward_amount || 0) * (job?.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                        (job?.reward_amount || 0) * 1.1
                       ).toLocaleString()}</span>
                       {report ? (
                         <span className="text-blue-600">📋 報告済み</span>

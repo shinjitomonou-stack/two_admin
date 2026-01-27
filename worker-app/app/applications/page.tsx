@@ -112,8 +112,8 @@ export default function ApplicationsPage() {
             if (isCompleted) {
                 // Calculate tax-inclusive reward
                 const baseAmount = job?.reward_amount || 0;
-                const isTaxExcluded = job?.reward_tax_mode === 'EXCL';
-                const reward = isTaxExcluded ? Math.round(baseAmount * 1.1) : baseAmount;
+                // DB always stores tax-excluded amount regardless of tax mode setting in Admin
+                const reward = Math.round(baseAmount * 1.1);
 
                 total += reward;
 
@@ -309,7 +309,7 @@ export default function ApplicationsPage() {
                                                         <span className="text-xs text-slate-500">報酬 (税込)</span>
                                                         <span className={`text-sm font-bold ${isCompleted ? 'text-green-600' : 'text-slate-400'}`}>
                                                             ¥{Math.round(
-                                                                (job?.reward_amount || 0) * (job?.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                                                (job?.reward_amount || 0) * 1.1
                                                             ).toLocaleString()}
                                                         </span>
                                                     </div>

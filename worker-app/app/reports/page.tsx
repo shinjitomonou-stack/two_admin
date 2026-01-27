@@ -284,7 +284,7 @@ export default async function ReportsPage() {
                                                             <span className="text-green-700">報酬金額 (税込)</span>
                                                             <span className="text-green-900 font-bold">
                                                                 ¥{Math.round(
-                                                                    (job.reward_amount || 0) * (job.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                                                    (job.reward_amount || 0) * 1.1
                                                                 ).toLocaleString()}
                                                             </span>
                                                         </div>

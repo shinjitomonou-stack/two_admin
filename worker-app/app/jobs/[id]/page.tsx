@@ -154,7 +154,7 @@ export default async function JobDetailPage({
                             <div className="flex items-center gap-1 font-bold text-slate-900">
                                 <JapaneseYen className="w-4 h-4 text-slate-400" />
                                 <span>¥{Math.round(
-                                    (job.reward_amount || 0) * (job.reward_tax_mode === 'EXCL' ? 1.1 : 1)
+                                    (job.reward_amount || 0) * 1.1
                                 ).toLocaleString()}</span>
                             </div>
                         </div>

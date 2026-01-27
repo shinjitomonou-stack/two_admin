@@ -26,8 +26,8 @@ export type Job = {
 export function JobCard({ job, returnTo }: { job: Job, returnTo?: string }) {
     // Normalize data
     const baseReward = job.reward_amount ?? job.reward ?? 0;
-    const isTaxExcluded = job.reward_tax_mode === 'EXCL';
-    const reward = isTaxExcluded ? Math.round(baseReward * 1.1) : baseReward;
+    // DB always stores tax-excluded amount regardless of tax mode setting in Admin
+    const reward = Math.round(baseReward * 1.1);
     const location = job.address_text ?? job.location ?? "場所未定";
 
     let dateStr = job.date;
