@@ -152,7 +152,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                             return;
                         }
                     } else {
-                        if (!val || String(val).trim() === '') {
+                        if ((val === undefined || val === null || String(val).trim() === '')) {
                             alert(`「${field.label}」は必須項目です。入力してください。`);
                             return;
                         }
