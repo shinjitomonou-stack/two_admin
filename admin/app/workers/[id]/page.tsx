@@ -144,6 +144,89 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Main Info */}
                     <div className="md:col-span-2 space-y-6">
+                        <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                            <h3 className="font-semibold text-lg">基本情報</h3>
+
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">氏名 (カナ)</label>
+                                    <div className="text-sm">{worker.name_kana || "未登録"}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">メールアドレス</label>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Mail className="w-4 h-4 text-slate-400" />
+                                        {worker.email}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">電話番号</label>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Phone className="w-4 h-4 text-slate-400" />
+                                        {worker.phone || "未登録"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">LINE名 / ID</label>
+                                    <div className="text-sm">
+                                        {worker.line_name || "未登録"}
+                                        {worker.line_id && <span className="text-muted-foreground ml-2">({worker.line_id})</span>}
+                                    </div>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2">
+                                    <label className="text-xs font-medium text-muted-foreground">住所</label>
+                                    <div className="text-sm">
+                                        {worker.postal_code && <span className="mr-2">〒{worker.postal_code}</span>}
+                                        {worker.address || "未登録"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">性別</label>
+                                    <div className="text-sm">
+                                        {worker.gender === 'male' ? '男性' : worker.gender === 'female' ? '女性' : worker.gender || "未登録"}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground">生年月日</label>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Calendar className="w-4 h-4 text-slate-400" />
+                                        {formatDate(worker.birth_date)}
+                                    </div>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2">
+                                    <label className="text-xs font-medium text-muted-foreground">タグ</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {worker.tags && worker.tags.length > 0 ? (
+                                            worker.tags.map((tag: string, i: number) => (
+                                                <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                    <Tag className="w-3 h-3" />
+                                                    {tag}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-slate-400">タグなし</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                                <h3 className="font-semibold text-lg">銀行口座情報</h3>
+                                <div className="flex items-start gap-3 text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
+                                    <CreditCard className="w-5 h-5 text-slate-400 mt-0.5" />
+                                    <div>
+                                        {worker.bank_account ? (
+                                            <pre className="font-sans whitespace-pre-wrap">
+                                                {JSON.stringify(worker.bank_account, null, 2)}
+                                            </pre>
+                                        ) : (
+                                            <p>口座情報は登録されていません。</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Planned Jobs */}
                         <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
                             <div className="p-6 border-b border-border flex items-center justify-between">
@@ -250,89 +333,6 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                         )}
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
-                            <h3 className="font-semibold text-lg">基本情報</h3>
-
-                            <div className="grid gap-6 sm:grid-cols-2">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">氏名 (カナ)</label>
-                                    <div className="text-sm">{worker.name_kana || "未登録"}</div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">メールアドレス</label>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Mail className="w-4 h-4 text-slate-400" />
-                                        {worker.email}
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">電話番号</label>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Phone className="w-4 h-4 text-slate-400" />
-                                        {worker.phone || "未登録"}
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">LINE名 / ID</label>
-                                    <div className="text-sm">
-                                        {worker.line_name || "未登録"}
-                                        {worker.line_id && <span className="text-muted-foreground ml-2">({worker.line_id})</span>}
-                                    </div>
-                                </div>
-                                <div className="space-y-1 sm:col-span-2">
-                                    <label className="text-xs font-medium text-muted-foreground">住所</label>
-                                    <div className="text-sm">
-                                        {worker.postal_code && <span className="mr-2">〒{worker.postal_code}</span>}
-                                        {worker.address || "未登録"}
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">性別</label>
-                                    <div className="text-sm">
-                                        {worker.gender === 'male' ? '男性' : worker.gender === 'female' ? '女性' : worker.gender || "未登録"}
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">生年月日</label>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Calendar className="w-4 h-4 text-slate-400" />
-                                        {formatDate(worker.birth_date)}
-                                    </div>
-                                </div>
-                                <div className="space-y-1 sm:col-span-2">
-                                    <label className="text-xs font-medium text-muted-foreground">タグ</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {worker.tags && worker.tags.length > 0 ? (
-                                            worker.tags.map((tag: string, i: number) => (
-                                                <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                                    <Tag className="w-3 h-3" />
-                                                    {tag}
-                                                </span>
-                                            ))
-                                        ) : (
-                                            <span className="text-sm text-slate-400">タグなし</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
-                                <h3 className="font-semibold text-lg">銀行口座情報</h3>
-                                <div className="flex items-start gap-3 text-sm text-slate-600 bg-slate-50 p-4 rounded-lg">
-                                    <CreditCard className="w-5 h-5 text-slate-400 mt-0.5" />
-                                    <div>
-                                        {worker.bank_account ? (
-                                            <pre className="font-sans whitespace-pre-wrap">
-                                                {JSON.stringify(worker.bank_account, null, 2)}
-                                            </pre>
-                                        ) : (
-                                            <p>口座情報は登録されていません。</p>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
