@@ -14,9 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Teo Worker",
+  title: "TeoWork",
   description: "Teo ワーカー専用アプリ",
   robots: "noindex, nofollow",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "TeoWork",
+    capable: true,
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
