@@ -29,7 +29,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .select(`
             *,
             contract_templates(title),
-            job_applications (
+            job_applications!application_id (
                 jobs (title)
             )
         `)
