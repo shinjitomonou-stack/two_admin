@@ -1,8 +1,8 @@
 import AdminLayout from "@/components/layout/AdminLayout";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Plus, Mail, Calendar, Trash2 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { Plus, Mail, Calendar, Trash2, Shield } from "lucide-react";
+import { formatDate, cn } from "@/lib/utils";
 import { DeleteAdminButton } from "@/components/DeleteAdminButton";
 
 export default async function AdminUsersPage() {
@@ -20,6 +20,12 @@ export default async function AdminUsersPage() {
     if (error) {
         console.error("Error fetching admins:", error);
     }
+
+    const roleLabels: { [key: string]: string } = {
+        SYSTEM: "システム管理者",
+        ADMIN: "管理者",
+        USER: "ユーザー",
+    };
 
     return (
         <AdminLayout>
@@ -48,6 +54,7 @@ export default async function AdminUsersPage() {
                             <thead className="bg-slate-50 border-b border-border text-slate-500">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">メールアドレス</th>
+                                    <th className="px-6 py-3 font-medium">ロール</th>
                                     <th className="px-6 py-3 font-medium">登録日</th>
                                     <th className="px-6 py-3 font-medium text-right">操作</th>
                                 </tr>
@@ -62,11 +69,21 @@ export default async function AdminUsersPage() {
                                                     {admin.email}
                                                 </span>
                                                 {admin.id === user?.id && (
-                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
                                                         現在のユーザー
                                                     </span>
                                                 )}
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={cn(
+                                                "px-2 py-1 rounded-full text-xs font-semibold",
+                                                admin.role === 'SYSTEM' ? "bg-purple-100 text-purple-700" :
+                                                    admin.role === 'ADMIN' ? "bg-blue-100 text-blue-700" :
+                                                        "bg-slate-100 text-slate-700"
+                                            )}>
+                                                {roleLabels[admin.role] || admin.role || "ユーザー"}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-500">
                                             <div className="flex items-center gap-2">

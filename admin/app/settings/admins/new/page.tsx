@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createAdminUser } from "@/app/actions/admin-users";
 import Link from "next/link";
-import { ArrowLeft, Mail, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Loader2, Shield } from "lucide-react";
 
 export default function NewAdminPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +82,27 @@ export default function NewAdminPage() {
                             />
                             <p className="text-xs text-slate-500">
                                 8文字以上で設定してください
+                            </p>
+                        </div>
+
+                        {/* Role */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                <Shield className="w-4 h-4" />
+                                ロール
+                            </label>
+                            <select
+                                name="role"
+                                required
+                                defaultValue="ADMIN"
+                                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 transition-all bg-white"
+                            >
+                                <option value="SYSTEM">システム管理者</option>
+                                <option value="ADMIN">管理者</option>
+                                <option value="USER">ユーザー</option>
+                            </select>
+                            <p className="text-xs text-slate-500">
+                                管理者の権限範囲を設定します
                             </p>
                         </div>
 

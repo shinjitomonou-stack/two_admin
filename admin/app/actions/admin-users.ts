@@ -8,6 +8,7 @@ import { verifyAdmin } from "@/lib/auth";
 export async function createAdminUser(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const role = (formData.get("role") as string) || "USER";
 
     if (!email || !password) {
         return { error: "メールアドレスとパスワードを入力してください" };
@@ -70,6 +71,7 @@ export async function createAdminUser(formData: FormData) {
             {
                 id: userId,
                 email: email,
+                role: role,
             },
         ]);
 
