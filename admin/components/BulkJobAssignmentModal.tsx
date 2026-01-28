@@ -25,10 +25,21 @@ interface Job {
     current_workers_count: number;
 }
 
+interface IndividualContract {
+    id: string;
+    contract_templates: {
+        title: string;
+    };
+    signed_at: string;
+}
+
 export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, workerName }: BulkJobAssignmentModalProps) {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
+    const [contracts, setContracts] = useState<IndividualContract[]>([]);
+    const [selectedContractId, setSelectedContractId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingContracts, setIsLoadingContracts] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [searchDate, setSearchDate] = useState("");
@@ -36,9 +47,35 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
     useEffect(() => {
         if (isOpen) {
             fetchJobs();
+            fetchContracts();
             setSelectedJobIds([]);
+            setSelectedContractId("");
         }
     }, [isOpen, searchDate, searchKeyword]);
+
+    const fetchContracts = async () => {
+        setIsLoadingContracts(true);
+        const supabase = createClient();
+        try {
+            const { data, error } = await supabase
+                .from("job_individual_contracts")
+                .select(`
+                    id,
+                    signed_at,
+                    contract_templates (title)
+                `)
+                .eq("worker_id", workerId)
+                .eq("status", "SIGNED")
+                .order("signed_at", { ascending: false });
+
+            if (error) throw error;
+            setContracts(data as any || []);
+        } catch (error) {
+            console.error("Error fetching contracts:", error);
+        } finally {
+            setIsLoadingContracts(false);
+        }
+    };
 
     const fetchJobs = async () => {
         setIsLoading(true);
@@ -95,7 +132,7 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
 
         setIsSubmitting(true);
         try {
-            const result = await assignWorkerToJobs(workerId, selectedJobIds);
+            const result = await assignWorkerToJobs(workerId, selectedJobIds, selectedContractId || undefined);
             if (result.success) {
                 toast.success(`${result.results?.success ?? 0}件の案件にアサインしました`);
                 onClose();
@@ -151,6 +188,32 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
                             onChange={(e) => setSearchDate(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                         />
+                    </div>
+                </div>
+
+                {/* Contract Selection */}
+                <div className="px-6 py-4 border-b border-slate-100 bg-purple-50/30">
+                    <label className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2 block">
+                        紐付ける個別契約（任意）
+                    </label>
+                    <div className="flex items-center gap-3">
+                        <select
+                            value={selectedContractId}
+                            onChange={(e) => setSelectedContractId(e.target.value)}
+                            disabled={isLoadingContracts || contracts.length === 0}
+                            className="flex-1 bg-white border border-purple-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:opacity-50"
+                        >
+                            <option value="">契約を紐付けない</option>
+                            {contracts.map(contract => (
+                                <option key={contract.id} value={contract.id}>
+                                    {contract.contract_templates?.title} (締結日: {formatDate(contract.signed_at)})
+                                </option>
+                            ))}
+                        </select>
+                        {isLoadingContracts && <Loader2 className="w-4 h-4 animate-spin text-purple-500" />}
+                        {!isLoadingContracts && contracts.length === 0 && (
+                            <span className="text-xs text-slate-500 italic">締結済みの契約がありません</span>
+                        )}
                     </div>
                 </div>
 

@@ -13,8 +13,10 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
     const [isOpen, setIsOpen] = useState(false);
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [contracts, setContracts] = useState<any[]>([]);
+    const [workerIndividualContracts, setWorkerIndividualContracts] = useState<any[]>([]);
     const [selectedWorkerId, setSelectedWorkerId] = useState("");
     const [selectedContractId, setSelectedContractId] = useState("");
+    const [selectedIndividualContractId, setSelectedIndividualContractId] = useState("");
     const [assignmentMode, setAssignmentMode] = useState<"NEW" | "EXISTING">("NEW");
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +39,40 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
         setContracts(contractData.contracts || []);
     };
 
+    // Fetch individual contracts for the selected worker
+    const fetchWorkerIndividualContracts = async (wId: string) => {
+        if (!wId) {
+            setWorkerIndividualContracts([]);
+            return;
+        }
+
+        try {
+            const { createClient } = await import("@/lib/supabase/client");
+            const supabase = createClient();
+            const { data, error } = await supabase
+                .from("job_individual_contracts")
+                .select(`
+                    id,
+                    signed_at,
+                    contract_templates (title)
+                `)
+                .eq("worker_id", wId)
+                .eq("status", "SIGNED")
+                .order("signed_at", { ascending: false });
+
+            if (error) throw error;
+            setWorkerIndividualContracts(data || []);
+        } catch (error) {
+            console.error("Error fetching worker contracts:", error);
+        }
+    };
+
+    const handleWorkerSelect = (wId: string) => {
+        setSelectedWorkerId(wId);
+        setSelectedIndividualContractId("");
+        fetchWorkerIndividualContracts(wId);
+    };
+
     const filteredWorkers = workers
         .filter(w => !existingWorkerIds.includes(w.id))
         .filter(w =>
@@ -56,6 +92,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                     jobId,
                     workerId: selectedWorkerId,
                     contractId: assignmentMode === "EXISTING" ? selectedContractId : undefined,
+                    individualContractId: selectedIndividualContractId || undefined,
                 }),
             });
 
@@ -111,7 +148,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                             <select
                                 size={5}
                                 value={selectedWorkerId}
-                                onChange={(e) => setSelectedWorkerId(e.target.value)}
+                                onChange={(e) => handleWorkerSelect(e.target.value)}
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[120px]"
                             >
                                 <option value="" disabled className="text-slate-400">
@@ -124,8 +161,29 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                                 ))}
                             </select>
 
+                            {selectedWorkerId && (
+                                <div className="space-y-1.5 pt-2">
+                                    <label className="text-sm font-medium">個別契約（署名済）の紐付け</label>
+                                    <select
+                                        value={selectedIndividualContractId}
+                                        onChange={(e) => setSelectedIndividualContractId(e.target.value)}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    >
+                                        <option value="">契約を紐付けない</option>
+                                        {workerIndividualContracts.map((c: any) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.contract_templates?.title} ({new Date(c.signed_at).toLocaleDateString('ja-JP')})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {workerIndividualContracts.length === 0 && (
+                                        <p className="text-[10px] text-slate-500 italic">締結済みの個別契約が見つかりませんでした</p>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="space-y-1.5 pt-2">
-                                <label className="text-sm font-medium">契約の紐付け</label>
+                                <label className="text-sm font-medium">パートナー契約（toB）の紐付け</label>
                                 <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
                                     <button
                                         type="button"

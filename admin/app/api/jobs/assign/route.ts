@@ -7,7 +7,7 @@ import { verifyAdmin } from "@/lib/auth";
 export async function POST(request: Request) {
     try {
         await verifyAdmin();
-        const { jobId, workerId, contractId } = await request.json();
+        const { jobId, workerId, contractId, individualContractId } = await request.json();
 
         if (!jobId) {
             return NextResponse.json({ error: "Missing jobId" }, { status: 400 });
@@ -44,9 +44,10 @@ export async function POST(request: Request) {
                 .insert({
                     job_id: jobId,
                     worker_id: workerId,
-                    status: isAutoSet ? "CONFIRMED" : "ASSIGNED",
+                    status: individualContractId ? "CONFIRMED" : (isAutoSet ? "CONFIRMED" : "ASSIGNED"),
                     scheduled_work_start: isAutoSet ? job.start_time : null,
                     scheduled_work_end: isAutoSet ? job.end_time : null,
+                    individual_contract_id: individualContractId || null,
                 });
 
             if (error) {

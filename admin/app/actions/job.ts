@@ -139,13 +139,26 @@ export async function duplicateJob(
         if (options?.workerIds && options.workerIds.length > 0) {
             const isAutoSet = newJob.auto_set_schedule && !newJob.is_flexible;
 
-            const applications = options.workerIds.map(workerId => ({
-                job_id: newJob.id,
-                worker_id: workerId,
-                status: isAutoSet ? "CONFIRMED" : "ASSIGNED",
-                scheduled_work_start: isAutoSet ? newJob.start_time : null,
-                scheduled_work_end: isAutoSet ? newJob.end_time : null,
-            }));
+            // Fetch source applications to inherit contract IDs
+            const { data: sourceApps } = await supabase
+                .from("job_applications")
+                .select("worker_id, individual_contract_id")
+                .eq("job_id", id)
+                .in("worker_id", options.workerIds);
+
+            const contractMap = new Map(sourceApps?.map(a => [a.worker_id, a.individual_contract_id]) || []);
+
+            const applications = options.workerIds.map(workerId => {
+                const contractId = contractMap.get(workerId);
+                return {
+                    job_id: newJob.id,
+                    worker_id: workerId,
+                    status: contractId ? "CONFIRMED" : (isAutoSet ? "CONFIRMED" : "ASSIGNED"),
+                    scheduled_work_start: isAutoSet ? newJob.start_time : null,
+                    scheduled_work_end: isAutoSet ? newJob.end_time : null,
+                    individual_contract_id: contractId || null,
+                };
+            });
 
             const { error: appError } = await supabase
                 .from("job_applications")

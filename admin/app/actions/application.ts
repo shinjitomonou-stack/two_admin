@@ -161,7 +161,7 @@ export async function assignMultipleWorkers(applicationIds: string[]) {
     }
 }
 
-export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
+export async function assignWorkerToJobs(workerId: string, jobIds: string[], individualContractId?: string) {
     await verifyAdmin();
     const supabase = await createClient();
 
@@ -198,6 +198,11 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
                 scheduled_work_end = job.end_time;
             }
 
+            // If an individual contract is provided, force status to CONFIRMED
+            if (individualContractId) {
+                status = "CONFIRMED";
+            }
+
             // Check if application already exists
             const { data: existingApp } = await supabase
                 .from("job_applications")
@@ -218,6 +223,7 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
                             status: status,
                             scheduled_work_start: scheduled_work_start,
                             scheduled_work_end: scheduled_work_end,
+                            individual_contract_id: individualContractId || null,
                         })
                         .eq("id", existingApp.id);
 
@@ -237,6 +243,7 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
                         status: status,
                         scheduled_work_start: scheduled_work_start,
                         scheduled_work_end: scheduled_work_end,
+                        individual_contract_id: individualContractId || null,
                     })
                     .select("id")
                     .single();
