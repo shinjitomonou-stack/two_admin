@@ -175,6 +175,29 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
         const notifications: { job: any; worker: any }[] = [];
 
         for (const jobId of jobIds) {
+            // Fetch job details first to check for auto-schedule settings
+            const { data: job } = await supabase
+                .from("jobs")
+                .select("title, start_time, end_time, address_text, auto_set_schedule, is_flexible")
+                .eq("id", jobId)
+                .single();
+
+            if (!job) {
+                results.failed++;
+                continue;
+            }
+
+            // Determine status and schedule based on job settings
+            let status = "ASSIGNED";
+            let scheduled_work_start = null;
+            let scheduled_work_end = null;
+
+            if (job.auto_set_schedule && !job.is_flexible) {
+                status = "CONFIRMED";
+                scheduled_work_start = job.start_time;
+                scheduled_work_end = job.end_time;
+            }
+
             // Check if application already exists
             const { data: existingApp } = await supabase
                 .from("job_applications")
@@ -191,10 +214,17 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
                     // Re-activate if cancelled or rejected
                     const { error } = await supabase
                         .from("job_applications")
-                        .update({ status: "ASSIGNED" })
+                        .update({
+                            status: status,
+                            scheduled_work_start: scheduled_work_start,
+                            scheduled_work_end: scheduled_work_end,
+                        })
                         .eq("id", existingApp.id);
 
-                    if (!error) results.success++;
+                    if (!error) {
+                        results.success++;
+                        notifications.push({ job, worker: null });
+                    }
                     else results.failed++;
                 }
             } else {
@@ -204,28 +234,18 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
                     .insert({
                         job_id: jobId,
                         worker_id: workerId,
-                        status: "ASSIGNED",
+                        status: status,
+                        scheduled_work_start: scheduled_work_start,
+                        scheduled_work_end: scheduled_work_end,
                     })
                     .select("id")
                     .single();
 
-                if (!error) results.success++;
-                else results.failed++;
-            }
-
-            // Prepare for notification (fetch details after successful operation)
-            // Ideally we do this in bulk, but for loop is simpler to construct list
-            if (results.success > notifications.length) { // Verify we just succeeded
-                // Fetch job details for notification
-                const { data: job } = await supabase
-                    .from("jobs")
-                    .select("title, start_time, address_text")
-                    .eq("id", jobId)
-                    .single();
-
-                if (job) {
-                    notifications.push({ job, worker: null }); // Worker fetched later
+                if (!error) {
+                    results.success++;
+                    notifications.push({ job, worker: null });
                 }
+                else results.failed++;
             }
         }
 
