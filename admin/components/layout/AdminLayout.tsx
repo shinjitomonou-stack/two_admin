@@ -90,14 +90,28 @@ function AdminLayoutContent({
     const tradingType = searchParams.get("trading_type");
 
     useEffect(() => {
+        const supabase = createClient();
+
+        // 1. Initial fetch
         const fetchUser = async () => {
-            const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) {
                 setUserEmail(user.email);
             }
         };
         fetchUser();
+
+        // 2. Listen for auth changes (to handle session expiration)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+                // Redirect to login if user is signed out or session is lost
+                window.location.href = "/login";
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     const toggleExpanded = (href: string) => {
