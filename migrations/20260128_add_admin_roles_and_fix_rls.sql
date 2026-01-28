@@ -1,13 +1,14 @@
 -- 1. Add role column to admin_users
 ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS role text DEFAULT 'USER';
 
--- 2. Add constraint for valid roles
+-- 2. Initialize existing admins to 'ADMIN' BEFORE adding constraint
+-- This ensures that the constraint added in the next step is not violated immediately.
+UPDATE public.admin_users SET role = 'ADMIN' WHERE role IS NULL OR role NOT IN ('SYSTEM', 'ADMIN', 'USER');
+
+-- 3. Add constraint for valid roles
 ALTER TABLE public.admin_users DROP CONSTRAINT IF EXISTS admin_users_role_check;
 ALTER TABLE public.admin_users ADD CONSTRAINT admin_users_role_check 
 CHECK (role IN ('SYSTEM', 'ADMIN', 'USER'));
-
--- 3. Initialize existing admins to 'ADMIN' if they don't have a role
-UPDATE public.admin_users SET role = 'ADMIN' WHERE role IS NULL;
 
 -- 4. Fix RLS on admin_users
 -- Current policy "Admins can read own record" only allows reading own record.
