@@ -17,8 +17,9 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .select(`
             *,
             contract_templates(title, version),
-            job_applications (
-                workers (id, full_name, email, address, phone),
+            workers (id, full_name, email, address, phone),
+            job_applications!application_id (
+                id,
                 jobs (
                     title,
                     reward_amount,
@@ -38,9 +39,13 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         notFound();
     }
 
-    // 1. Try to get worker from job_applications join
-    // @ts-ignore
-    let worker = contract.job_applications?.workers;
+    // 1. Try to get worker directly from contract or join
+    let worker = contract.workers;
+
+    // 2. Fallback to job_applications join (old data structure)
+    if (!worker && (contract.job_applications as any)?.workers) {
+        worker = (contract.job_applications as any).workers;
+    }
 
     // 2. If not found (e.g., contract not linked to an app), fetch directly using worker_id
     if (!worker && contract.worker_id) {

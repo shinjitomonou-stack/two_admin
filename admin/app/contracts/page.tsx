@@ -59,7 +59,7 @@ export default async function ContractsPage({
                 *,
                 contract_templates(title, version),
                 workers(full_name, email),
-                job_applications(
+                job_applications!application_id(
                     workers(full_name, email),
                     jobs(
                         title,
