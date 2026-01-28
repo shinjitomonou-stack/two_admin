@@ -253,9 +253,8 @@ export default async function Home() {
       <div className="min-h-screen bg-white">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-4 sticky top-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100">
-          <div className="text-xl font-black text-slate-900 flex items-center gap-2">
-            <img src="/app-icon.png" alt="Teo Work" className="w-8 h-8 object-contain" />
-            Teo Work
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Teo Work" className="h-8 object-contain" />
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-yellow-600 transition-colors">ログイン</Link>
@@ -311,7 +310,7 @@ export default async function Home() {
       {/* Header */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
-          <h1 className="font-bold text-lg text-slate-900">Teo Work</h1>
+          <img src="/logo.png" alt="Teo Work" className="h-7 object-contain" />
           {workerId ? (
             <div className="text-xs text-slate-500">
               <span className="font-medium text-slate-900">{workerName}</span> さん

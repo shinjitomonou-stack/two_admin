@@ -53,6 +53,9 @@ function LoginContent() {
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
                 <div className="text-center mb-8">
+                    <div className="flex justify-center mb-6">
+                        <img src="/logo.png" alt="Teo Work" className="h-12 object-contain" />
+                    </div>
                     <h1 className="text-2xl font-bold text-slate-900">ログイン</h1>
                     <p className="text-slate-500 text-sm mt-2">
                         登録したメールアドレスとパスワードを入力してください
