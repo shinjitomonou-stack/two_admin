@@ -288,11 +288,18 @@ export async function linkExistingContractToApplication(applicationId: string, c
     const supabase = await createClient();
 
     try {
+        const updateData: any = {
+            individual_contract_id: contractId
+        };
+
+        // If a contract is linked, automatically move to CONFIRMED status
+        if (contractId) {
+            updateData.status = 'CONFIRMED';
+        }
+
         const { error } = await supabase
             .from("job_applications")
-            .update({
-                individual_contract_id: contractId
-            })
+            .update(updateData)
             .eq("id", applicationId);
 
         if (error) throw error;

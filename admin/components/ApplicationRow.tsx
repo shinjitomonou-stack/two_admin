@@ -260,6 +260,14 @@ export function ApplicationRow({
                             {(app.status === 'ASSIGNED' || app.status === 'CONFIRMED') && (
                                 <div className="mt-3 pt-3 border-t border-slate-100">
                                     <div className="text-xs text-muted-foreground mb-2">個別契約（署名済）</div>
+                                    {app.individual_contracts?.contract_templates?.title && app.individual_contract_id && (
+                                        <Link
+                                            href={`/contracts/individual/${app.individual_contract_id}`}
+                                            className="text-sm text-blue-600 hover:underline mb-2 block"
+                                        >
+                                            {app.individual_contracts.contract_templates.title}
+                                        </Link>
+                                    )}
                                     <LinkIndividualContractButton
                                         applicationId={app.id}
                                         workerId={app.worker_id}
