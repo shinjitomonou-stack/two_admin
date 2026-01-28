@@ -57,7 +57,15 @@ export default async function JobDetailPage({
     // Fetch Applications for this Job
     const { data: dbApplications, error: appError } = await supabase
         .from("job_applications")
-        .select("*, workers(*), reports(id, status)")
+        .select(`
+            *, 
+            workers(*), 
+            reports(id, status),
+            individual_contracts: job_individual_contracts!individual_contract_id (
+                id,
+                contract_templates (title)
+            )
+        `)
         .eq("job_id", id)
         .order("created_at", { ascending: false });
 

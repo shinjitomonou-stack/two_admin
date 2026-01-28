@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { formatDateTime, formatDate, formatTime } from "@/lib/utils";
 import { updateApplicationStatus, updateApplicationSchedule } from "@/app/actions/application";
+import { LinkIndividualContractButton } from "./LinkIndividualContractButton";
 
 type Application = {
     id: string;
@@ -24,6 +25,13 @@ type Application = {
         id: string;
         status: string;
     }[];
+    individual_contract_id?: string | null;
+    individual_contracts?: {
+        id: string;
+        contract_templates: {
+            title: string;
+        };
+    } | null;
 };
 
 const STATUS_STYLES = {
@@ -236,19 +244,31 @@ export function ApplicationRow({
                                     </div>
                                 </>
                             )}
-                        </>
-                    )}
 
-                    {app.reports && app.reports.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-100">
-                            <Link
-                                href={`/reports/${app.reports[0].id}?returnTo=${encodeURIComponent(pathname)}`}
-                                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                            >
-                                <FileText className="w-4 h-4" />
-                                作業報告を確認
-                            </Link>
-                        </div>
+                            {app.reports && app.reports.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-slate-100">
+                                    <Link
+                                        href={`/reports/${app.reports[0].id}?returnTo=${encodeURIComponent(pathname)}`}
+                                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        <FileText className="w-4 h-4" />
+                                        作業報告を確認
+                                    </Link>
+                                </div>
+                            )}
+
+                            {(app.status === 'ASSIGNED' || app.status === 'CONFIRMED') && (
+                                <div className="mt-3 pt-3 border-t border-slate-100">
+                                    <div className="text-xs text-muted-foreground mb-2">個別契約（署名済）</div>
+                                    <LinkIndividualContractButton
+                                        applicationId={app.id}
+                                        workerId={app.worker_id}
+                                        currentContractId={app.individual_contract_id}
+                                        currentContractTitle={app.individual_contracts?.contract_templates?.title}
+                                    />
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </td>

@@ -282,3 +282,26 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[]) {
         return { success: false, error };
     }
 }
+
+export async function linkExistingContractToApplication(applicationId: string, contractId: string | null) {
+    await verifyAdmin();
+    const supabase = await createClient();
+
+    try {
+        const { error } = await supabase
+            .from("job_applications")
+            .update({
+                individual_contract_id: contractId
+            })
+            .eq("id", applicationId);
+
+        if (error) throw error;
+
+        revalidatePath("/jobs/[id]", "page");
+        revalidatePath("/workers/[id]", "page");
+        return { success: true };
+    } catch (error) {
+        console.error("Error linking contract to application:", error);
+        return { success: false, error };
+    }
+}
