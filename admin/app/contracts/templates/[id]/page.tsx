@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 export default function EditTemplatePage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -170,18 +171,16 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">クライアント (任意)</label>
-                            <select
+                            <SearchableSelect
                                 value={formData.client_id || ""}
-                                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                            >
-                                <option value="">共通テンプレート</option>
-                                {clients.map((client) => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.name}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(value) => setFormData({ ...formData, client_id: value === "" ? null : value })}
+                                options={[
+                                    { value: "", label: "共通テンプレート" },
+                                    ...clients.map(c => ({ value: c.id, label: c.name }))
+                                ]}
+                                placeholder="クライアントを選択してください"
+                                searchPlaceholder="クライアント名で検索"
+                            />
                         </div>
 
                         <div className="space-y-2">
