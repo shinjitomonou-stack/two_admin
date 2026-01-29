@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { headers, cookies } from "next/headers";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { sendSlackNotification } from "@/lib/slack";
 
@@ -72,24 +72,66 @@ export async function signBasicContract(templateId: string) {
     const finalContent = replaceVariables(template.content_template);
 
     // Check if already signed
-...
-    const result = await supabase
+    const { data: existing } = await supabase
         .from("worker_basic_contracts")
-        .update({
-            signed_content_snapshot: finalContent,
-            ...
-        const result = await supabase
-                .from("worker_basic_contracts")
-                .insert([
-                    {
-                        worker_id: workerId,
-                        template_id: templateId,
-                        signed_content_snapshot: finalContent,
-                        ...
+        .select("id")
+        .eq("worker_id", workerId)
+        .eq("template_id", templateId)
+        .single();
+
+    if (existing) {
+        await supabase
+            .from("worker_basic_contracts")
+            .update({
+                signed_content_snapshot: finalContent,
+                signed_at: new Date().toISOString(),
+                ip_address: ip,
+                user_agent: userAgent,
+                status: "SIGNED"
+            })
+            .eq("id", existing.id);
+    } else {
+        await supabase
+            .from("worker_basic_contracts")
+            .insert([
+                {
+                    worker_id: workerId,
+                    template_id: templateId,
+                    signed_content_snapshot: finalContent,
+                    signed_at: new Date().toISOString(),
+                    ip_address: ip,
+                    user_agent: userAgent,
+                    status: "SIGNED"
+                }
+            ]);
+    }
+
+    revalidatePath("/contracts/basic");
+    redirect("/contracts/basic?signed=true");
+}
+
+export async function signIndividualContract(formData: FormData) {
+    const contractId = formData.get("contractId") as string;
+    if (!contractId) return { error: "Contract ID is required" };
+
+    const supabase = await createClient();
+
+    // Get authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    const workerId = user?.id;
+
+    if (!workerId) {
+        return { error: "ログインが必要です" };
+    }
+
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for") || "unknown";
+    const userAgent = headersList.get("user-agent") || "unknown";
+
     // Fetch template content, worker, and job info
     const { data: contract } = await supabase
-                            .from("job_individual_contracts")
-                            .select(`
+        .from("job_individual_contracts")
+        .select(`
             template_id, 
             contract_templates(title, content_template),
             worker:workers!worker_id(full_name, address),
@@ -97,12 +139,12 @@ export async function signBasicContract(templateId: string) {
                 jobs(title, reward_amount, start_time, end_time, address_text)
             )
         `)
-                            .eq("id", contractId)
-                            .single();
+        .eq("id", contractId)
+        .single();
 
-                        if(!contract || !contract.contract_templates) {
-            return { error: "契約情報が見つかりません" };
-        }
+    if (!contract || !contract.contract_templates) {
+        return { error: "契約情報が見つかりません" };
+    }
 
     // Fetch company settings
     const { data: company } = await supabase
@@ -110,11 +152,8 @@ export async function signBasicContract(templateId: string) {
         .select("*")
         .single();
 
-    // Handle contract_templates being an array or object
-    const templateContent = Array.isArray(contract.contract_templates)
-        ? contract.contract_templates[0]?.content_template
-        // @ts-ignore
-        : contract.contract_templates?.content_template;
+    // @ts-ignore
+    const templateContent = contract.contract_templates?.content_template;
 
     if (!templateContent) {
         return { error: "テンプレート内容が取得できませんでした" };
@@ -123,11 +162,11 @@ export async function signBasicContract(templateId: string) {
     function replaceVariables(content: string) {
         let result = content;
         // @ts-ignore
-        const worker = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
-        if (worker) {
+        const workerData = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
+        if (workerData) {
             result = result
-                .replace(/{{worker_name}}/g, worker.full_name || "")
-                .replace(/{{worker_address}}/g, worker.address || "");
+                .replace(/{{worker_name}}/g, workerData.full_name || "")
+                .replace(/{{worker_address}}/g, workerData.address || "");
         }
         if (company) {
             result = result
@@ -183,8 +222,8 @@ export async function signBasicContract(templateId: string) {
     // Send Slack notification (non-blocking)
     try {
         // @ts-ignore
-        const worker = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
-        const workerName = worker?.full_name || "不明なワーカー";
+        const workerData = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
+        const workerName = workerData?.full_name || "不明なワーカー";
 
         // @ts-ignore
         const template = Array.isArray(contract.contract_templates) ? contract.contract_templates[0] : contract.contract_templates;
