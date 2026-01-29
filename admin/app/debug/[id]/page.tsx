@@ -24,7 +24,7 @@ export default async function DebugPage({ params }: { params: Promise<{ id: stri
         // Query B: With Job Applications
         const { data: dataB, error: errorB } = await supabase
             .from("job_individual_contracts")
-            .select("*, job_applications(*)")
+            .select("*, job_applications!application_id(*)")
             .in("application_id", appIds);
 
         // Query C: With Templates
@@ -39,7 +39,7 @@ export default async function DebugPage({ params }: { params: Promise<{ id: stri
             .select(`
                 *,
                 contract_templates(title),
-                job_applications (
+                job_applications!application_id (
                     jobs (title)
                 )
             `)
@@ -56,7 +56,7 @@ export default async function DebugPage({ params }: { params: Promise<{ id: stri
     // 4. Get ALL contracts and see if any match this worker (manual check)
     const { data: allContracts } = await supabase
         .from("job_individual_contracts")
-        .select("*, job_applications(worker_id, jobs(title))");
+        .select("*, job_applications!application_id(worker_id, jobs(title))");
 
     // @ts-ignore
     const manualMatches = allContracts?.filter(c => c.job_applications?.worker_id === id) || [];

@@ -121,7 +121,7 @@ export async function signIndividualContract(formData: FormData) {
         .select(`
             template_id, 
             contract_templates(content_template),
-            job_applications(
+            job_applications!application_id(
                 jobs(title),
                 workers(full_name)
             )

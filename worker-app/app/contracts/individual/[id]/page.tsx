@@ -43,7 +43,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
                 content_template,
                 version
             ),
-            job_applications (
+            job_applications!application_id (
                 jobs (
                     title,
                     reward_amount,

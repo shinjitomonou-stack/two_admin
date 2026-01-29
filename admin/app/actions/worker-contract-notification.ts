@@ -17,7 +17,7 @@ export async function sendWorkerContractNotification(contractId: string) {
             .select(`
                 *,
                 worker:workers (full_name, line_id, line_user_id),
-                job_applications (
+                job_applications!application_id (
                     workers (full_name, line_id, line_user_id),
                     jobs (title)
                 )
