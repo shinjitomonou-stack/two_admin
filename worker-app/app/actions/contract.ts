@@ -175,8 +175,11 @@ export async function signIndividualContract(formData: FormData) {
                 .replace(/{{company_rep}}/g, company.representative_name || "");
         }
 
+        // @ts-ignore
         const app = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
-        const jobData = app?.jobs;
+        const rawJobData = app?.jobs;
+        // @ts-ignore
+        const jobData = Array.isArray(rawJobData) ? rawJobData[0] : rawJobData;
         if (jobData) {
             result = result
                 .replace(/{{job_title}}/g, jobData.title || "")
