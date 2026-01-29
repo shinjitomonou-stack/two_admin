@@ -24,6 +24,8 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                 jobs (
                     title,
                     reward_amount,
+                    start_time,
+                    end_time,
                     clients (name)
                 )
             )
@@ -69,6 +71,10 @@ export default async function IndividualContractDetailPage(props: { params: Prom
             </AdminLayout>
         );
     }
+
+    // Determine job: Only exists if linked via application
+    // @ts-ignore
+    const job = (contract.job_applications as any)?.jobs;
 
     // --- Variable Replacement for Display (for legacy data) ---
     function replaceVariables(text: string) {
