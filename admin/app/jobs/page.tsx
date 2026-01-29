@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Plus, MapPin, Calendar, Eye, Edit, Users, Copy, Trash2, Loader2 } from "lucide-react";
+import { Plus, MapPin, Calendar, Eye, Edit, Users, Copy, Trash2, Loader2, Briefcase, CheckCircle, FileText } from "lucide-react";
 import { deleteJob, duplicateJob, updateJob } from "@/app/actions/job";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -54,7 +54,8 @@ export default function JobsPage() {
                     scheduled_work_start,
                     actual_work_start,
                     workers(full_name, name_kana),
-                    worker_id
+                    worker_id,
+                    reports(id, status)
                 ),
                 client_job_contracts!job_id (
                     id,
@@ -301,6 +302,47 @@ export default function JobsPage() {
         }
     };
 
+    // Stats Calculation (consistent with JobsDashboardView)
+    const totalJobsCount = filteredJobs.length;
+    const totalMaxWorkers = filteredJobs.reduce((sum, j) => sum + j.max_workers, 0);
+    const assignedCount = filteredJobs.reduce((sum, j) => {
+        const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
+        const placementContracts = (j as any).client_job_contracts?.filter((c: any) =>
+            c.trading_type === 'PLACING' &&
+            (c.status === 'ACTIVE' || c.status === 'PENDING' || c.status === 'DRAFT')
+        ) || [];
+        const linkedContract = (j as any).linked_contract;
+
+        let count = assignedApps.length;
+        const placementIds = new Set(placementContracts.map((c: any) => c.id));
+        count += placementContracts.length;
+        if (linkedContract &&
+            (linkedContract.status === 'ACTIVE' || linkedContract.status === 'PENDING' || linkedContract.status === 'DRAFT') &&
+            !placementIds.has(linkedContract.id)
+        ) {
+            count += 1;
+        }
+        return sum + count;
+    }, 0);
+
+    const submittedReportsCount = filteredJobs.reduce((sum, j) => {
+        const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
+        return sum + reports.length;
+    }, 0);
+
+    const approvedReportsCount = filteredJobs.reduce((sum, j) => {
+        const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
+        const approved = reports.filter((r: any) => r.status === 'APPROVED');
+        return sum + approved.length;
+    }, 0);
+
+    const completedJobsCount = filteredJobs.filter(j => {
+        if (j.status === "COMPLETED") return true;
+        const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
+        if (assignedApps.length === 0) return false;
+        return assignedApps.every((app: any) => (app.reports?.length || 0) > 0);
+    }).length;
+
     if (loading) {
         return (
             <AdminLayout>
@@ -351,6 +393,61 @@ export default function JobsPage() {
                             <Plus className="w-4 h-4" />
                             新規作成
                         </Link>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid gap-4 md:grid-cols-5">
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">表示中案件</p>
+                                <p className="text-2xl font-bold mt-1">{totalJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <Briefcase className="w-8 h-8 text-blue-500 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">配置状況</p>
+                                <p className="text-2xl font-bold mt-1">{assignedCount} / {totalMaxWorkers} <span className="text-sm font-normal text-muted-foreground">名</span></p>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                                    <div
+                                        className="bg-green-500 h-full transition-all duration-500"
+                                        style={{ width: `${totalMaxWorkers > 0 ? (assignedCount / totalMaxWorkers) * 100 : 0}%` }}
+                                    />
+                                </div>
+                            </div>
+                            <Users className="w-8 h-8 text-green-500 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">作業報告提出</p>
+                                <p className="text-2xl font-bold mt-1">{submittedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <FileText className="w-8 h-8 text-purple-500 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">承認済み報告</p>
+                                <p className="text-2xl font-bold mt-1">{approvedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">完了済み案件</p>
+                                <p className="text-2xl font-bold mt-1">{completedJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <CheckCircle className="w-8 h-8 text-blue-500 opacity-20" />
+                        </div>
                     </div>
                 </div>
 
