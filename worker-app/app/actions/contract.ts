@@ -32,109 +32,83 @@ export async function signBasicContract(templateId: string) {
         return { error: "テンプレートが見つかりません" };
     }
 
-    // Check for existing contract (PENDING or any status)
-    const { data: existingContracts, error: fetchError } = await supabase
-        .from("worker_basic_contracts")
-        .select("id, status")
-        .eq("worker_id", workerId)
-        .eq("template_id", templateId)
-        .order("created_at", { ascending: false });
-
-    if (fetchError) {
-        console.error("Fetch error:", fetchError);
-        return { error: "契約情報の取得に失敗しました" };
-    }
-
-    let error;
-
-    // Find PENDING contract to update
-    const pendingContract = existingContracts?.find(c => c.status === 'PENDING');
-
-    // Check if already signed
-    const signedContract = existingContracts?.find(c => c.status === 'SIGNED');
-    if (signedContract && !pendingContract) {
-        return { error: "この契約は既に締結されています" };
-    }
-
-    if (pendingContract) {
-        // Update existing PENDING request
-        const result = await supabase
-            .from("worker_basic_contracts")
-            .update({
-                signed_content_snapshot: template.content_template,
-                signed_at: new Date().toISOString(),
-                ip_address: ip,
-                user_agent: userAgent,
-                consent_hash: "mock_hash_" + Date.now(),
-                status: "SIGNED"
-            })
-            .eq("id", pendingContract.id);
-        error = result.error;
-    } else if (!signedContract) {
-        // Insert new signed contract only if no SIGNED contract exists
-        const result = await supabase
-            .from("worker_basic_contracts")
-            .insert([
-                {
-                    worker_id: workerId,
-                    template_id: templateId,
-                    signed_content_snapshot: template.content_template,
-                    signed_at: new Date().toISOString(),
-                    ip_address: ip,
-                    user_agent: userAgent,
-                    consent_hash: "mock_hash_" + Date.now(),
-                    status: "SIGNED"
-                },
-            ]);
-        error = result.error;
-    }
-
-    if (error) {
-        console.error("Signing error:", error);
-        return { error: "契約締結に失敗しました" };
-    }
-
-    revalidatePath("/contracts/basic");
-    revalidatePath("/"); // Revalidate home page to update alert
-    redirect("/contracts/basic?signed=true");
-}
-
-export async function signIndividualContract(formData: FormData) {
-    const contractId = formData.get("contract_id") as string;
-
-    const supabase = await createClient();
-
-    // Get authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
-    const workerId = user?.id;
-
-    if (!workerId || !contractId) {
-        return { error: "不正なリクエストです" };
-    }
-    const headersList = await headers();
-    const ip = headersList.get("x-forwarded-for") || "unknown";
-    const userAgent = headersList.get("user-agent") || "unknown";
-
-    // Fetch template content and job title
-    const { data: contract } = await supabase
-        .from("job_individual_contracts")
-        .select(`
-            template_id, 
-            contract_templates(title, content_template),
-            worker:workers!worker_id(full_name),
-            job_applications!application_id(
-                jobs(title)
-            ),
-            linked_applications:job_applications!individual_contract_id(
-                jobs(title)
-            )
-        `)
-        .eq("id", contractId)
+    // Fetch worker profile for replacement
+    const { data: worker } = await supabase
+        .from("workers")
+        .select("full_name, address")
+        .eq("id", workerId)
         .single();
 
-    if (!contract || !contract.contract_templates) {
-        return { error: "契約情報が見つかりません" };
+    // Fetch company settings for replacement
+    const { data: company } = await supabase
+        .from("company_settings")
+        .select("*")
+        .single();
+
+    function replaceVariables(content: string) {
+        let result = content;
+        if (worker) {
+            result = result
+                .replace(/{{worker_name}}/g, worker.full_name || "")
+                .replace(/{{worker_address}}/g, worker.address || "");
+        }
+        if (company) {
+            result = result
+                .replace(/{{company_name}}/g, company.name || "")
+                .replace(/{{company_address}}/g, company.address || "")
+                .replace(/{{company_rep}}/g, company.representative_name || "");
+        }
+        // Date Variables
+        result = result.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+            const today = new Date();
+            if (p2) {
+                today.setDate(today.getDate() + parseInt(p2, 10));
+            }
+            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
+        return result;
     }
+
+    const finalContent = replaceVariables(template.content_template);
+
+    // Check if already signed
+...
+    const result = await supabase
+        .from("worker_basic_contracts")
+        .update({
+            signed_content_snapshot: finalContent,
+            ...
+        const result = await supabase
+                .from("worker_basic_contracts")
+                .insert([
+                    {
+                        worker_id: workerId,
+                        template_id: templateId,
+                        signed_content_snapshot: finalContent,
+                        ...
+    // Fetch template content, worker, and job info
+    const { data: contract } = await supabase
+                            .from("job_individual_contracts")
+                            .select(`
+            template_id, 
+            contract_templates(title, content_template),
+            worker:workers!worker_id(full_name, address),
+            job_applications!application_id(
+                jobs(title, reward_amount, start_time, end_time, address_text)
+            )
+        `)
+                            .eq("id", contractId)
+                            .single();
+
+                        if(!contract || !contract.contract_templates) {
+            return { error: "契約情報が見つかりません" };
+        }
+
+    // Fetch company settings
+    const { data: company } = await supabase
+        .from("company_settings")
+        .select("*")
+        .single();
 
     // Handle contract_templates being an array or object
     const templateContent = Array.isArray(contract.contract_templates)
@@ -146,11 +120,53 @@ export async function signIndividualContract(formData: FormData) {
         return { error: "テンプレート内容が取得できませんでした" };
     }
 
+    function replaceVariables(content: string) {
+        let result = content;
+        // @ts-ignore
+        const worker = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
+        if (worker) {
+            result = result
+                .replace(/{{worker_name}}/g, worker.full_name || "")
+                .replace(/{{worker_address}}/g, worker.address || "");
+        }
+        if (company) {
+            result = result
+                .replace(/{{company_name}}/g, company.name || "")
+                .replace(/{{company_address}}/g, company.address || "")
+                .replace(/{{company_rep}}/g, company.representative_name || "");
+        }
+
+        const app = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
+        const jobData = app?.jobs;
+        if (jobData) {
+            result = result
+                .replace(/{{job_title}}/g, jobData.title || "")
+                .replace(/{{reward_amount}}/g, Math.round(jobData.reward_amount || 0).toLocaleString())
+                .replace(/{{start_time}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{start_date}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{end_time}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{end_date}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{address}}/g, jobData.address_text || "");
+        }
+
+        // Date Variables
+        result = result.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+            const today = new Date();
+            if (p2) {
+                today.setDate(today.getDate() + parseInt(p2, 10));
+            }
+            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
+        return result;
+    }
+
+    const finalContent = replaceVariables(templateContent);
+
     // Update contract status
-    const { error } = await supabase
+    const { error: updateError } = await supabase
         .from("job_individual_contracts")
         .update({
-            signed_content_snapshot: templateContent,
+            signed_content_snapshot: finalContent,
             signed_at: new Date().toISOString(),
             ip_address: ip,
             user_agent: userAgent,
@@ -159,8 +175,8 @@ export async function signIndividualContract(formData: FormData) {
         })
         .eq("id", contractId);
 
-    if (error) {
-        console.error("Signing error:", error);
+    if (updateError) {
+        console.error("Signing error:", updateError);
         return { error: "署名に失敗しました" };
     }
 

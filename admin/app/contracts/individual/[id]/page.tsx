@@ -60,22 +60,54 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         }
     }
 
-    // Determine job: Only exists if linked via application
-    // @ts-ignore
-    const job = contract.job_applications?.jobs;
-
     if (!worker) {
         return (
             <AdminLayout>
                 <div className="p-8 text-center space-y-4">
                     <div className="text-red-500 font-bold">ワーカー情報が見つかりません。</div>
-                    <div className="text-sm text-slate-500 max-w-sm mx-auto">
-                        この契約書にはワーカーが紐付けられていないか、DBのマイグレーション（worker_idカラムの追加）が完了していない可能性があります。
-                    </div>
                 </div>
             </AdminLayout>
         );
     }
+
+    // --- Variable Replacement for Display (for legacy data) ---
+    function replaceVariables(text: string) {
+        if (!text) return "";
+        let result = text;
+
+        // Use available data
+        result = result
+            .replace(/{{worker_name}}/g, worker.full_name || "")
+            .replace(/{{worker_address}}/g, worker.address || "")
+            .replace(/{{company_name}}/g, company?.name || "")
+            .replace(/{{company_address}}/g, company?.address || "")
+            .replace(/{{company_rep}}/g, company?.representative_name || "");
+
+        if (job) {
+            result = result
+                .replace(/{{job_title}}/g, job.title || "")
+                .replace(/{{reward_amount}}/g, Math.round(job.reward_amount || 0).toLocaleString())
+                .replace(/{{start_time}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{start_date}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{end_time}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{end_date}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP') : "");
+        }
+
+        // Date Variables (using signed_at if available, else today)
+        const baseDate = contract.signed_at ? new Date(contract.signed_at) : new Date();
+        result = result.replace(/{{TODAY(\+(\d+))?}}/g, (match: string, p1: string, p2: string) => {
+            const date = new Date(baseDate);
+            if (p2) {
+                date.setDate(date.getDate() + parseInt(p2, 10));
+            }
+            return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
+
+        return result;
+    }
+
+    const displayContent = replaceVariables(contract.signed_content_snapshot);
+
 
     return (
         <AdminLayout>
@@ -110,7 +142,14 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                     {/* Main Content: The Contract Text */}
                     <div className="lg:col-span-2 space-y-6 print:w-full">
                         <div className="bg-white p-8 rounded-xl border border-border shadow-sm print:shadow-none print:border-none print:p-0">
-                            <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+                            {/* PDF Formal Title (Only visible in print) */}
+                            <div className="hidden print:block text-center mb-12">
+                                <h1 className="text-3xl font-bold tracking-widest underline underline-offset-8">
+                                    {contract.contract_templates?.title || "個別契約書"}
+                                </h1>
+                            </div>
+
+                            <div className="flex items-center justify-between border-b border-border pb-4 mb-6 print:hidden">
                                 <div className="flex items-center gap-3">
                                     <FileSignature className="w-8 h-8 text-slate-900" />
                                     <div>
@@ -176,9 +215,9 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                 </div>
                             )}
 
-                            <div className="prose prose-sm max-w-none prose-slate print:prose-base">
+                            <div className="prose prose-sm max-w-none prose-slate print:prose-base print:text-black">
                                 <div className="whitespace-pre-wrap font-serif leading-relaxed p-4 bg-slate-50 rounded border border-slate-100 print:bg-white print:border-none print:p-0">
-                                    {contract.signed_content_snapshot || "署名されたコンテンツはありません"}
+                                    {displayContent || "署名されたコンテンツはありません"}
                                 </div>
                             </div>
 
@@ -209,10 +248,10 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                         </div>
 
                                         {contract.party_a_signed_at && (
-                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-200 rounded-full flex items-center justify-center text-red-300 font-serif transform -rotate-12 select-none pointer-events-none opacity-80">
+                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 font-serif transform -rotate-12 select-none pointer-events-none opacity-80 print:opacity-100 print:border-red-600 print:text-red-600">
                                                 <div className="text-center">
-                                                    <span className="block text-xs">電子署名済</span>
-                                                    <span className="block text-xs mt-1">{formatDate(contract.party_a_signed_at)}</span>
+                                                    <span className="block text-xs font-bold">電子署名済</span>
+                                                    <span className="block text-xs mt-1 font-bold">{formatDate(contract.party_a_signed_at)}</span>
                                                 </div>
                                             </div>
                                         )}
@@ -230,17 +269,17 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                                 <p className="text-xs text-muted-foreground mb-1">氏名</p>
                                                 <p className="font-bold">{worker.full_name}</p>
                                             </div>
-                                            <div>
+                                            <div className="print:hidden">
                                                 <p className="text-xs text-muted-foreground mb-1">メールアドレス</p>
                                                 <p className="text-sm font-mono">{worker.email}</p>
                                             </div>
                                         </div>
 
                                         {contract.status === 'SIGNED' && (
-                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-200 rounded-full flex items-center justify-center text-red-300 font-serif transform -rotate-12 select-none pointer-events-none opacity-80">
+                                            <div className="absolute top-1/2 right-0 md:right-4 -translate-y-1/2 h-24 w-24 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 font-serif transform -rotate-12 select-none pointer-events-none opacity-80 print:opacity-100 print:border-red-600 print:text-red-600">
                                                 <div className="text-center">
-                                                    <span className="block text-xs">電子署名済</span>
-                                                    <span className="block text-xs mt-1">{formatDate(contract.signed_at)}</span>
+                                                    <span className="block text-xs font-bold">電子署名済</span>
+                                                    <span className="block text-xs mt-1 font-bold">{formatDate(contract.signed_at)}</span>
                                                 </div>
                                             </div>
                                         )}
