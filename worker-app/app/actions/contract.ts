@@ -120,7 +120,7 @@ export async function signIndividualContract(formData: FormData) {
         .from("job_individual_contracts")
         .select(`
             template_id, 
-            contract_templates(content_template),
+            contract_templates(title, content_template),
             worker:workers!worker_id(full_name),
             job_applications!application_id(
                 jobs(title)
@@ -170,18 +170,14 @@ export async function signIndividualContract(formData: FormData) {
         const worker = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
         const workerName = worker?.full_name || "不明なワーカー";
 
-        const appFromSource = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
         // @ts-ignore
-        const appFromLink = Array.isArray(contract.linked_applications) ? contract.linked_applications[0] : contract.linked_applications;
-
-        const rawJob = appFromSource?.jobs || appFromLink?.jobs;
-        const job = Array.isArray(rawJob) ? rawJob[0] : rawJob;
-        const jobTitle = job?.title || "不明な案件";
+        const template = Array.isArray(contract.contract_templates) ? contract.contract_templates[0] : contract.contract_templates;
+        const contractName = template?.title || "不明な契約";
 
         const adminAppUrl = process.env.ADMIN_APP_URL || "https://admin.teo-work.com";
         const detailUrl = `${adminAppUrl}/contracts/individual/${contractId}`;
 
-        await sendSlackNotification(`<!here> 🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*案件:* ${jobTitle}\n\nワーカーが個別契約に署名しました。\n詳細はこちら: ${detailUrl}`);
+        await sendSlackNotification(`<!here> 🤝 *個別契約締結のお知らせ*\n\n*ワーカー:* ${workerName}\n*契約名:* ${contractName}\n\nワーカーが個別契約に署名しました。\n詳細はこちら: ${detailUrl}`);
     } catch (slackError) {
         console.error("Failed to send Slack notification:", slackError);
     }

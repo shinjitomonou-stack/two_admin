@@ -17,6 +17,7 @@ export async function sendWorkerContractNotification(contractId: string) {
             .select(`
                 *,
                 worker:workers!worker_id (full_name, line_id, line_user_id),
+                contract_templates (title),
                 job_applications!application_id (
                     jobs (title)
                 ),
@@ -38,13 +39,9 @@ export async function sendWorkerContractNotification(contractId: string) {
 
         if (!worker) throw new Error("No worker found");
 
-        const appFromSource = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
         // @ts-ignore
-        const appFromLink = Array.isArray(contract.linked_applications) ? contract.linked_applications[0] : contract.linked_applications;
-
-        const rawJob = appFromSource?.jobs || appFromLink?.jobs;
-        const job = Array.isArray(rawJob) ? rawJob[0] : rawJob;
-        const jobTitle = job?.title || "未設定";
+        const template = Array.isArray(contract.contract_templates) ? contract.contract_templates[0] : contract.contract_templates;
+        const contractName = template?.title || "個別契約書";
 
         // @ts-ignore
         const lineUserId = worker.line_id || worker.line_user_id;
@@ -59,7 +56,7 @@ export async function sendWorkerContractNotification(contractId: string) {
         // 2. Send LINE message
         // Add ?openExternalBrowser=1 to force opening in external browser (Safari/Chrome)
         const contractUrl = `${WORKER_APP_URL}/contracts/individual/${contractId}?openExternalBrowser=1`;
-        const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n案件「${jobTitle}」に関する個別契約書が発行されました。\n\n以下のURLより内容をご確認の上、署名をお願いいたします。\n${contractUrl}`;
+        const message = `【契約書確認のお願い】\n\n${worker.full_name}様\n\n「${contractName}」が発行されました。\n\n以下のURLより内容をご確認の上、署名をお願いいたします。\n${contractUrl}`;
 
         const result = await sendLineMessage(lineUserId, message);
 
