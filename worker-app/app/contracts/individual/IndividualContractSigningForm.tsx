@@ -19,7 +19,7 @@ export default function IndividualContractSigningForm({ contractId }: Props) {
         setIsSubmitting(true);
         try {
             const formData = new FormData();
-            formData.append("contract_id", contractId);
+            formData.append("contractId", contractId);
 
             const result = await signIndividualContract(formData);
             if (result?.error) {
