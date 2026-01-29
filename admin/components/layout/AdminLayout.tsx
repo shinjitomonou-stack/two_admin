@@ -154,7 +154,7 @@ function AdminLayoutContent({
         <div className="min-h-screen bg-muted/30 flex">
             {/* Sidebar */}
             <aside className={cn(
-                "fixed inset-y-0 left-0 z-50 w-64 bg-primary border-r border-primary/20 transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-lg",
+                "fixed inset-y-0 left-0 z-50 w-64 bg-primary border-r border-primary/20 transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-lg print:hidden",
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 <div className="h-24 flex items-center justify-center border-b border-primary-foreground/10 mb-4 px-6">
@@ -273,9 +273,9 @@ function AdminLayoutContent({
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+            <div className="flex-1 flex flex-col min-w-0 lg:ml-64 print:ml-0">
                 {/* Mobile Header */}
-                <header className="lg:hidden h-16 flex items-center px-4 border-b border-border bg-white dark:bg-slate-900">
+                <header className="lg:hidden h-16 flex items-center px-4 border-b border-border bg-white dark:bg-slate-900 print:hidden">
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="p-2 -ml-2 rounded-md hover:bg-muted"
@@ -285,7 +285,7 @@ function AdminLayoutContent({
                     <span className="ml-3 font-bold">Teo Admin</span>
                 </header>
 
-                <main className="flex-1 p-6 lg:p-8 overflow-auto">
+                <main className="flex-1 p-6 lg:p-8 overflow-auto print:p-0">
                     <div className="max-w-6xl mx-auto">
                         {children}
                     </div>
@@ -295,7 +295,7 @@ function AdminLayoutContent({
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                    className="fixed inset-0 z-40 bg-black/50 lg:hidden print:hidden"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}

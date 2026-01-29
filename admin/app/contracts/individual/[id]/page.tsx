@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import StatusChanger from "@/components/StatusChanger";
 import WorkerContractNotificationButton from "@/components/contracts/WorkerContractNotificationButton";
+import DownloadContractPDFButton from "@/components/contracts/DownloadContractPDFButton";
 
 export default async function IndividualContractDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -83,7 +84,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                 <div className="flex items-center gap-4">
                     <Link
                         href="/contracts?tab=individual"
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors print:hidden"
                     >
                         <ArrowLeft className="w-5 h-5 text-slate-500" />
                     </Link>
@@ -95,7 +96,8 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                         </div>
                         <p className="text-muted-foreground text-xs font-mono mt-1">ID: {contract.id}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 print:hidden">
+                        <DownloadContractPDFButton />
                         <WorkerContractNotificationButton
                             contractId={id}
                             // @ts-ignore
@@ -104,10 +106,10 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                     </div>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-6 lg:grid-cols-3 print:block print:space-y-6">
                     {/* Main Content: The Contract Text */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
+                    <div className="lg:col-span-2 space-y-6 print:w-full">
+                        <div className="bg-white p-8 rounded-xl border border-border shadow-sm print:shadow-none print:border-none print:p-0">
                             <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
                                 <div className="flex items-center gap-3">
                                     <FileSignature className="w-8 h-8 text-slate-900" />
@@ -174,8 +176,8 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                 </div>
                             )}
 
-                            <div className="prose prose-sm max-w-none prose-slate">
-                                <div className="whitespace-pre-wrap font-serif leading-relaxed p-4 bg-slate-50 rounded border border-slate-100">
+                            <div className="prose prose-sm max-w-none prose-slate print:prose-base">
+                                <div className="whitespace-pre-wrap font-serif leading-relaxed p-4 bg-slate-50 rounded border border-slate-100 print:bg-white print:border-none print:p-0">
                                     {contract.signed_content_snapshot || "署名されたコンテンツはありません"}
                                 </div>
                             </div>
@@ -247,7 +249,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
 
                                 {/* Party A Approval Button */}
                                 {!contract.party_a_signed_at && contract.status === 'SIGNED' && (
-                                    <div className="mt-8 flex justify-center">
+                                    <div className="mt-8 flex justify-center print:hidden">
                                         <form action={async () => {
                                             "use server";
                                             const { approveIndividualContract } = await import("@/app/actions/contract");
@@ -268,8 +270,8 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                     </div>
 
                     {/* Sidebar: Audit Log */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <div className="space-y-6 print:break-before-page print:mt-12">
+                        <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6 print:shadow-none print:border print:border-slate-200">
                             <h3 className="font-semibold text-lg flex items-center gap-2">
                                 <ShieldCheck className="w-5 h-5 text-green-600" />
                                 監査ログ・証跡
@@ -344,7 +346,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                         </div>
 
                         {/* Status Changer */}
-                        <div className="mt-6">
+                        <div className="mt-6 print:hidden">
                             <StatusChanger
                                 contractId={id}
                                 currentStatus={contract.status}
