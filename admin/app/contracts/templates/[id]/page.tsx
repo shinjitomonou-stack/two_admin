@@ -12,6 +12,7 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
     const [id, setId] = useState<string | null>(null);
+    const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -19,19 +20,27 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
         version: "1.0",
         content_template: "",
         is_active: true,
+        client_id: "" as string | null,
     });
 
     useEffect(() => {
-        const fetchTemplate = async () => {
+        const fetchInitialData = async () => {
             const resolvedParams = await params;
             setId(resolvedParams.id);
+            const supabase = createClient();
+
+            // Fetch clients
+            const { data: clientsData } = await supabase
+                .from("clients")
+                .select("id, name")
+                .order("name");
+            if (clientsData) setClients(clientsData);
 
             if (resolvedParams.id === 'create') {
                 setIsFetching(false);
                 return;
             }
 
-            const supabase = createClient();
             const { data, error } = await supabase
                 .from("contract_templates")
                 .select("*")
@@ -52,12 +61,13 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
                     version: data.version,
                     content_template: data.content_template,
                     is_active: data.is_active,
+                    client_id: data.client_id || "",
                 });
             }
             setIsFetching(false);
         };
 
-        fetchTemplate();
+        fetchInitialData();
     }, [params, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -66,16 +76,22 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
 
         const supabase = createClient();
 
+        // Sanitize formData for database
+        const payload = {
+            ...formData,
+            client_id: formData.client_id === "" ? null : formData.client_id
+        };
+
         try {
             if (id === 'create') {
                 const { error } = await supabase
                     .from("contract_templates")
-                    .insert([formData]);
+                    .insert([payload]);
                 if (error) throw error;
             } else {
                 const { error } = await supabase
                     .from("contract_templates")
-                    .update(formData)
+                    .update(payload)
                     .eq("id", id);
                 if (error) throw error;
             }
@@ -149,6 +165,22 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
                             >
                                 <option value="BASIC">基本契約 (Basic)</option>
                                 <option value="INDIVIDUAL">個別契約 (Individual)</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">クライアント (任意)</label>
+                            <select
+                                value={formData.client_id || ""}
+                                onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            >
+                                <option value="">共通テンプレート</option>
+                                {clients.map((client) => (
+                                    <option key={client.id} value={client.id}>
+                                        {client.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

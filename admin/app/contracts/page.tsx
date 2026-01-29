@@ -57,7 +57,7 @@ export default async function ContractsPage({
             .from("job_individual_contracts")
             .select(`
                 *,
-                contract_templates(title, version),
+                contract_templates(title, version, client_id, clients(name)),
                 workers(full_name, email),
                 job_applications!application_id(
                     workers(full_name, email),
@@ -259,7 +259,11 @@ export default async function ContractsPage({
                                                             </div>
                                                         </>
                                                     ) : (
-                                                        <span className="text-slate-400 text-xs">-</span>
+                                                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                                            <Building2 className="w-3 h-3" />
+                                                            {/* @ts-ignore */}
+                                                            {contract.contract_templates?.clients?.name || <span className="text-slate-400">共通</span>}
+                                                        </div>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">

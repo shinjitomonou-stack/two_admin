@@ -17,8 +17,6 @@ export default async function IndividualContractDetailPage(props: { params: Prom
         .from("job_individual_contracts")
         .select(`
             *,
-            contract_templates(title, version),
-            workers (id, full_name, email, address, phone),
             job_applications!application_id (
                 id,
                 jobs (
@@ -28,7 +26,8 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                     end_time,
                     clients (name)
                 )
-            )
+            ),
+            contract_templates(title, version, client_id, clients(name))
         `)
         .eq("id", id)
         .single();
@@ -216,8 +215,19 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6 text-sm text-slate-500 flex items-center justify-center">
-                                    案件指定なし（ワーカー個別契約）
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6 space-y-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium border-b border-slate-200 pb-2 mb-2">
+                                        <Building2 className="w-4 h-4 text-slate-500" />
+                                        <span>クライアント/パートナー情報</span>
+                                    </div>
+                                    <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
+                                        <span className="text-slate-500">名称</span>
+                                        {/* @ts-ignore */}
+                                        <span className="font-medium">{contract.contract_templates?.clients?.name || "共通（クライアント指定なし）"}</span>
+                                    </div>
+                                    <div className="pt-2 text-[10px] text-slate-400">
+                                        ※ この契約は特定の案件（ジョブ）に紐付かない個別契約です。
+                                    </div>
                                 </div>
                             )}
 
@@ -400,7 +410,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
                         </div>
                     </div>
                 </div>
-            </div>
-        </AdminLayout>
+            </div >
+        </AdminLayout >
     );
 }

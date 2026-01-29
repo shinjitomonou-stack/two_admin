@@ -19,7 +19,7 @@ export default async function ContractTemplatesPage({
 
     let query = supabase
         .from("contract_templates")
-        .select("*")
+        .select("*, clients(id, name)")
         .order("created_at", { ascending: false });
 
     if (search) {
@@ -68,6 +68,7 @@ export default async function ContractTemplatesPage({
                                 <tr>
                                     <th className="px-6 py-3 font-medium w-32">種別</th>
                                     <th className="px-6 py-3 font-medium">テンプレート名</th>
+                                    <th className="px-6 py-3 font-medium">クライアント</th>
                                     <th className="px-6 py-3 font-medium w-24">バージョン</th>
                                     <th className="px-6 py-3 font-medium w-32 text-center">ステータス</th>
                                     <th className="px-6 py-3 font-medium w-48 text-right">最終更新</th>
@@ -79,8 +80,8 @@ export default async function ContractTemplatesPage({
                                     <tr key={template.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${template.type === 'BASIC'
-                                                    ? 'bg-blue-50 text-blue-700'
-                                                    : 'bg-purple-50 text-purple-700'
+                                                ? 'bg-blue-50 text-blue-700'
+                                                : 'bg-purple-50 text-purple-700'
                                                 }`}>
                                                 <FileText className="w-3 h-3" />
                                                 {template.type === 'BASIC' ? '基本契約' : '個別契約'}
@@ -89,13 +90,17 @@ export default async function ContractTemplatesPage({
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             {template.title}
                                         </td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {/* @ts-ignore */}
+                                            {template.clients?.name || <span className="text-slate-400">共通</span>}
+                                        </td>
                                         <td className="px-6 py-4 font-mono text-slate-500">
                                             v{template.version}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${template.is_active
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-slate-100 text-slate-600'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {template.is_active ? '有効' : '無効'}
                                             </span>

@@ -31,11 +31,13 @@ export default function CreateContractPage() {
 
     const [contractType, setContractType] = useState<"BASIC" | "INDIVIDUAL">("BASIC");
     const [workers, setWorkers] = useState<Worker[]>([]);
+    const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
 
     const [formData, setFormData] = useState({
         worker_id: "",
         template_id: "",
+        client_id: "",
     });
 
     useEffect(() => {
@@ -43,24 +45,49 @@ export default function CreateContractPage() {
             setIsFetching(true);
             const supabase = createClient();
 
-            // Fetch Templates based on type
-            const { data: templatesData } = await supabase
+            // Fetch Clients
+            const { data: clientsData } = await supabase
+                .from("clients")
+                .select("id, name")
+                .order("name");
+            if (clientsData) setClients(clientsData);
+
+            // Fetch Templates based on type and client
+            let query = supabase
                 .from("contract_templates")
                 .select("id, title, version")
                 .eq("type", contractType)
                 .eq("is_active", true)
                 .order("created_at", { ascending: false });
 
+            if (contractType === "INDIVIDUAL") {
+                if (formData.client_id) {
+                    query = query.eq("client_id", formData.client_id);
+                } else {
+                    // If no client selected for individual, maybe show none or only global?
+                    // Let's show only global templates if no client selected.
+                    query = query.is("client_id", null);
+                }
+            } else {
+                // For BASIC, usually global
+                query = query.is("client_id", null);
+            }
+
+            const { data: templatesData } = await query;
+
             if (templatesData) {
                 setTemplates(templatesData);
                 if (templatesData.length > 0) {
-                    setFormData(prev => ({ ...prev, template_id: templatesData[0].id }));
+                    // Only auto-select if current template_id is not in new list
+                    if (!templatesData.find(t => t.id === formData.template_id)) {
+                        setFormData(prev => ({ ...prev, template_id: templatesData[0].id }));
+                    }
                 } else {
                     setFormData(prev => ({ ...prev, template_id: "" }));
                 }
             }
 
-            // Fetch Workers for both contract types
+            // Fetch Workers
             const { data: workersData } = await supabase
                 .from("workers")
                 .select("id, full_name, email")
@@ -71,7 +98,7 @@ export default function CreateContractPage() {
         };
 
         fetchData();
-    }, [contractType]);
+    }, [contractType, formData.client_id]);
 
     // Calculate available workers - No longer needed as we fetch all workers for both types
     // Filter applications - No longer needed
@@ -192,6 +219,24 @@ export default function CreateContractPage() {
                             </label>
                         </div>
                     </div>
+
+                    {/* Client Selection (for Individual Contracts) */}
+                    {contractType === "INDIVIDUAL" && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">クライアント <span className="text-red-500">*</span></label>
+                            <SearchableSelect
+                                required
+                                value={formData.client_id}
+                                onChange={(value) => setFormData(prev => ({ ...prev, client_id: value, template_id: "" }))}
+                                options={clients.map(c => ({
+                                    value: c.id,
+                                    label: c.name
+                                }))}
+                                placeholder="クライアントを選択してください"
+                                searchPlaceholder="クライアント名で検索"
+                            />
+                        </div>
+                    )}
 
                     {/* Combined Worker Selection for both types */}
                     <div className="space-y-2">
