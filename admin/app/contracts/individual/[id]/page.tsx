@@ -13,24 +13,60 @@ export default async function IndividualContractDetailPage(props: { params: Prom
     const id = params.id;
     const supabase = await createClient();
 
-    const { data: contract, error } = await supabase
+    const selectWithJoin = `
+        *,
+        job_applications!application_id (
+            id,
+            jobs (
+                title,
+                reward_amount,
+                start_time,
+                end_time,
+                clients (name)
+            )
+        ),
+        contract_templates(title, version, client_id, clients(name))
+    `;
+
+    const selectWithoutJoin = `
+        *,
+        job_applications!application_id (
+            id,
+            jobs (
+                title,
+                reward_amount,
+                start_time,
+                end_time,
+                clients (name)
+            )
+        ),
+        contract_templates(title, version)
+    `;
+
+    let { data: contract, error } = await supabase
         .from("job_individual_contracts")
-        .select(`
-            *,
-            job_applications!application_id (
-                id,
-                jobs (
-                    title,
-                    reward_amount,
-                    start_time,
-                    end_time,
-                    clients (name)
-                )
-            ),
-            contract_templates(title, version, client_id, clients(name))
-        `)
+        .select(selectWithJoin)
         .eq("id", id)
         .single();
+
+    if (error) {
+        console.error("Error fetching individual contract with join:", error.message || error);
+
+        // Fallback: try without the client join in contract_templates
+        const { data: fallbackData, error: fallbackError } = await supabase
+            .from("job_individual_contracts")
+            .select(selectWithoutJoin)
+            .eq("id", id)
+            .single();
+
+        if (fallbackError) {
+            console.error("Error fetching individual contract (fallback):", fallbackError.message || fallbackError);
+            // If even fallback fails, we probably have a real issue or notFound
+        } else {
+            contract = fallbackData;
+            error = null;
+        }
+    }
 
     const { data: company } = await supabase
         .from("company_settings")

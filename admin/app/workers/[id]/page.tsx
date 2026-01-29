@@ -28,7 +28,10 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .from("job_individual_contracts")
         .select(`
             *,
-            contract_templates(title),
+            contract_templates(
+                title,
+                clients(name)
+            ),
             job_applications!application_id (
                 jobs (title)
             )
@@ -344,8 +347,16 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                     individualContracts.map((contract) => (
                                         <div key={contract.id} className="p-3 bg-slate-50 rounded-lg space-y-2">
                                             <div className="flex items-center justify-between">
-                                                {/* @ts-ignore */}
-                                                <div className="font-medium text-sm">{contract.job_applications?.jobs?.title}</div>
+                                                <div className="flex flex-col">
+                                                    {/* @ts-ignore */}
+                                                    <div className="font-medium text-sm">{contract.job_applications?.jobs?.title || contract.contract_templates?.title}</div>
+                                                    {/* @ts-ignore */}
+                                                    {contract.contract_templates?.clients?.name && (
+                                                        <div className="text-[10px] text-slate-400">
+                                                            クライアント: {contract.contract_templates.clients.name}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-700' :
                                                     contract.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
                                                         'bg-orange-100 text-orange-700'

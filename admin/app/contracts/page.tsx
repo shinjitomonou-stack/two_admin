@@ -53,26 +53,40 @@ export default async function ContractsPage({
             totalCount = count || 0;
         }
     } else {
+        const selectWithJoin = `
+            *,
+            contract_templates(title, version, client_id, clients(name)),
+            workers(full_name, email),
+            job_applications!application_id(
+                workers(full_name, email),
+                jobs(
+                    title,
+                    clients(name)
+                )
+            )
+        `;
+
+        const selectWithoutJoin = `
+            *,
+            contract_templates(title, version),
+            workers(full_name, email),
+            job_applications!application_id(
+                workers(full_name, email),
+                jobs(
+                    title,
+                    clients(name)
+                )
+            )
+        `;
+
         let query = supabase
             .from("job_individual_contracts")
-            .select(`
-                *,
-                contract_templates(title, version, client_id, clients(name)),
-                workers(full_name, email),
-                job_applications!application_id(
-                    workers(full_name, email),
-                    jobs(
-                        title,
-                        clients(name)
-                    )
-                )
-            `, { count: "exact" });
+            .select(selectWithJoin, { count: "exact" });
 
         if (status) {
             query = query.eq("status", status);
         }
         if (search) {
-            // prioritize worker name search for individual contracts
             query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`, { foreignTable: 'workers' });
         }
 
@@ -81,19 +95,32 @@ export default async function ContractsPage({
             .range(from, to);
 
         if (error) {
-            console.error("Error fetching individual contracts:", error.message || error);
-            throw new Error(`Individual Contract Fetch Failed: ${error.message}`);
-        } else {
-            if (data && data.length > 0) {
-                console.log("Available columns in job_individual_contracts:", Object.keys(data[0]));
-            } else {
-                // Try to get one record without filtering to see columns
-                const { data: sample } = await supabase.from("job_individual_contracts").select("*").limit(1);
-                if (sample && sample.length > 0) {
-                    console.log("Sample record columns:", Object.keys(sample[0]));
-                }
+            console.error("Error fetching individual contracts with join:", error.message || error);
+
+            // Fallback: try without the client join in contract_templates
+            let fallbackQuery = supabase
+                .from("job_individual_contracts")
+                .select(selectWithoutJoin, { count: "exact" });
+
+            if (status) {
+                fallbackQuery = fallbackQuery.eq("status", status);
             }
-            console.log(`Fetched ${data?.length || 0} individual contracts.`);
+            if (search) {
+                fallbackQuery = fallbackQuery.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`, { foreignTable: 'workers' });
+            }
+
+            const { data: fallbackData, count: fallbackCount, error: fallbackError } = await fallbackQuery
+                .order("id", { ascending: false })
+                .range(from, to);
+
+            if (fallbackError) {
+                console.error("Error fetching individual contracts (fallback):", fallbackError.message || fallbackError);
+                throw new Error(`Individual Contract Fetch Failed: ${fallbackError.message}`);
+            } else {
+                individualContracts = fallbackData || [];
+                totalCount = fallbackCount || 0;
+            }
+        } else {
             individualContracts = data || [];
             totalCount = count || 0;
         }

@@ -19,8 +19,7 @@ export default async function ContractTemplatesPage({
 
     let query = supabase
         .from("contract_templates")
-        .select("*, clients(id, name)")
-        .order("created_at", { ascending: false });
+        .select("*, clients(id, name)");
 
     if (search) {
         query = query.ilike("title", `%${search}%`);
@@ -34,10 +33,31 @@ export default async function ContractTemplatesPage({
         query = query.eq("type", type);
     }
 
-    const { data: templates, error } = await query;
+    let { data: templates, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
-        console.error("Error fetching templates:", error);
+        console.error("Error fetching templates with join:", error);
+        // Fallback to simple query if join fails (migration might be missing)
+        const fallbackQuery = supabase
+            .from("contract_templates")
+            .select("*");
+
+        if (search) {
+            fallbackQuery.ilike("title", `%${search}%`);
+        }
+        if (status !== undefined) {
+            fallbackQuery.eq("is_active", status === "true");
+        }
+        if (type) {
+            fallbackQuery.eq("type", type);
+        }
+
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery.order("created_at", { ascending: false });
+        if (fallbackError) {
+            console.error("Error fetching templates (fallback):", fallbackError);
+        } else {
+            templates = fallbackData;
+        }
     }
 
     return (
@@ -121,7 +141,7 @@ export default async function ContractTemplatesPage({
                                 ))}
                                 {(!templates || templates.length === 0) && (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                                             テンプレートが見つかりませんでした。
                                         </td>
                                     </tr>
