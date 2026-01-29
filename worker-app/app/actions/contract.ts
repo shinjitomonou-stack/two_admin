@@ -121,9 +121,12 @@ export async function signIndividualContract(formData: FormData) {
         .select(`
             template_id, 
             contract_templates(content_template),
+            worker:workers!worker_id(full_name),
             job_applications!application_id(
-                jobs(title),
-                workers(full_name)
+                jobs(title)
+            ),
+            linked_applications:job_applications!individual_contract_id(
+                jobs(title)
             )
         `)
         .eq("id", contractId)
@@ -163,13 +166,16 @@ export async function signIndividualContract(formData: FormData) {
 
     // Send Slack notification (non-blocking)
     try {
-        const jobApps = contract.job_applications;
-        // Supabase returns an array for 1-to-many relations
-        const app: any = Array.isArray(jobApps) ? jobApps[0] : jobApps;
-
-        const job = app?.jobs;
-        const worker = app?.workers;
+        // @ts-ignore
+        const worker = Array.isArray(contract.worker) ? contract.worker[0] : contract.worker;
         const workerName = worker?.full_name || "不明なワーカー";
+
+        const appFromSource = Array.isArray(contract.job_applications) ? contract.job_applications[0] : contract.job_applications;
+        // @ts-ignore
+        const appFromLink = Array.isArray(contract.linked_applications) ? contract.linked_applications[0] : contract.linked_applications;
+
+        const rawJob = appFromSource?.jobs || appFromLink?.jobs;
+        const job = Array.isArray(rawJob) ? rawJob[0] : rawJob;
         const jobTitle = job?.title || "不明な案件";
 
         const adminAppUrl = process.env.ADMIN_APP_URL || "https://admin.teo-work.com";
