@@ -171,8 +171,8 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                 },
                 body: JSON.stringify({
                     applicationId,
-                    workStart,
-                    workEnd,
+                    workStart: new Date(workStart).toISOString(),
+                    workEnd: new Date(workEnd).toISOString(),
                     reportText,
                     photoUrls: photos,
                     customFields,

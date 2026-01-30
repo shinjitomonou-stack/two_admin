@@ -46,8 +46,8 @@ export async function POST(request: Request) {
             .from("reports")
             .insert({
                 application_id: applicationId,
-                work_start_at: new Date(workStart).toISOString(),
-                work_end_at: new Date(workEnd).toISOString(),
+                work_start_at: workStart,
+                work_end_at: workEnd,
                 report_text: reportText,
                 photo_urls: photoUrls,
                 custom_fields: customFields,
@@ -63,8 +63,8 @@ export async function POST(request: Request) {
         const { error: updateError } = await supabase
             .from("job_applications")
             .update({
-                actual_work_start: new Date(workStart).toISOString(),
-                actual_work_end: new Date(workEnd).toISOString(),
+                actual_work_start: workStart,
+                actual_work_end: workEnd,
             })
             .eq("id", applicationId);
 
