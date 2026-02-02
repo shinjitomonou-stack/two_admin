@@ -41,6 +41,7 @@ export default function JobsPage() {
         clientId: "",
         dateFrom: "",
         dateTo: "",
+        contractStatus: "ALL",
     });
     const router = useRouter();
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
@@ -211,6 +212,14 @@ export default function JobsPage() {
                     return false;
                 }
                 return true;
+            });
+        }
+
+        // Contract status filter
+        if (filters.contractStatus !== "ALL") {
+            filtered = filtered.filter((job) => {
+                const hasContract = !!((job as any).linked_contract || (job as any).client_job_contracts?.length > 0);
+                return filters.contractStatus === "HAS_CONTRACT" ? hasContract : !hasContract;
             });
         }
 
@@ -407,6 +416,10 @@ export default function JobsPage() {
         return assignedApps.every((app: any) => (app.reports?.length || 0) > 0);
     }).length;
 
+    const jobsWithContractCount = filteredJobs.filter(j =>
+        !!((j as any).linked_contract || (j as any).client_job_contracts?.length > 0)
+    ).length;
+
     if (loading) {
         return (
             <AdminLayout>
@@ -461,56 +474,65 @@ export default function JobsPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-5">
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">表示中案件</p>
-                                <p className="text-2xl font-bold mt-1">{totalJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">表示中案件</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1">{totalJobsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <Briefcase className="w-8 h-8 text-blue-500 opacity-20" />
+                            <Briefcase className="w-6 h-6 md:w-8 md:h-8 text-blue-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">配置状況</p>
-                                <p className="text-2xl font-bold mt-1">{assignedCount} / {totalMaxWorkers} <span className="text-sm font-normal text-muted-foreground">名</span></p>
-                                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                                <p className="text-xs font-medium text-muted-foreground">個別契約あり</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1 text-blue-600">{jobsWithContractCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
+                            </div>
+                            <FileText className="w-6 h-6 md:w-8 md:h-8 text-blue-600 opacity-20" />
+                        </div>
+                    </div>
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground">配置状況</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1">{assignedCount} / {totalMaxWorkers} <span className="text-xs font-normal text-muted-foreground">名</span></p>
+                                <div className="w-full bg-slate-100 h-1 rounded-full mt-3 overflow-hidden">
                                     <div
                                         className="bg-green-500 h-full transition-all duration-500"
                                         style={{ width: `${totalMaxWorkers > 0 ? (assignedCount / totalMaxWorkers) * 100 : 0}%` }}
                                     />
                                 </div>
                             </div>
-                            <Users className="w-8 h-8 text-green-500 opacity-20" />
+                            <Users className="w-6 h-6 md:w-8 md:h-8 text-green-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">作業報告提出</p>
-                                <p className="text-2xl font-bold mt-1">{submittedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">作業提出</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1">{submittedReportsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <FileText className="w-8 h-8 text-purple-500 opacity-20" />
+                            <FileText className="w-6 h-6 md:w-8 md:h-8 text-purple-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">承認済み報告</p>
-                                <p className="text-2xl font-bold mt-1">{approvedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">承認済み</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1">{approvedReportsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
+                            <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="p-4 md:p-6 bg-white rounded-xl border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">完了済み案件</p>
-                                <p className="text-2xl font-bold mt-1">{completedJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">完了済み</p>
+                                <p className="text-xl md:text-2xl font-bold mt-1">{completedJobsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <CheckCircle className="w-8 h-8 text-blue-500 opacity-20" />
+                            <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-blue-500 opacity-20" />
                         </div>
                     </div>
                 </div>

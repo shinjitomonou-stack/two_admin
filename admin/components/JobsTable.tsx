@@ -78,6 +78,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                             <th className="px-6 py-3 font-medium">応募数 / 募集人数</th>
                             <th className="px-6 py-3 font-medium">アサイン済み</th>
                             <th className="px-6 py-3 font-medium">報告状況</th>
+                            <th className="px-6 py-3 font-medium text-center">個別契約</th>
                             <th className="px-6 py-3 font-medium">ステータス</th>
                             <th className="px-6 py-3 font-medium text-right">操作</th>
                         </tr>
