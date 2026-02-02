@@ -1,7 +1,8 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { Download, Building2, ChevronRight, ChevronLeft } from "lucide-react";
+import { Download, Building2, ChevronRight, ChevronLeft, ExternalLink, Calendar as CalendarIcon } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -111,8 +112,6 @@ export default function ClientPaymentPage() {
     };
 
     const fetchClientDetails = async (clientId: string) => {
-        // Reuse the logic from fetchPaymentData but filtered by client
-        // Optimizing by passing data would be better but separate fetch is simpler for now
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
         const startDate = `${year}-${month}-01`;
@@ -120,7 +119,7 @@ export default function ClientPaymentPage() {
 
         const { data: contracts } = await supabase
             .from('client_job_contracts')
-            .select('*, jobs(title)')
+            .select('*, jobs(id, title)')
             .eq('trading_type', 'PLACING')
             .eq('client_id', clientId)
             .lte('start_date', endDate)
@@ -308,22 +307,49 @@ export default function ClientPaymentPage() {
                                         <h4 className="font-bold mb-3">【対象契約一覧】</h4>
                                         <div className="space-y-2">
                                             {clientDetails.contracts.map((contract: any) => (
-                                                <div key={contract.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                                    <div>
-                                                        <div className="font-medium">{contract.title}</div>
-                                                        <div className="text-xs text-muted-foreground flex gap-2">
-                                                            <span className={contract.billing_cycle === 'ONCE' ? 'text-orange-600 font-bold' : 'text-blue-600'}>
-                                                                {contract.billing_cycle === 'ONCE' ? 'スポット(ONCE)' :
-                                                                    contract.billing_cycle === 'MONTHLY' ? '月次' :
-                                                                        contract.billing_cycle === 'QUARTERLY' ? '四半期' :
-                                                                            contract.billing_cycle === 'YEARLY' ? '年次' : contract.billing_cycle}
-                                                            </span>
-                                                            <span>
-                                                                {contract.jobs?.title && `案件: ${contract.jobs.title}`}
-                                                            </span>
+                                                <div key={contract.id} className="p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors shadow-sm group">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div className="space-y-1 flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${contract.billing_cycle === 'ONCE' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                                                                    }`}>
+                                                                    {contract.billing_cycle === 'ONCE' ? 'スポット' : '継続'}
+                                                                </span>
+                                                                <h5 className="font-bold text-slate-900 leading-tight">
+                                                                    {contract.title}
+                                                                </h5>
+                                                            </div>
+                                                            {contract.jobs?.title && (
+                                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-0.5">
+                                                                    <Building2 className="w-3 h-3" />
+                                                                    <span>案件: {contract.jobs.title}</span>
+                                                                    <Link
+                                                                        href={`/jobs/${contract.jobs.id}`}
+                                                                        className="ml-1 text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                                                                    >
+                                                                        詳細 <ExternalLink className="w-3 h-3" />
+                                                                    </Link>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-1">
+                                                                <CalendarIcon className="w-3 h-3" />
+                                                                <span>
+                                                                    {contract.billing_cycle === 'ONCE'
+                                                                        ? `${contract.start_date} (実施日)`
+                                                                        : `${contract.start_date} 〜 ${contract.end_date || '未設定 (継続)'}`
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="font-bold text-slate-900">
+                                                                ¥{Math.round(parseFloat(contract.contract_amount || 0)).toLocaleString()}
+                                                            </div>
+                                                            <div className="text-[10px] text-muted-foreground">
+                                                                (税抜)
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div className="font-medium">¥{Math.round(parseFloat(contract.contract_amount || 0)).toLocaleString()}</div>
                                                 </div>
                                             ))}
                                         </div>
