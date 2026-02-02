@@ -18,6 +18,7 @@ import { JobCopyDialog } from "@/components/JobCopyDialog";
 import { FileUp, Download, FileEdit } from "lucide-react";
 
 import { JobsTable, Job } from "@/components/JobsTable";
+import { MonthNavigator } from "@/components/MonthNavigator";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -33,6 +34,14 @@ export default function JobsPage() {
     const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
     const [jobToCopy, setJobToCopy] = useState<{ id: string; title: string; address_text: string; assignedWorkerIds: string[]; start_time: string; end_time: string } | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [currentFilters, setCurrentFilters] = useState<FilterState>({
+        search: "",
+        status: [],
+        clientId: "",
+        dateFrom: "",
+        dateTo: "",
+    });
     const router = useRouter();
     const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
@@ -81,8 +90,9 @@ export default function JobsPage() {
             console.error("Error fetching jobs:", jobsRes.error);
         } else {
             console.log(`Fetched ${jobsRes.data?.length || 0} jobs`);
-            setJobs(jobsRes.data || []);
-            setFilteredJobs(jobsRes.data || []);
+            const allJobs = jobsRes.data || [];
+            setJobs(allJobs);
+            setFilteredJobs(applyFilters(allJobs, currentFilters, selectedDate));
         }
 
         if (clientsRes.error) {
@@ -94,8 +104,35 @@ export default function JobsPage() {
         setLoading(false);
     };
 
-    const handleFilterChange = (filters: FilterState) => {
-        let filtered = [...jobs];
+    const applyFilters = (jobsToFilter: Job[], filters: FilterState, date: Date) => {
+        let filtered = [...jobsToFilter];
+
+        // Month filter (Default)
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+        filtered = filtered.filter(job => {
+            const applications = job.job_applications || [];
+
+            // If there are applications, check if any intersect with the selected month
+            if (applications.length > 0) {
+                return applications.some(app => {
+                    if (!app.scheduled_work_start) return false;
+                    const appDate = new Date(app.scheduled_work_start);
+                    return appDate >= firstDayOfMonth && appDate <= lastDayOfMonth;
+                });
+            }
+
+            // Fallback to start_time if no applications
+            if (job.start_time) {
+                const jobDate = new Date(job.start_time);
+                return jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
+            }
+
+            return false;
+        });
 
         // Search filter
         if (filters.search) {
@@ -163,8 +200,21 @@ export default function JobsPage() {
             });
         }
 
+        return filtered;
+    };
+
+    const handleFilterChange = (filters: FilterState) => {
+        setCurrentFilters(filters);
+        const filtered = applyFilters(jobs, filters, selectedDate);
         setFilteredJobs(filtered);
-        setCurrentPage(1); // Reset to first page when filters change
+        setCurrentPage(1);
+    };
+
+    const handleDateChange = (date: Date) => {
+        setSelectedDate(date);
+        const filtered = applyFilters(jobs, currentFilters, date);
+        setFilteredJobs(filtered);
+        setCurrentPage(1);
     };
 
     const handleExportCSV = () => {
@@ -450,6 +500,9 @@ export default function JobsPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Monthly Navigation */}
+                <MonthNavigator currentDate={selectedDate} onChange={handleDateChange} />
 
                 {/* Filters */}
                 <JobFilters onFilterChange={handleFilterChange} clients={clients} />
