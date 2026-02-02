@@ -261,6 +261,16 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             <span className="text-xs text-slate-400">-</span>
                                         )}
                                     </td>
+                                    <td className="px-6 py-4 text-center">
+                                        {(job as any).linked_contract || (job as any).client_job_contracts?.length > 0 ? (
+                                            <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs font-bold border border-blue-100">
+                                                <FileText className="w-3 h-3" />
+                                                あり
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-300">-</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <select
                                             value={job.status}
