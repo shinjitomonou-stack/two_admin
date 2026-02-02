@@ -33,6 +33,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         clientId: "",
         dateFrom: "",
         dateTo: "",
+        contractStatus: 'ALL',
     });
 
     const router = useRouter();
@@ -141,6 +142,12 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         }
         if (filters.clientId) {
             filtered = filtered.filter(j => (j as any).clients?.id === filters.clientId || (j as any).client_id === filters.clientId);
+        }
+        if (filters.contractStatus !== "ALL") {
+            filtered = filtered.filter((job) => {
+                const hasContract = !!((job as any).linked_contract || (job as any).client_job_contracts?.length > 0);
+                return filters.contractStatus === "HAS_CONTRACT" ? hasContract : !hasContract;
+            });
         }
         setFilteredJobs(filtered);
     }, [jobs, currentFilters]);
