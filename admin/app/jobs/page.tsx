@@ -107,29 +107,43 @@ export default function JobsPage() {
     const applyFilters = (jobsToFilter: Job[], filters: FilterState, date: Date) => {
         let filtered = [...jobsToFilter];
 
-        // Month filter (Default)
+        // Month filter (Inclusion logic)
         const year = date.getFullYear();
         const month = date.getMonth();
-        const firstDayOfMonth = new Date(year, month, 1);
-        const lastDayOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
         filtered = filtered.filter(job => {
+            const dateCheck = (d: string | null | undefined) => {
+                if (!d) return false;
+                const checkDate = new Date(d);
+                return checkDate >= startOfMonth && checkDate <= endOfMonth;
+            };
+
+            const intervalCheck = (start: string | null | undefined, end: string | null | undefined) => {
+                if (!start || !end) return false;
+                const s = new Date(start);
+                const e = new Date(end);
+                // Overlap: (StartA <= EndB) and (EndA >= StartB)
+                return s <= endOfMonth && e >= startOfMonth;
+            };
+
+            // 1. Check Job Start/End dates (for fixed jobs)
+            if (dateCheck(job.start_time) || dateCheck(job.end_time)) return true;
+            if (intervalCheck(job.start_time, job.end_time)) return true;
+
+            // 2. Check Flexible Work Period
+            if (job.is_flexible && intervalCheck(job.work_period_start, job.work_period_end)) return true;
+
+            // 3. Check any Application dates
             const applications = job.job_applications || [];
+            const hasMatchingApp = applications.some(app =>
+                dateCheck(app.scheduled_work_start)
+            );
+            if (hasMatchingApp) return true;
 
-            // If there are applications, check if any intersect with the selected month
-            if (applications.length > 0) {
-                return applications.some(app => {
-                    if (!app.scheduled_work_start) return false;
-                    const appDate = new Date(app.scheduled_work_start);
-                    return appDate >= firstDayOfMonth && appDate <= lastDayOfMonth;
-                });
-            }
-
-            // Fallback to start_time if no applications
-            if (job.start_time) {
-                const jobDate = new Date(job.start_time);
-                return jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
-            }
+            // 4. Check Creation Date (Optional fallback? Maybe not, usually jobs have dates above)
+            // if (dateCheck(job.created_at)) return true;
 
             return false;
         });
