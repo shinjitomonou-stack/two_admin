@@ -71,25 +71,31 @@ function CreateJobForm() {
     // Helper to calculate total reward and billing
     useEffect(() => {
         if (formData.rewardType === 'UNIT') {
-            let unitPrice = parseFloat(formData.rewardUnitPrice) || 0;
+            const unitPrice = parseFloat(formData.rewardUnitPrice) || 0;
+            const billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
             const quantity = parseFloat(formData.rewardQuantity) || 0;
 
-            // If input is tax-inclusive, convert to exclusive for the base calculation
+            // Calculate reward
+            let rewardTotal;
             if (formData.rewardTaxMode === 'INCL') {
-                unitPrice = Math.ceil((unitPrice / 1.1) * 100) / 100;
+                // Round total first, then extract base
+                rewardTotal = Math.round(unitPrice * quantity) / 1.1;
+            } else {
+                rewardTotal = unitPrice * quantity;
             }
-            const rewardTotal = Math.round(unitPrice * quantity);
 
-            let billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
+            // Calculate billing
+            let billingTotal;
             if (formData.billingTaxMode === 'INCL') {
-                billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
+                billingTotal = Math.round(billingUnitPrice * quantity) / 1.1;
+            } else {
+                billingTotal = billingUnitPrice * quantity;
             }
-            const billingTotal = Math.round(billingUnitPrice * quantity);
 
             setFormData(prev => ({
                 ...prev,
-                reward: rewardTotal.toString(),
-                billingAmount: billingTotal > 0 ? billingTotal.toString() : prev.billingAmount
+                reward: Math.round(rewardTotal).toString(),
+                billingAmount: billingTotal > 0 ? Math.round(billingTotal).toString() : prev.billingAmount
             }));
         }
     }, [formData.rewardType, formData.rewardUnitPrice, formData.rewardQuantity, formData.billingUnitPrice, formData.rewardTaxMode, formData.billingTaxMode]);
@@ -134,22 +140,22 @@ function CreateJobForm() {
             }
             // Convert to exclusive if inclusive mode was used for fixed reward
             if (formData.rewardType === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
+                rewardAmount = Math.round(rewardAmount / 1.1);
             }
 
             let billingAmount = formData.billingAmount ? parseFloat(formData.billingAmount) : null;
             if (billingAmount !== null && formData.rewardType === 'FIXED' && formData.billingTaxMode === 'INCL') {
-                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
+                billingAmount = Math.round(billingAmount / 1.1);
             }
 
             let rewardUnitPrice = formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null;
             if (rewardUnitPrice !== null && formData.rewardTaxMode === 'INCL') {
-                rewardUnitPrice = Math.ceil((rewardUnitPrice / 1.1) * 100) / 100;
+                rewardUnitPrice = rewardUnitPrice / 1.1;
             }
 
             let billingUnitPrice = formData.rewardType === 'UNIT' && formData.billingUnitPrice ? parseFloat(formData.billingUnitPrice) : null;
             if (billingUnitPrice !== null && formData.billingTaxMode === 'INCL') {
-                billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
+                billingUnitPrice = billingUnitPrice / 1.1;
             }
 
             let startDateTime: Date;
@@ -670,21 +676,47 @@ function CreateJobForm() {
                                     <h4 className="text-sm font-semibold mb-3 text-slate-700">見積</h4>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-slate-600">総報酬額:</span>
+                                            <span className="text-slate-600">
+                                                総報酬額 {formData.rewardTaxMode === 'INCL' ? '(税込)' : '(税抜)'}:
+                                            </span>
                                             <span className="font-semibold">
-                                                ¥{(parseInt(formData.reward) * parseInt(formData.maxWorkers)).toLocaleString()}
+                                                ¥{Math.round(
+                                                    formData.rewardType === 'UNIT'
+                                                        ? (parseFloat(formData.rewardUnitPrice) * parseFloat(formData.rewardQuantity) * parseFloat(formData.maxWorkers))
+                                                        : (parseFloat(formData.reward) * parseFloat(formData.maxWorkers))
+                                                ).toLocaleString()}
                                             </span>
                                         </div>
+                                        {formData.rewardTaxMode === 'INCL' && (
+                                            <div className="flex justify-between text-[11px] text-muted-foreground">
+                                                <span>内 税抜額:</span>
+                                                <span>¥{(parseInt(formData.reward) * parseInt(formData.maxWorkers)).toLocaleString()}</span>
+                                            </div>
+                                        )}
+
                                         {formData.billingAmount && (
                                             <>
-                                                <div className="flex justify-between">
-                                                    <span className="text-slate-600">総請求額:</span>
+                                                <div className="flex justify-between pt-1">
+                                                    <span className="text-slate-600">
+                                                        総請求額 {formData.billingTaxMode === 'INCL' ? '(税込)' : '(税抜)'}:
+                                                    </span>
                                                     <span className="font-semibold">
-                                                        ¥{(parseInt(formData.billingAmount) * parseInt(formData.maxWorkers)).toLocaleString()}
+                                                        ¥{Math.round(
+                                                            formData.rewardType === 'UNIT'
+                                                                ? (parseFloat(formData.billingUnitPrice) * parseFloat(formData.rewardQuantity) * parseFloat(formData.maxWorkers))
+                                                                : (parseFloat(formData.billingAmount) * parseFloat(formData.maxWorkers))
+                                                        ).toLocaleString()}
                                                     </span>
                                                 </div>
+                                                {formData.billingTaxMode === 'INCL' && (
+                                                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                                                        <span>内 税抜額:</span>
+                                                        <span>¥{(parseInt(formData.billingAmount) * parseInt(formData.maxWorkers)).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+
                                                 <div className="flex justify-between pt-2 border-t border-slate-300">
-                                                    <span className="text-slate-600">粗利:</span>
+                                                    <span className="text-slate-600 font-medium">粗利 (税抜ベース):</span>
                                                     <span className="font-semibold text-green-600">
                                                         ¥{((parseInt(formData.billingAmount) - parseInt(formData.reward)) * parseInt(formData.maxWorkers)).toLocaleString()}
                                                         {' '}

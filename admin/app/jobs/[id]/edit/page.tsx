@@ -131,19 +131,30 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
     // Recalculate totals when unit/qty changes
     useEffect(() => {
         if (!isFetching && formData.reward_type === 'UNIT') {
-            // Unit price calculation with Tax Mode
-            let unitPrice = parseFloat(formData.reward_unit_price) || 0;
-            let billingUnitPrice = parseFloat(formData.billing_unit_price) || 0;
+            const unitPrice = parseFloat(formData.reward_unit_price) || 0;
+            const billingUnitPrice = parseFloat(formData.billing_unit_price) || 0;
             const quantity = parseFloat(formData.reward_quantity) || 0;
 
-            if (formData.rewardTaxMode === 'INCL') unitPrice = Math.ceil((unitPrice / 1.1) * 100) / 100;
-            if (formData.billingTaxMode === 'INCL') billingUnitPrice = Math.ceil((billingUnitPrice / 1.1) * 100) / 100;
+            // Calculate reward base for DB
+            let rewardTotal;
+            if (formData.rewardTaxMode === 'INCL') {
+                rewardTotal = Math.round(unitPrice * quantity) / 1.1;
+            } else {
+                rewardTotal = unitPrice * quantity;
+            }
 
-            const newReward = Math.round(unitPrice * quantity);
-            const newBilling = Math.round(billingUnitPrice * quantity);
+            // Calculate billing base for DB
+            let billingTotal;
+            if (formData.billingTaxMode === 'INCL') {
+                billingTotal = Math.round(billingUnitPrice * quantity) / 1.1;
+            } else {
+                billingTotal = billingUnitPrice * quantity;
+            }
+
+            const newReward = Math.round(rewardTotal);
+            const newBilling = Math.round(billingTotal);
 
             // Avoid infinite loop by only updating if values are different
-            // Compare as numbers to handle decimal precision diffs if any, but store as string
             const currentReward = parseFloat(formData.reward_amount) || 0;
             const currentBilling = parseFloat(formData.billing_amount) || 0;
 
@@ -178,16 +189,16 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
 
             // Handle Tax Mode Conversions
             if (formData.reward_type === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                reward_amount = Math.ceil((reward_amount / 1.1) * 100) / 100;
+                reward_amount = Math.round(reward_amount / 1.1);
             }
             if (formData.reward_type === 'FIXED' && formData.billing_amount && formData.billingTaxMode === 'INCL') {
-                billing_amount = Math.ceil((billing_amount / 1.1) * 100) / 100;
+                billing_amount = Math.round(billing_amount / 1.1);
             }
             if (formData.reward_type === 'UNIT' && reward_unit_price !== null && formData.rewardTaxMode === 'INCL') {
-                reward_unit_price = Math.ceil((reward_unit_price / 1.1) * 100) / 100;
+                reward_unit_price = reward_unit_price / 1.1;
             }
             if (formData.reward_type === 'UNIT' && billing_unit_price !== null && formData.billingTaxMode === 'INCL') {
-                billing_unit_price = Math.ceil((billing_unit_price / 1.1) * 100) / 100;
+                billing_unit_price = billing_unit_price / 1.1;
             }
 
             const result = await updateJob(id!, {
@@ -509,25 +520,51 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                             <h4 className="text-sm font-semibold mb-3 text-slate-700">見積</h4>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-600">総報酬額:</span>
+                                    <span className="text-slate-600">
+                                        総報酬額 {formData.rewardTaxMode === 'INCL' ? '(税込)' : '(税抜)'}:
+                                    </span>
                                     <span className="font-semibold">
-                                        ¥{Math.round(parseFloat(formData.reward_amount) * parseFloat(formData.max_workers)).toLocaleString()}
+                                        ¥{Math.round(
+                                            formData.reward_type === 'UNIT'
+                                                ? (parseFloat(formData.reward_unit_price) * parseFloat(formData.reward_quantity) * parseFloat(formData.max_workers))
+                                                : (parseFloat(formData.reward_amount) * parseFloat(formData.max_workers))
+                                        ).toLocaleString()}
                                     </span>
                                 </div>
+                                {formData.rewardTaxMode === 'INCL' && (
+                                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                                        <span>内 税抜額:</span>
+                                        <span>¥{(parseInt(formData.reward_amount) * parseInt(formData.max_workers)).toLocaleString()}</span>
+                                    </div>
+                                )}
+
                                 {parseFloat(formData.billing_amount) > 0 && (
                                     <>
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-600">総請求額:</span>
+                                        <div className="flex justify-between pt-1">
+                                            <span className="text-slate-600">
+                                                総請求額 {formData.billingTaxMode === 'INCL' ? '(税込)' : '(税抜)'}:
+                                            </span>
                                             <span className="font-semibold">
-                                                ¥{Math.round(parseFloat(formData.billing_amount) * parseFloat(formData.max_workers)).toLocaleString()}
+                                                ¥{Math.round(
+                                                    formData.reward_type === 'UNIT'
+                                                        ? (parseFloat(formData.billing_unit_price) * parseFloat(formData.reward_quantity) * parseFloat(formData.max_workers))
+                                                        : (parseFloat(formData.billing_amount) * parseFloat(formData.max_workers))
+                                                ).toLocaleString()}
                                             </span>
                                         </div>
+                                        {formData.billingTaxMode === 'INCL' && (
+                                            <div className="flex justify-between text-[11px] text-muted-foreground">
+                                                <span>内 税抜額:</span>
+                                                <span>¥{(parseInt(formData.billing_amount) * parseInt(formData.max_workers)).toLocaleString()}</span>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between pt-2 border-t border-slate-300">
-                                            <span className="text-slate-600">粗利:</span>
+                                            <span className="text-slate-600 font-medium">粗利 (税抜ベース):</span>
                                             <span className="font-semibold text-green-600">
-                                                ¥{Math.round((parseFloat(formData.billing_amount) - parseFloat(formData.reward_amount)) * parseFloat(formData.max_workers)).toLocaleString()}
+                                                ¥{((parseInt(formData.billing_amount) - parseInt(formData.reward_amount)) * parseInt(formData.max_workers)).toLocaleString()}
                                                 {' '}
-                                                ({Math.round(((parseFloat(formData.billing_amount) - parseFloat(formData.reward_amount)) / parseFloat(formData.billing_amount)) * 100)}%)
+                                                ({Math.round(((parseInt(formData.billing_amount) - parseInt(formData.reward_amount)) / parseInt(formData.billing_amount)) * 100)}%)
                                             </span>
                                         </div>
                                     </>
