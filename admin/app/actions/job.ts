@@ -101,6 +101,8 @@ export async function duplicateJob(
         workerIds?: string[];
         start_time?: string;
         end_time?: string;
+        work_period_start?: string;
+        work_period_end?: string;
     }
 ) {
     await verifyAdmin();
@@ -124,8 +126,20 @@ export async function duplicateJob(
             address_text: options?.address_text || job.address_text,
             start_time: options?.start_time || job.start_time,
             end_time: options?.end_time || job.end_time,
+            work_period_start: options?.work_period_start || job.work_period_start,
+            work_period_end: options?.work_period_end || job.work_period_end,
             status: "DRAFT", // Reset to draft for safety
         };
+
+        // Sync work period for flexible jobs if not explicitly provided
+        if (payload.is_flexible) {
+            if (options?.start_time && !options?.work_period_start) {
+                payload.work_period_start = options.start_time;
+            }
+            if (options?.end_time && !options?.work_period_end) {
+                payload.work_period_end = options.end_time;
+            }
+        }
 
         const { data: newJob, error: insertError } = await supabase
             .from("jobs")

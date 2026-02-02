@@ -123,7 +123,7 @@ export default function ClientPaymentPage() {
 
         const { data: contracts, error } = await supabase
             .from('client_job_contracts')
-            .select('*, jobs(id, title)')
+            .select('*, jobs!job_id(id, title)')
             .eq('trading_type', 'PLACING')
             .eq('client_id', clientId)
             .lte('start_date', endDate)

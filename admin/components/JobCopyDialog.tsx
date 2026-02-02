@@ -18,6 +18,7 @@ type JobCopyDialogProps = {
     defaultStartDate?: string; // ISO string
     defaultEndDate?: string;   // ISO string
     assignedWorkerIds: string[];
+    isFlexible?: boolean;
 };
 
 export function JobCopyDialog({
@@ -29,6 +30,7 @@ export function JobCopyDialog({
     defaultStartDate,
     defaultEndDate,
     assignedWorkerIds,
+    isFlexible = false,
 }: JobCopyDialogProps) {
     const [title, setTitle] = useState(defaultTitle);
     const [address, setAddress] = useState(defaultAddress);
@@ -88,7 +90,7 @@ export function JobCopyDialog({
                 setStartDate(`${y}-${m}-${d}`);
                 setStartTime("09:00");
                 setEndDate(`${y}-${m}-${d}`);
-                setEndTime("18:00");
+                setEndTime(isFlexible ? "23:59" : "18:00");
             }
 
             fetchWorkers();
@@ -200,7 +202,7 @@ export function JobCopyDialog({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium flex items-center gap-1">
-                                    <Calendar className="w-3.5 h-3.5" /> 開始日時
+                                    <Calendar className="w-3.5 h-3.5" /> {isFlexible ? "期間開始日" : "開始日時"}
                                 </label>
                                 <div className="flex gap-2">
                                     <input
@@ -219,7 +221,7 @@ export function JobCopyDialog({
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium flex items-center gap-1">
-                                    <Calendar className="w-3.5 h-3.5" /> 終了日時
+                                    <Calendar className="w-3.5 h-3.5" /> {isFlexible ? "期間終了日" : "終了日時"}
                                 </label>
                                 <div className="flex gap-2">
                                     <input

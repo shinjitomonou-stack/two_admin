@@ -21,6 +21,7 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
         address_text: string;
         start_time: string;
         end_time: string;
+        is_flexible: boolean;
         assignedWorkerIds: string[];
     } | null>(null);
     const router = useRouter();
@@ -31,7 +32,7 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
         // Fetch job details
         const { data: job } = await supabase
             .from("jobs")
-            .select("title, address_text, start_time, end_time")
+            .select("*")
             .eq("id", jobId)
             .single();
 
@@ -48,6 +49,7 @@ export function JobDetailActions({ jobId }: JobDetailActionsProps) {
                 address_text: job.address_text || "",
                 start_time: job.start_time,
                 end_time: job.end_time,
+                is_flexible: job.is_flexible,
                 assignedWorkerIds: applications?.map(app => app.worker_id) || [],
             });
         }
