@@ -24,6 +24,7 @@ export default function ClientPaymentPage() {
     });
     const [selectedClient, setSelectedClient] = useState<PaymentData | null>(null);
     const [clientDetails, setClientDetails] = useState<any>(null);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
 
     const handleMoveMonth = (delta: number) => {
         const [year, month] = selectedMonth.split('-').map(Number);
@@ -112,12 +113,15 @@ export default function ClientPaymentPage() {
     };
 
     const fetchClientDetails = async (clientId: string) => {
+        setIsDetailLoading(true);
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
         const startDate = `${year}-${month}-01`;
         const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
 
-        const { data: contracts } = await supabase
+        console.log('Fetching details for client:', clientId, 'Period:', startDate, 'to', endDate);
+
+        const { data: contracts, error } = await supabase
             .from('client_job_contracts')
             .select('*, jobs(id, title)')
             .eq('trading_type', 'PLACING')
@@ -125,15 +129,29 @@ export default function ClientPaymentPage() {
             .lte('start_date', endDate)
             .or(`end_date.is.null,end_date.gte.${startDate}`);
 
+        if (error) {
+            console.error('Error fetching client details:', error);
+            setClientDetails({ contracts: [], error: error.message });
+            setIsDetailLoading(false);
+            return;
+        }
+
+        console.log('Raw contracts fetched:', contracts?.length);
+
         // Filter ONCE contracts again
         const filteredContracts = contracts?.filter((c: any) => {
             if (c.billing_cycle === 'ONCE') {
-                return c.start_date >= startDate && c.start_date <= endDate;
+                const match = c.start_date >= startDate && c.start_date <= endDate;
+                if (!match) console.log('Filtered out ONCE contract due to date:', c.start_date);
+                return match;
             }
             return true;
         });
 
-        setClientDetails({ contracts: filteredContracts });
+        console.log('Filtered contracts:', filteredContracts?.length);
+
+        setClientDetails({ contracts: filteredContracts || [] });
+        setIsDetailLoading(false);
     };
 
     const handleClientClick = (client: PaymentData) => {
@@ -302,10 +320,20 @@ export default function ClientPaymentPage() {
 
                             <div className="p-6 space-y-6">
                                 {/* Contracts List */}
-                                {clientDetails?.contracts && clientDetails.contracts.length > 0 ? (
+                                {isDetailLoading ? (
+                                    <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-sm text-muted-foreground">読み込み中...</p>
+                                    </div>
+                                ) : clientDetails?.error ? (
+                                    <div className="py-8 text-center text-red-600 bg-red-50 rounded-lg border border-red-100 p-4">
+                                        <p className="font-bold">エラーが発生しました</p>
+                                        <p className="text-xs mt-1">{clientDetails.error}</p>
+                                    </div>
+                                ) : clientDetails?.contracts && clientDetails.contracts.length > 0 ? (
                                     <div>
-                                        <h4 className="font-bold mb-3">【対象契約一覧】</h4>
-                                        <div className="space-y-2">
+                                        <h4 className="font-bold mb-3 text-slate-900 border-l-4 border-blue-600 pl-3">対象契約一覧</h4>
+                                        <div className="space-y-3">
                                             {clientDetails.contracts.map((contract: any) => (
                                                 <div key={contract.id} className="p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors shadow-sm group">
                                                     <div className="flex justify-between items-start gap-4">
@@ -355,7 +383,9 @@ export default function ClientPaymentPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-center text-muted-foreground">詳細データがありません</div>
+                                    <div className="py-12 text-center text-muted-foreground bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                                        <p>対象期間の詳細データが見つかりませんでした。</p>
+                                    </div>
                                 )}
 
                                 {/* Total */}
