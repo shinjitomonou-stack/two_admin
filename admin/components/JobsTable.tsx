@@ -50,7 +50,7 @@ export interface Job {
         actual_work_start: string | null;
         workers: { full_name: string } | null;
         worker_id: string;
-        reports?: Array<{ id: string; status: string }>;
+        reports?: Array<{ id: string; status: string; created_at: string }>;
     }>;
 }
 
@@ -64,6 +64,14 @@ interface JobsTableProps {
 
 export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, processingId }: JobsTableProps) {
     const pathname = usePathname();
+
+    const getLatestReport = (reports: Array<{ id: string; status: string; created_at: string }> | undefined) => {
+        if (!reports || reports.length === 0) return null;
+        // Sort by created_at desc (newest first)
+        return [...reports].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+    };
 
     return (
         <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
@@ -122,6 +130,16 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                             const earliestActual = actualDates.length > 0
                                 ? new Date(Math.min(...actualDates.map((d) => new Date(d).getTime())))
                                 : null;
+
+                            // Calculate report stats using LATEST report
+                            const reportStats = assignedApps.reduce((acc, app) => {
+                                const latest = getLatestReport(app.reports);
+                                if (latest) {
+                                    acc.submitted++;
+                                    if (latest.status === 'APPROVED') acc.approved++;
+                                }
+                                return acc;
+                            }, { submitted: 0, approved: 0 });
 
                             return (
                                 <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
@@ -214,23 +232,23 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             <div className="space-y-2">
                                                 <div className={cn(
                                                     "text-[10px] px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1",
-                                                    assignedApps.every(app => app.reports?.some(r => r.status === 'APPROVED'))
+                                                    reportStats.approved === assignedApps.length
                                                         ? "bg-blue-100 text-blue-700 border border-blue-200"
-                                                        : assignedApps.some(app => (app.reports?.length || 0) > 0)
+                                                        : reportStats.submitted > 0
                                                             ? "bg-orange-100 text-orange-700 border border-orange-200"
                                                             : "bg-slate-100 text-slate-500 border border-slate-200"
                                                 )}>
                                                     <FileText className="w-3 h-3" />
                                                     <span>
-                                                        提出:{assignedApps.filter(app => (app.reports?.length || 0) > 0).length} / 承認:{assignedApps.filter(app => app.reports?.some(r => r.status === 'APPROVED')).length} / 全:{assignedApps.length}
+                                                        提出:{reportStats.submitted} / 承認:{reportStats.approved} / 全:{assignedApps.length}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {assignedApps.map((app, idx) => {
-                                                        const report = app.reports?.[0];
+                                                        const latestReport = getLatestReport(app.reports);
                                                         const workerName = app.workers?.full_name || "不明なユーザー";
 
-                                                        if (!report) {
+                                                        if (!latestReport) {
                                                             return (
                                                                 <div
                                                                     key={idx}
@@ -240,17 +258,32 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                                             );
                                                         }
 
-                                                        const isApproved = report.status === 'APPROVED';
+                                                        const isApproved = latestReport.status === 'APPROVED';
+                                                        const isRejected = latestReport.status === 'REJECTED';
+                                                        const isSubmitted = latestReport.status === 'SUBMITTED';
+
+                                                        let dotClass = "bg-slate-500 border-slate-600"; // default fallback
+                                                        let titleStatus = "不明";
+
+                                                        if (isApproved) {
+                                                            dotClass = "bg-blue-500 border-blue-600 focus:ring-blue-400";
+                                                            titleStatus = "承認済み";
+                                                        } else if (isRejected) {
+                                                            dotClass = "bg-red-500 border-red-600 focus:ring-red-400";
+                                                            titleStatus = "差し戻し";
+                                                        } else if (isSubmitted) {
+                                                            dotClass = "bg-orange-500 border-orange-600 focus:ring-orange-400";
+                                                            titleStatus = "提出済み";
+                                                        }
+
                                                         return (
                                                             <Link
                                                                 key={idx}
-                                                                href={`/reports/${report.id}?returnTo=${encodeURIComponent(pathname)}`}
-                                                                title={`${workerName}: ${isApproved ? '承認済み' : '提出済み'}`}
+                                                                href={`/reports/${latestReport.id}?returnTo=${encodeURIComponent(pathname)}`}
+                                                                title={`${workerName}: ${titleStatus}`}
                                                                 className={cn(
                                                                     "w-3 h-3 rounded-full border shadow-sm transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1",
-                                                                    isApproved
-                                                                        ? "bg-blue-500 border-blue-600 focus:ring-blue-400"
-                                                                        : "bg-orange-500 border-orange-600 focus:ring-orange-400"
+                                                                    dotClass
                                                                 )}
                                                             />
                                                         );
