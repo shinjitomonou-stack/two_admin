@@ -29,6 +29,7 @@ export default async function Home() {
   let pendingIndividualContracts: any[] = [];
   let applicationsNeedingSchedule: any[] = [];
   let applicationsOverdue: any[] = [];
+  let rejectedReports: any[] = [];
 
   // Dashboard statistics setup (JST aware)
   const jstNow = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
@@ -71,7 +72,8 @@ export default async function Home() {
       announcementsRes,
       pendingNoticesRes,
       pendingContractsRes,
-      assignedAppsRes
+      assignedAppsRes,
+      rejectedReportsRes
     ] = await Promise.all([
       supabase.from("workers").select("full_name, email, phone, bank_account, line_id").eq("id", workerId).single(),
       supabase.from("contract_templates").select("id").eq("type", "BASIC").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle(),
@@ -83,7 +85,8 @@ export default async function Home() {
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications!application_id(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
-      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
+      supabase.from("job_applications").select("id, jobs(id, title), reports!inner(id, status, feedback)").eq("worker_id", workerId).eq("reports.status", "REJECTED")
     ]);
 
     const worker = workerRes.data;
@@ -97,6 +100,7 @@ export default async function Home() {
     const pendingNotices = pendingNoticesRes.data;
     const myPendingContracts = pendingContractsRes.data;
     const assignedApplications = assignedAppsRes.data;
+    const rejectedReportsData = rejectedReportsRes.data;
 
     // Process Worker Info
     if (worker) {
@@ -174,6 +178,7 @@ export default async function Home() {
     }).slice(0, 5); // Take top 5 after filtering
     showPaymentNoticeAlert = (pendingNotices?.length || 0) > 0;
     pendingIndividualContracts = myPendingContracts || [];
+    rejectedReports = rejectedReportsData || [];
 
     // Process Announcements with Read Status (Batch fetch)
     if (announcementsData && announcementsData.length > 0) {
@@ -422,6 +427,40 @@ export default async function Home() {
         </div>
       )}
 
+      {/* Rejected Reports Alert */}
+      {
+        rejectedReports.length > 0 && (
+          <div className="max-w-md mx-auto px-4 mt-4 space-y-3">
+            {rejectedReports.map((app) => {
+              const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+              const report = Array.isArray(app.reports) ? app.reports[0] : app.reports;
+              return (
+                <div key={app.id} className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-red-800 text-sm">作業報告が差し戻されました</h3>
+                    <p className="text-xs text-red-700 mt-1 leading-relaxed">
+                      案件: {job?.title || "案件名不明"}
+                      <br />
+                      内容を確認し、再提出してください。
+                      {report?.feedback && (
+                        <span className="block mt-1 font-medium bg-white/50 p-1 rounded">理由: {report.feedback}</span>
+                      )}
+                    </p>
+                    <Link
+                      href={`/jobs/${job?.id}/report`}
+                      className="inline-block mt-3 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      再提出する
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      }
+
       {/* Bank Account Alert */}
       {
         showBankAccountAlert && (
@@ -469,27 +508,29 @@ export default async function Home() {
       }
 
       {/* Payment Notice Alert */}
-      {showPaymentNoticeAlert && (
-        <div className="max-w-md mx-auto px-4 mt-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
-            <Bell className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-bold text-blue-800 text-sm">確認待ちの支払明細があります</h3>
-              <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-                今月分の支払明細が発行されました。
-                <br />
-                内容を確認し、承認をお願いします。
-              </p>
-              <Link
-                href="/payments"
-                className="inline-block mt-3 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                明細を確認・承認する
-              </Link>
+      {
+        showPaymentNoticeAlert && (
+          <div className="max-w-md mx-auto px-4 mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+              <Bell className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-blue-800 text-sm">確認待ちの支払明細があります</h3>
+                <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                  今月分の支払明細が発行されました。
+                  <br />
+                  内容を確認し、承認をお願いします。
+                </p>
+                <Link
+                  href="/payments"
+                  className="inline-block mt-3 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  明細を確認・承認する
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Main Content */}
       <main className="max-w-md mx-auto px-4 py-6 space-y-6">

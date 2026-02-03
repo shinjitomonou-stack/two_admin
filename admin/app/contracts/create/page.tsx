@@ -20,9 +20,14 @@ type Template = {
     id: string;
     title: string;
     version: string;
+    content_template: string;
 };
 
 
+
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function CreateContractPage() {
     const router = useRouter();
@@ -40,6 +45,8 @@ export default function CreateContractPage() {
         client_id: "",
     });
 
+    const [selectedTemplateContent, setSelectedTemplateContent] = useState("");
+
     useEffect(() => {
         const fetchData = async () => {
             setIsFetching(true);
@@ -55,7 +62,7 @@ export default function CreateContractPage() {
             // Fetch Templates based on type and client
             let query = supabase
                 .from("contract_templates")
-                .select("id, title, version")
+                .select("id, title, version, content_template")
                 .eq("type", contractType)
                 .eq("is_active", true)
                 .order("created_at", { ascending: false });
@@ -81,9 +88,15 @@ export default function CreateContractPage() {
                     // Only auto-select if current template_id is not in new list
                     if (!templatesData.find(t => t.id === formData.template_id)) {
                         setFormData(prev => ({ ...prev, template_id: templatesData[0].id }));
+                        setSelectedTemplateContent(templatesData[0].content_template || "");
+                    } else {
+                        // refresh content if needed
+                        const current = templatesData.find(t => t.id === formData.template_id);
+                        if (current) setSelectedTemplateContent(current.content_template || "");
                     }
                 } else {
                     setFormData(prev => ({ ...prev, template_id: "" }));
+                    setSelectedTemplateContent("");
                 }
             }
 
@@ -260,7 +273,12 @@ export default function CreateContractPage() {
                         <select
                             required
                             value={formData.template_id}
-                            onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
+                            onChange={(e) => {
+                                const newId = e.target.value;
+                                setFormData({ ...formData, template_id: newId });
+                                const t = templates.find(temp => temp.id === newId);
+                                setSelectedTemplateContent(t?.content_template || "");
+                            }}
                             className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                         >
                             {templates.map((template) => (
@@ -270,6 +288,19 @@ export default function CreateContractPage() {
                             ))}
                         </select>
                     </div>
+
+                    {selectedTemplateContent && (
+                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h3 className="font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+                                プレビュー: {templates.find(t => t.id === formData.template_id)?.title}
+                            </h3>
+                            <div className="prose prose-sm max-w-none bg-white p-6 rounded-lg border border-slate-200 shadow-sm max-h-[500px] overflow-y-auto">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {selectedTemplateContent}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="p-4 bg-slate-50 rounded-lg text-sm text-slate-500">
                         <p>※ ワーカーに対して契約締結の依頼を作成します。</p>
