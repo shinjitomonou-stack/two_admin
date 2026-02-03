@@ -382,6 +382,53 @@ export default function ApplicationsPage() {
                                 <div className="space-y-3">
                                     {scheduleItems.map((app) => {
                                         const job = Array.isArray(app.jobs) ? app.jobs[0] : app.jobs;
+
+                                        // Determine report status
+                                        let reportStatusDisplay = null;
+                                        if (app.reports && app.reports.length > 0) {
+                                            const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
+                                            const sortedReports = [...reports].sort((a: any, b: any) =>
+                                                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                                            );
+                                            const latestReport = sortedReports[0];
+
+                                            if (latestReport.status === 'APPROVED') {
+                                                reportStatusDisplay = (
+                                                    <div className="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-green-200">
+                                                        承認済
+                                                    </div>
+                                                );
+                                            } else if (latestReport.status === 'REJECTED') {
+                                                reportStatusDisplay = (
+                                                    <div className="bg-red-100 text-red-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-red-200">
+                                                        差し戻し
+                                                    </div>
+                                                );
+                                            } else if (latestReport.status === 'SUBMITTED') {
+                                                reportStatusDisplay = (
+                                                    <div className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-200">
+                                                        提出済
+                                                    </div>
+                                                );
+                                            }
+                                        } else {
+                                            // Check if overdue (only if no report)
+                                            const scheduledEnd = app.scheduled_work_end ? new Date(app.scheduled_work_end) : null;
+                                            if (scheduledEnd && scheduledEnd <= new Date()) {
+                                                reportStatusDisplay = (
+                                                    <div className="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-orange-200">
+                                                        未報告
+                                                    </div>
+                                                );
+                                            } else {
+                                                reportStatusDisplay = (
+                                                    <div className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                        予定
+                                                    </div>
+                                                );
+                                            }
+                                        }
+
                                         return (
                                             <Link key={app.id} href={`/jobs/${job?.id}?returnTo=/applications`} className="group block bg-white rounded-2xl border border-blue-50 p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                                                 <div className="flex items-start justify-between mb-3">
@@ -389,9 +436,7 @@ export default function ApplicationsPage() {
                                                         <Calendar className="w-3 h-3" />
                                                         {formatDateDisplay(app)}
                                                     </div>
-                                                    <div className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
-                                                        予定
-                                                    </div>
+                                                    {reportStatusDisplay}
                                                 </div>
                                                 <h4 className="font-bold text-slate-900 text-sm mb-3 leading-snug group-hover:text-blue-600 transition-colors">
                                                     {job?.title}

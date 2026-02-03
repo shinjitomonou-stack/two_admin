@@ -80,13 +80,13 @@ export default async function Home() {
       supabase.from("job_applications").select("id, actual_work_start").eq("worker_id", workerId).not("actual_work_start", "is", null).gte("actual_work_start", jstMonthStart).lte("actual_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status, jobs(status, reward_amount, reward_tax_mode)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"]).gte("scheduled_work_start", jstMonthStart).lte("scheduled_work_start", jstMonthEnd),
       supabase.from("job_applications").select("status").eq("worker_id", workerId).in("status", ["APPLIED", "ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", nowIso).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
+      supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, address_text, clients(name))").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]).gte("scheduled_work_start", jstTodayStart).lte("scheduled_work_start", sevenDaysLater).order("scheduled_work_start"),
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount, reward_tax_mode), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications!application_id(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, jobs(id, title), reports!inner(id, status, feedback)").eq("worker_id", workerId).eq("reports.status", "REJECTED")
+      supabase.from("job_applications").select("id, jobs(id, title), reports(id, status, feedback, created_at)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
     ]);
 
     const worker = workerRes.data;
@@ -100,7 +100,36 @@ export default async function Home() {
     const pendingNotices = pendingNoticesRes.data;
     const myPendingContracts = pendingContractsRes.data;
     const assignedApplications = assignedAppsRes.data;
-    const rejectedReportsData = rejectedReportsRes.data;
+
+    // Filter for truly rejected reports (only if the LATEST report is rejected)
+    const allReportsApplications = rejectedReportsRes.data || [];
+    const rejectedReportsData = allReportsApplications.filter(app => {
+      if (!app.reports || !Array.isArray(app.reports) || app.reports.length === 0) return false;
+
+      // Sort reports by created_at desc (newest first)
+      // Note: reports might be a single object if 1:1 relation, but schema says 1:N and we query it as array usually.
+      // However, without !inner or explicit array hint, supabase-js might return single object if it thinks it's 1:1.
+      // But based on our "reports(id...)" query, it usually returns array.
+      // Let's force array handling just in case.
+      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
+
+      const sortedReports = [...reports].sort((a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      // Check if the NEWEST report is REJECTED
+      return sortedReports[0].status === 'REJECTED';
+    }).map(app => {
+      // Map to the format expected by the UI (attaching the specific rejected report)
+      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
+      const sortedReports = [...reports].sort((a: any, b: any) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      return {
+        ...app,
+        reports: [sortedReports[0]] // Keep only the latest rejected report for display
+      };
+    });
 
     // Process Worker Info
     if (worker) {

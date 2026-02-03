@@ -68,14 +68,16 @@ export default async function JobDetailPage({
         .eq("worker_id", workerId)
         .single();
 
-    // Check if report exists
+    // Check if report exists (fetch latest)
     let existingReport = null;
     if (existingApplication) {
         const { data: reportData } = await supabase
             .from("reports")
-            .select("id, status, created_at")
+            .select("id, status, created_at, feedback")
             .eq("application_id", existingApplication.id)
-            .single();
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
         existingReport = reportData;
     }
 
@@ -124,7 +126,7 @@ export default async function JobDetailPage({
                             'bg-amber-50 border-amber-200'
                         }`}>
                         <div className="flex items-center justify-between">
-                            <span className="font-medium">
+                            <span className={`font-bold ${existingReport.status === 'APPROVED' ? 'text-green-800' : existingReport.status === 'REJECTED' ? 'text-red-800' : 'text-amber-800'}`}>
                                 {existingReport.status === 'APPROVED' && '日報承認済み'}
                                 {existingReport.status === 'REJECTED' && '日報差し戻し'}
                                 {existingReport.status === 'SUBMITTED' && '日報確認中'}
@@ -133,6 +135,12 @@ export default async function JobDetailPage({
                                 {new Date(existingReport.created_at).toLocaleDateString()}
                             </span>
                         </div>
+                        {existingReport.status === 'REJECTED' && existingReport.feedback && (
+                            <div className="mt-2 text-xs bg-white/60 p-2 rounded text-red-700">
+                                <span className="font-bold block mb-0.5">差し戻し理由:</span>
+                                {existingReport.feedback}
+                            </div>
+                        )}
                     </div>
                 )}
 
