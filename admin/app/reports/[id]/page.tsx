@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, Edit } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, Edit, X } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateReportStatusAction } from "@/app/actions/report";
+import ImagePreviewModal from "@/components/ui/ImagePreviewModal";
+
 
 export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const [id, setId] = useState<string | null>(null);
@@ -19,7 +21,10 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const router = useRouter();
+
     const supabase = createClient();
     const searchParams = useSearchParams();
     const returnTo = searchParams.get('returnTo') || '/reports';
@@ -226,8 +231,11 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                                                 <img
                                                                     src={url}
                                                                     alt={`${field.label} ${idx + 1}`}
-                                                                    className="w-full h-full object-cover cursor-zoom-in"
-                                                                    onClick={() => window.open(url, '_blank')}
+                                                                    className="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
+                                                                    onClick={() => {
+                                                                        setPreviewUrl(url);
+                                                                        setIsPreviewOpen(true);
+                                                                    }}
                                                                 />
                                                             </div>
                                                         ))}
@@ -250,7 +258,14 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                 <h3 className="font-semibold">添付写真</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {report.photo_urls.map((url: string, index: number) => (
-                                        <div key={index} className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                                        <div
+                                            key={index}
+                                            className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in"
+                                            onClick={() => {
+                                                setPreviewUrl(url);
+                                                setIsPreviewOpen(true);
+                                            }}
+                                        >
                                             <img
                                                 src={url}
                                                 alt={`Report photo ${index + 1}`}
@@ -262,6 +277,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                         )}
                     </div>
+
 
                     {/* Sidebar Info */}
                     <div className="space-y-6">
@@ -337,6 +353,15 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                 </div>
             </div>
+
+            <ImagePreviewModal
+                isOpen={isPreviewOpen}
+                onClose={() => {
+                    setIsPreviewOpen(false);
+                    setPreviewUrl(null);
+                }}
+                imageUrl={previewUrl || ""}
+            />
 
             {/* Reject Modal */}
             {showRejectModal && (
