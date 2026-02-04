@@ -42,13 +42,20 @@ export default function ClientBillingPage() {
         const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
         const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const toLocalISOString = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const startDateStr = toLocalISOString(startDate);
+        const endDateStr = toLocalISOString(endDate);
 
         // Fetch jobs with applications to check actual/scheduled dates
         // We fetch a wider range of jobs to account for dates shifting between months
-        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
-        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+        const queryStartDate = toLocalISOString(new Date(parseInt(year), parseInt(month) - 2, 1));
+        const queryEndDate = toLocalISOString(new Date(parseInt(year), parseInt(month) + 1, 0));
 
         const { data: jobs } = await supabase
             .from('jobs')
@@ -145,12 +152,19 @@ export default function ClientBillingPage() {
         const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
         const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const toLocalISOString = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const startDateStr = toLocalISOString(startDate);
+        const endDateStr = toLocalISOString(endDate);
 
         // Fetch jobs for this client (wider range for shifts)
-        const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
-        const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
+        const queryStartDate = toLocalISOString(new Date(parseInt(year), parseInt(month) - 2, 1));
+        const queryEndDate = toLocalISOString(new Date(parseInt(year), parseInt(month) + 1, 0));
 
         const { data: allJobs } = await supabase
             .from('jobs')
