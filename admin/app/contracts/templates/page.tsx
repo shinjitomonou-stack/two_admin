@@ -4,6 +4,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ContractTemplateFilters from "@/components/ContractTemplateFilters";
 import { formatDate } from "@/lib/utils";
+import ContractTemplateActions from "@/components/ContractTemplateActions";
+
 
 export default async function ContractTemplatesPage({
     searchParams
@@ -129,13 +131,16 @@ export default async function ContractTemplatesPage({
                                             {formatDate(template.updated_at || template.created_at)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/contracts/templates/${template.id}`}
-                                                className="inline-flex items-center justify-end gap-1 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                                編集
-                                            </Link>
+                                            <div className="flex items-center justify-end gap-4">
+                                                <Link
+                                                    href={`/contracts/templates/${template.id}`}
+                                                    className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                    編集
+                                                </Link>
+                                                <ContractTemplateActions templateId={template.id} title={template.title} />
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

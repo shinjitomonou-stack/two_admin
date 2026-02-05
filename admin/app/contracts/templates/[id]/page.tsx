@@ -1,16 +1,19 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, Save, Loader2, Copy } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Copy, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { toast } from "sonner";
+import { deleteContractTemplate, duplicateContractTemplate } from "@/app/actions/contract-template";
 
 export default function EditTemplatePage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
     const [id, setId] = useState<string | null>(null);
     const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
@@ -50,7 +53,7 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
 
             if (error) {
                 console.error(error);
-                alert("テンプレートの取得に失敗しました");
+                toast.error("テンプレートの取得に失敗しました");
                 router.push("/contracts/templates");
                 return;
             }
@@ -97,14 +100,53 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
                 if (error) throw error;
             }
 
-            alert("保存しました");
+            toast.success("保存しました");
             router.push("/contracts/templates");
             router.refresh();
         } catch (error: any) {
             console.error(error);
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDuplicate = async () => {
+        if (!id || id === 'create') return;
+        setIsProcessing(true);
+        try {
+            const result = await duplicateContractTemplate(id);
+            if (result.success) {
+                toast.success("テンプレートを複製しました");
+                router.push(`/contracts/templates/${result.data.id}`);
+            } else {
+                toast.error("複製に失敗しました");
+            }
+        } catch (error) {
+            toast.error("エラーが発生しました");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!id || id === 'create') return;
+        if (!confirm(`テンプレート「${formData.title}」を削除してもよろしいですか？`)) return;
+
+        setIsProcessing(true);
+        try {
+            const result = await deleteContractTemplate(id);
+            if (result.success) {
+                toast.success("テンプレートを削除しました");
+                router.push("/contracts/templates");
+                router.refresh();
+            } else {
+                toast.error("削除に失敗しました");
+            }
+        } catch (error) {
+            toast.error("エラーが発生しました");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -133,15 +175,40 @@ export default function EditTemplatePage({ params }: { params: Promise<{ id: str
                             {id === 'create' ? 'テンプレート新規作成' : 'テンプレート編集'}
                         </h2>
                     </div>
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium disabled:opacity-50"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        保存する
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {id !== 'create' && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleDuplicate}
+                                    disabled={isLoading || isProcessing}
+                                    className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-md hover:bg-slate-50 transition-colors text-sm font-medium disabled:opacity-50"
+                                >
+                                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
+                                    複製する
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    disabled={isLoading || isProcessing}
+                                    className="inline-flex items-center gap-2 bg-white border border-red-200 text-red-600 px-4 py-2.5 rounded-md hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50"
+                                >
+                                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                    削除
+                                </button>
+                            </>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={isLoading || isProcessing}
+                            className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-2.5 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            保存する
+                        </button>
+                    </div>
                 </div>
+
 
                 <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
                     <div className="grid gap-6 sm:grid-cols-2">
