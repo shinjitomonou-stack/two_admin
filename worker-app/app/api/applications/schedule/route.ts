@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
@@ -40,8 +40,12 @@ export async function POST(request: Request) {
             );
         }
 
+        // Use Admin Client to bypass RLS for updating job_applications
+        // This is necessary because workers don't have update permission on job_applications
+        const adminSupabase = await createAdminClient();
+
         // Update the schedule and set status to CONFIRMED
-        const { error } = await supabase
+        const { error } = await adminSupabase
             .from("job_applications")
             .update({
                 scheduled_work_start: scheduledStart,
