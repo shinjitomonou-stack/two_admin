@@ -56,7 +56,7 @@ export default function WorkerPaymentPage() {
 
         const [year, month] = selectedMonth.split('-');
         const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-        const endDate = new Date(parseInt(year), parseInt(month), 0);
+        const endDate = new Date(parseInt(year), parseInt(month), 1); // Start of next month (exclusive)
 
         // Fetch jobs for a wider range to account for date shifts
         const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
@@ -92,7 +92,7 @@ export default function WorkerPaymentPage() {
                 if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
 
                 const effectiveDate = getEffectiveDate(job, app);
-                if (effectiveDate < startDate || effectiveDate > endDate) return;
+                if (effectiveDate < startDate || effectiveDate >= endDate) return;
 
                 const workerId = app.worker_id;
                 if (!workerMap.has(workerId)) {
@@ -119,7 +119,7 @@ export default function WorkerPaymentPage() {
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
         const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-        const endDate = new Date(parseInt(year), parseInt(month), 0);
+        const endDate = new Date(parseInt(year), parseInt(month), 1); // Start of next month (exclusive)
 
         const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
         const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
@@ -147,7 +147,7 @@ export default function WorkerPaymentPage() {
                 if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
 
                 const effectiveDate = getEffectiveDate(job, app);
-                if (effectiveDate >= startDate && effectiveDate <= endDate) {
+                if (effectiveDate >= startDate && effectiveDate < endDate) {
                     details.push({
                         ...app,
                         jobs: job,
@@ -195,7 +195,7 @@ export default function WorkerPaymentPage() {
         const supabase = createClient();
         const [year, month] = selectedMonth.split('-');
         const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-        const endDate = new Date(parseInt(year), parseInt(month), 0);
+        const endDate = new Date(parseInt(year), parseInt(month), 1); // Start of next month (exclusive)
         const queryStartDate = new Date(parseInt(year), parseInt(month) - 2, 1).toISOString().split('T')[0];
         const queryEndDate = new Date(parseInt(year), parseInt(month) + 1, 0).toISOString().split('T')[0];
 
@@ -227,7 +227,7 @@ export default function WorkerPaymentPage() {
                         if (app.status !== 'ASSIGNED' && app.status !== 'CONFIRMED') return;
 
                         const effectiveDate = getEffectiveDate(job, app);
-                        if (effectiveDate >= startDate && effectiveDate <= endDate) {
+                        if (effectiveDate >= startDate && effectiveDate < endDate) {
                             details.push({
                                 job_id: job.id,
                                 job_title: job.title,
