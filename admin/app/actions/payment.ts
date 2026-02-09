@@ -24,7 +24,7 @@ export async function generatePaymentNotices(month: string, workersData: any[]) 
                 worker_id: data.worker_id,
                 month: month,
                 total_amount: data.total_payment,
-                tax_amount: Math.round(data.total_payment * 0.1),
+                tax_amount: Math.round(data.total_payment * 1.1) - data.total_payment,
                 job_details: data.details || [],
                 status: "DRAFT",
             };
