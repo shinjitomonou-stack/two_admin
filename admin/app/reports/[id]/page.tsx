@@ -21,7 +21,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    const [previewInitialIndex, setPreviewInitialIndex] = useState(0);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const router = useRouter();
 
@@ -233,7 +234,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                                                     alt={`${field.label} ${idx + 1}`}
                                                                     className="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
                                                                     onClick={() => {
-                                                                        setPreviewUrl(url);
+                                                                        setPreviewImages(value as string[]);
+                                                                        setPreviewInitialIndex(idx);
                                                                         setIsPreviewOpen(true);
                                                                     }}
                                                                 />
@@ -262,7 +264,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                             key={index}
                                             className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in"
                                             onClick={() => {
-                                                setPreviewUrl(url);
+                                                setPreviewImages(report.photo_urls);
+                                                setPreviewInitialIndex(index);
                                                 setIsPreviewOpen(true);
                                             }}
                                         >
@@ -358,9 +361,11 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                 isOpen={isPreviewOpen}
                 onClose={() => {
                     setIsPreviewOpen(false);
-                    setPreviewUrl(null);
+                    setPreviewImages([]);
+                    setPreviewInitialIndex(0);
                 }}
-                imageUrl={previewUrl || ""}
+                images={previewImages}
+                initialIndex={previewInitialIndex}
             />
 
             {/* Reject Modal */}
