@@ -20,6 +20,7 @@ interface JobsDashboardViewProps {
 
 export function JobsDashboardView({ title, description, targetDateStr }: JobsDashboardViewProps) {
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [dateFilteredJobs, setDateFilteredJobs] = useState<Job[]>([]);
     const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [loading, setLoading] = useState(true);
@@ -98,12 +99,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     }, [targetDateStr]);
 
     useEffect(() => {
-        let filtered = [...jobs];
-        const filters = currentFilters;
-
-        // Date filter (Prioritizing scheduled_work_start)
-        filtered = filtered.filter(job => {
-            // 1. Check if any application is scheduled for targetDateStr
+        let dateFiltered = jobs.filter(job => {
             const hasTargetDateApp = job.job_applications?.some((app: any) => {
                 if (!app.scheduled_work_start) return false;
                 return app.scheduled_work_start.startsWith(targetDateStr);
@@ -111,14 +107,17 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
 
             if (hasTargetDateApp) return true;
 
-            // 2. If no application is scheduled for targetDateStr, check if any application is scheduled at ALL for this job
             const hasAnyScheduledApp = job.job_applications?.some((app: any) => !!app.scheduled_work_start);
             if (hasAnyScheduledApp) return false;
 
-            // 3. Fallback: If no scheduled applications, check job.start_time
             if (!job.start_time) return false;
             return job.start_time.startsWith(targetDateStr);
         });
+
+        setDateFilteredJobs(dateFiltered);
+
+        let filtered = [...dateFiltered];
+        const filters = currentFilters;
 
         if (filters.search) {
             const keywords = filters.search.toLowerCase().split(/\s+/).filter(Boolean);
@@ -235,9 +234,9 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     };
 
     // Stats Calculation
-    const totalJobs = jobs.length;
-    const totalMaxWorkers = jobs.reduce((sum, j) => sum + j.max_workers, 0);
-    const assignedCount = jobs.reduce((sum, j) => {
+    const totalJobsCount = dateFilteredJobs.length;
+    const totalMaxWorkers = dateFilteredJobs.reduce((sum, j) => sum + j.max_workers, 0);
+    const assignedCount = dateFilteredJobs.reduce((sum, j) => {
         const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
         const placementContracts = (j as any).client_job_contracts?.filter((c: any) =>
             c.trading_type === 'PLACING' &&
@@ -263,19 +262,19 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     }, 0);
 
     // 作業報告提出件数（ステータス問わず）
-    const submittedReportsCount = jobs.reduce((sum, j) => {
+    const submittedReportsCount = dateFilteredJobs.reduce((sum, j) => {
         const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
         return sum + reports.length;
     }, 0);
 
     // 承認済み報告件数
-    const approvedReportsCount = jobs.reduce((sum, j) => {
+    const approvedReportsCount = dateFilteredJobs.reduce((sum, j) => {
         const reports = j.job_applications?.flatMap(app => app.reports || []) || [];
         const approved = reports.filter((r: any) => r.status === 'APPROVED');
         return sum + approved.length;
     }, 0);
 
-    const completedJobs = jobs.filter(j => {
+    const completedJobsCount = dateFilteredJobs.filter(j => {
         if (j.status === "COMPLETED") return true;
         const assignedApps = j.job_applications?.filter(app => app.status === "ASSIGNED" || app.status === "CONFIRMED") || [];
         if (assignedApps.length === 0) return false;
@@ -296,7 +295,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">全案件数</p>
-                                <p className="text-2xl font-bold mt-1">{totalJobs} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-2xl font-bold mt-1">{totalJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
                             </div>
                             <Briefcase className="w-8 h-8 text-blue-500 opacity-20" />
                         </div>
@@ -338,7 +337,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">完了済み案件</p>
-                                <p className="text-2xl font-bold mt-1">{completedJobs} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-2xl font-bold mt-1">{completedJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
                             </div>
                             <CheckCircle className="w-8 h-8 text-blue-500 opacity-20" />
                         </div>
