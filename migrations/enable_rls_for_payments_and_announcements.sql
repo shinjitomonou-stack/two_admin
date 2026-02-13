@@ -19,9 +19,7 @@ ON public.payment_notices
 FOR SELECT
 TO authenticated
 USING (
-  worker_id IN (
-    SELECT id FROM public.workers WHERE user_id = auth.uid()
-  )
+  worker_id = auth.uid()
 );
 
 -- Enable RLS for payment_schedules
@@ -94,9 +92,7 @@ ON public.worker_announcement_reads
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  worker_id IN (
-    SELECT id FROM public.workers WHERE user_id = auth.uid()
-  )
+  worker_id = auth.uid()
 );
 
 -- Workers can view their own read status
@@ -105,7 +101,5 @@ ON public.worker_announcement_reads
 FOR SELECT
 TO authenticated
 USING (
-  worker_id IN (
-    SELECT id FROM public.workers WHERE user_id = auth.uid()
-  )
+  worker_id = auth.uid()
 );
