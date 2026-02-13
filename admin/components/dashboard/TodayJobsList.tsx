@@ -76,8 +76,17 @@ export function TodayJobsList({ jobs: initialJobs }: TodayJobsListProps) {
                     </thead>
                     <tbody className="divide-y divide-border">
                         {jobs.map((job) => {
-                            const startTime = new Date(job.start_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-                            const endTime = new Date(job.end_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                            // Find application scheduled for TODAY if any
+                            const today = new Date(new Date().getTime() + (9 * 60 * 60 * 1000)).toISOString().split('T')[0];
+                            const todayApp = (job as any).job_applications?.find((app: any) =>
+                                app.scheduled_work_start?.startsWith(today)
+                            );
+
+                            const displayStartTime = todayApp?.scheduled_work_start || job.start_time;
+                            const displayEndTime = todayApp?.scheduled_work_end || job.end_time;
+
+                            const startTime = new Date(displayStartTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                            const endTime = new Date(displayEndTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
 
                             return (
                                 <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">

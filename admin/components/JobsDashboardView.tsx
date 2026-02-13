@@ -43,15 +43,8 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     const fetchData = async () => {
         setLoading(true);
 
-        // Construct JST Start/End times
-        // targetDateStr is "YYYY-MM-DD"
-        // Start: YYYY-MM-DDT00:00:00+09:00 (JST midnight) -> Converted to UTC by ISOString (automatically handles offset)
-        // End: YYYY-MM-DDT23:59:59.999+09:00 (JST end of day)
-
-        const startOfDay = new Date(`${targetDateStr}T00:00:00+09:00`);
-        const endOfDay = new Date(`${targetDateStr}T23:59:59.999+09:00`);
-
         const [jobsRes, clientsRes] = await Promise.all([
+            // Fetch all active jobs plus anything that might be relevant
             supabase.from("jobs").select(`
                 *,
                 clients(id, name),
@@ -59,7 +52,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                     id,
                     status,
                     scheduled_work_start,
-                    actual_work_start,
+                    scheduled_work_end,
                     workers(full_name, name_kana),
                     worker_id,
                     reports(id, status)
@@ -77,8 +70,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                     clients(id, name)
                 )
             `)
-                .gte("start_time", startOfDay.toISOString())
-                .lte("start_time", endOfDay.toISOString())
+                .in("status", ["OPEN", "FILLED", "IN_PROGRESS", "COMPLETED"]) // Include completed to see them on the dashboard
                 .order("start_time", { ascending: true }),
             supabase.from("clients").select("id, name").order("name")
         ]);
@@ -102,6 +94,24 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     useEffect(() => {
         let filtered = [...jobs];
         const filters = currentFilters;
+
+        // Date filter (Prioritizing scheduled_work_start)
+        filtered = filtered.filter(job => {
+            // 1. Check if any application is scheduled for targetDateStr
+            const hasTargetDateApp = job.job_applications?.some((app: any) => {
+                if (!app.scheduled_work_start) return false;
+                return app.scheduled_work_start.startsWith(targetDateStr);
+            });
+
+            if (hasTargetDateApp) return true;
+
+            // 2. If no application is scheduled for targetDateStr, check if any application is scheduled at ALL for this job
+            const hasAnyScheduledApp = job.job_applications?.some((app: any) => !!app.scheduled_work_start);
+            if (hasAnyScheduledApp) return false;
+
+            // 3. Fallback: If no scheduled applications, check job.start_time
+            return job.start_time?.startsWith(targetDateStr);
+        });
 
         if (filters.search) {
             const keywords = filters.search.toLowerCase().split(/\s+/).filter(Boolean);

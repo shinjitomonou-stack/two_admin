@@ -47,7 +47,7 @@ export default async function Home() {
     supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", false),
     // Pending Basic Contracts
     supabase.from("worker_basic_contracts").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
-    // Today's Jobs
+    // Today's Jobs (Broad fetch to filter in memory for scheduled_work_start priority)
     supabase.from("jobs").select(`
       id,
       title,
@@ -55,8 +55,9 @@ export default async function Home() {
       start_time,
       end_time,
       address_text,
-      clients(name)
-    `).gte("start_time", startOfToday).lte("start_time", endOfToday).order("start_time", { ascending: true }),
+      clients(name),
+      job_applications(scheduled_work_start, scheduled_work_end)
+    `).order("start_time", { ascending: true }),
     // Recent Applications
     supabase.from("job_applications").select(`
       id,
@@ -79,7 +80,28 @@ export default async function Home() {
   const pendingAppsCount = pendingAppsRes.count;
   const unverifiedWorkersCount = unverifiedWorkersCountRes.count;
   const pendingContractsCount = pendingContractsRes.count;
-  const todayJobs = todayJobsRes.data;
+
+  // Filter Today's Jobs in memory to prioritize scheduled_work_start
+  const todayJobs = (todayJobsRes.data || []).filter(job => {
+    // 1. Check if any application is scheduled for today
+    const hasTodayApp = job.job_applications?.some((app: any) => {
+      if (!app.scheduled_work_start) return false;
+      const appDateStr = app.scheduled_work_start.split('T')[0];
+      return appDateStr === jstTodayStr;
+    });
+
+    if (hasTodayApp) return true;
+
+    // 2. If no application is scheduled for today, check if any application is scheduled at ALL for this job
+    // If there ARE scheduled applications but none are today, this job shouldn't show today (it belongs to another day)
+    const hasAnyScheduledApp = job.job_applications?.some((app: any) => !!app.scheduled_work_start);
+    if (hasAnyScheduledApp) return false;
+
+    // 3. Fallback: If no scheduled applications, check job.start_time
+    const jobDateStr = job.start_time?.split('T')[0];
+    return jobDateStr === jstTodayStr;
+  });
+
   const recentApps = recentAppsRes.data;
   const unverifiedWorkers = unverifiedWorkersRes.data;
   const jobContracts = jobContractsRes.data;
