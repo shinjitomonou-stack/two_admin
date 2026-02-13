@@ -8,9 +8,8 @@ FOR ALL
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.users
-    WHERE public.users.id = auth.uid()
-    AND public.users.role IN ('ADMIN', 'SUPER_ADMIN')
+    SELECT 1 FROM public.admin_users
+    WHERE public.admin_users.id = auth.uid()
   )
 );
 
@@ -35,9 +34,8 @@ FOR ALL
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.users
-    WHERE public.users.id = auth.uid()
-    AND public.users.role IN ('ADMIN', 'SUPER_ADMIN')
+    SELECT 1 FROM public.admin_users
+    WHERE public.admin_users.id = auth.uid()
   )
 );
 
@@ -59,9 +57,8 @@ FOR ALL
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.users
-    WHERE public.users.id = auth.uid()
-    AND public.users.role IN ('ADMIN', 'SUPER_ADMIN')
+    SELECT 1 FROM public.admin_users
+    WHERE public.admin_users.id = auth.uid()
   )
 );
 
@@ -86,9 +83,8 @@ FOR ALL
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM public.users
-    WHERE public.users.id = auth.uid()
-    AND public.users.role IN ('ADMIN', 'SUPER_ADMIN')
+    SELECT 1 FROM public.admin_users
+    WHERE public.admin_users.id = auth.uid()
   )
 );
 
