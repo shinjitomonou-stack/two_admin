@@ -68,9 +68,13 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
     const getLatestReport = (reports: Array<{ id: string; status: string; created_at: string }> | undefined) => {
         if (!reports || reports.length === 0) return null;
         // Sort by created_at desc (newest first)
-        return [...reports].sort((a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )[0];
+        return [...reports].sort((a, b) => {
+            const timeA = new Date(a.created_at).getTime();
+            const timeB = new Date(b.created_at).getTime();
+            if (isNaN(timeA)) return 1;
+            if (isNaN(timeB)) return -1;
+            return timeB - timeA;
+        })[0];
     };
 
     return (
@@ -124,12 +128,21 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                 .map((app) => app.actual_work_start)
                                 .filter((date): date is string => date !== null);
 
-                            const earliestScheduled = scheduledDates.length > 0
-                                ? new Date(Math.min(...scheduledDates.map((d) => new Date(d).getTime())))
-                                : null;
-                            const earliestActual = actualDates.length > 0
-                                ? new Date(Math.min(...actualDates.map((d) => new Date(d).getTime())))
-                                : null;
+                            let earliestScheduled = null;
+                            if (scheduledDates.length > 0) {
+                                const minTimestamp = Math.min(...scheduledDates.map((d) => new Date(d).getTime()));
+                                if (!isNaN(minTimestamp)) {
+                                    earliestScheduled = new Date(minTimestamp);
+                                }
+                            }
+
+                            let earliestActual = null;
+                            if (actualDates.length > 0) {
+                                const minTimestamp = Math.min(...actualDates.map((d) => new Date(d).getTime()));
+                                if (!isNaN(minTimestamp)) {
+                                    earliestActual = new Date(minTimestamp);
+                                }
+                            }
 
                             // Calculate report stats using LATEST report
                             const reportStats = assignedApps.reduce((acc, app) => {
@@ -158,10 +171,10 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             {(earliestScheduled || !earliestActual) && (
                                                 <div className="flex items-center gap-1 text-slate-600">
                                                     <Calendar className="w-3 h-3" />
-                                                    <span>予定: {formatDate(earliestScheduled ? earliestScheduled.toISOString() : job.start_time)}</span>
+                                                    <span>予定: {formatDate(earliestScheduled && !isNaN(earliestScheduled.getTime()) ? earliestScheduled.toISOString() : job.start_time)}</span>
                                                 </div>
                                             )}
-                                            {earliestActual && (
+                                            {earliestActual && !isNaN(earliestActual.getTime()) && (
                                                 <div className="flex items-center gap-1 text-green-600">
                                                     <Calendar className="w-3 h-3" />
                                                     <span>実施: {formatDate(earliestActual.toISOString())}</span>
