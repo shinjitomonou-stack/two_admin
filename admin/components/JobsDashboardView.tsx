@@ -43,8 +43,12 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
     const fetchData = async () => {
         setLoading(true);
 
+        // targetDateStr is "YYYY-MM-DD" in JST. Let's create a buffer around it.
+        const bufferStart = new Date(new Date(`${targetDateStr}T00:00:00+09:00`).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const bufferEnd = new Date(new Date(`${targetDateStr}T23:59:59+09:00`).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
         const [jobsRes, clientsRes] = await Promise.all([
-            // Fetch all active jobs plus anything that might be relevant
+            // Fetch jobs within a buffer range to allow in-memory prioritization
             supabase.from("jobs").select(`
                 *,
                 clients(id, name),
@@ -70,7 +74,9 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
                     clients(id, name)
                 )
             `)
-                .in("status", ["OPEN", "FILLED", "IN_PROGRESS", "COMPLETED"]) // Include completed to see them on the dashboard
+                .in("status", ["OPEN", "FILLED", "IN_PROGRESS", "COMPLETED"])
+                .gte("start_time", bufferStart)
+                .lte("start_time", bufferEnd)
                 .order("start_time", { ascending: true }),
             supabase.from("clients").select("id, name").order("name")
         ]);
@@ -161,7 +167,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             });
         }
         setFilteredJobs(filtered);
-    }, [jobs, currentFilters]);
+    }, [jobs, currentFilters, targetDateStr]);
 
     const handleFilterChange = (filters: FilterState) => {
         setCurrentFilters(filters);

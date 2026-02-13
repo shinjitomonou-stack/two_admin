@@ -47,7 +47,7 @@ export default async function Home() {
     supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", false),
     // Pending Basic Contracts
     supabase.from("worker_basic_contracts").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
-    // Today's Jobs (Broad fetch to filter in memory for scheduled_work_start priority)
+    // Today's Jobs (Fetch with buffer to allow in-memory rescheduling prioritization)
     supabase.from("jobs").select(`
       id,
       title,
@@ -57,7 +57,10 @@ export default async function Home() {
       address_text,
       clients(name),
       job_applications(scheduled_work_start, scheduled_work_end)
-    `).order("start_time", { ascending: true }),
+    `)
+      .gte("start_time", new Date(new Date(startOfToday).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .lte("start_time", new Date(new Date(endOfToday).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString())
+      .order("start_time", { ascending: true }),
     // Recent Applications
     supabase.from("job_applications").select(`
       id,
