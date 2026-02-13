@@ -110,7 +110,8 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             if (hasAnyScheduledApp) return false;
 
             // 3. Fallback: If no scheduled applications, check job.start_time
-            return job.start_time?.startsWith(targetDateStr);
+            if (!job.start_time) return false;
+            return job.start_time.startsWith(targetDateStr);
         });
 
         if (filters.search) {

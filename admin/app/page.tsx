@@ -98,7 +98,8 @@ export default async function Home() {
     if (hasAnyScheduledApp) return false;
 
     // 3. Fallback: If no scheduled applications, check job.start_time
-    const jobDateStr = job.start_time?.split('T')[0];
+    if (!job.start_time) return false;
+    const jobDateStr = job.start_time.split('T')[0];
     return jobDateStr === jstTodayStr;
   });
 

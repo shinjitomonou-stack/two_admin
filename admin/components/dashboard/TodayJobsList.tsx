@@ -85,8 +85,22 @@ export function TodayJobsList({ jobs: initialJobs }: TodayJobsListProps) {
                             const displayStartTime = todayApp?.scheduled_work_start || job.start_time;
                             const displayEndTime = todayApp?.scheduled_work_end || job.end_time;
 
-                            const startTime = new Date(displayStartTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-                            const endTime = new Date(displayEndTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                            let startTime = "時間未定";
+                            let endTime = "時間未定";
+
+                            if (displayStartTime) {
+                                const d = new Date(displayStartTime);
+                                if (!isNaN(d.getTime())) {
+                                    startTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                                }
+                            }
+
+                            if (displayEndTime) {
+                                const d = new Date(displayEndTime);
+                                if (!isNaN(d.getTime())) {
+                                    endTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                                }
+                            }
 
                             return (
                                 <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
