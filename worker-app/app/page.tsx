@@ -84,9 +84,9 @@ export default async function Home() {
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount, reward_tax_mode), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
-      supabase.from("job_individual_contracts").select("id, job_applications!inner(jobs(title))").eq("status", "PENDING").eq("job_applications.worker_id", workerId),
+      supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, jobs(id, title), reports!inner(id, status, feedback, created_at)").eq("worker_id", workerId).eq("reports.status", "REJECTED")
+      supabase.from("reports").select("id, status, feedback, created_at, application_id, job_applications!inner(jobs(id, title))").eq("status", "REJECTED").eq("job_applications.worker_id", workerId).order("created_at", { ascending: false })
     ]);
 
     const worker = workerRes.data;
@@ -101,29 +101,28 @@ export default async function Home() {
     const myPendingContracts = pendingContractsRes.data;
     const assignedApplications = assignedAppsRes.data;
 
-    const allRejectedApplications = (rejectedReportsRes.data || []) as any[];
-    const rejectedReportsData = allRejectedApplications.filter(app => {
-      if (!app.reports) return false;
-      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
-      if (reports.length === 0) return false;
+    // Use reports query directly to ensure we get rejected reports
+    const rejectedReportsRaw = (rejectedReportsRes.data || []) as any[];
 
-      // Sort reports by created_at desc (newest first)
-      const sortedReports = [...reports].sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+    // Group by application_id and Format
+    const applicationMap = new Map<string, any>();
 
-      // Check if the NEWEST report is REJECTED
-      return sortedReports[0].status === 'REJECTED';
-    }).map(app => {
-      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
-      const sortedReports = [...reports].sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      return {
-        ...app,
-        reports: [sortedReports[0]]
-      };
+    rejectedReportsRaw.forEach((report: any) => {
+      const appId = report.application_id;
+      if (!applicationMap.has(appId)) {
+        // Construct app-like object that the UI expects
+        // report.job_applications is the joined object
+        const jobs = report.job_applications?.jobs; // { id, title }
+
+        applicationMap.set(appId, {
+          id: appId,
+          jobs: jobs, // UI expects app.jobs.title or app.jobs[0].title
+          reports: [report]
+        });
+      }
     });
+
+    const rejectedReportsData = Array.from(applicationMap.values());
 
     // Process Worker Info
     if (worker) {
