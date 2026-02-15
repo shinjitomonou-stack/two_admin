@@ -84,9 +84,9 @@ export default async function Home() {
       supabase.from("job_applications").select("id, actual_work_end, jobs(id, status, title, reward_amount, reward_tax_mode), reports(id, status)").eq("worker_id", workerId).not("actual_work_end", "is", null).order("actual_work_end", { ascending: false }).limit(20),
       supabase.from("announcements").select("*").eq("is_active", true).or(`expires_at.is.null,expires_at.gte.${nowIso}`).order("created_at", { ascending: false }).limit(3),
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
-      supabase.from("job_individual_contracts").select("id, worker_id, job_applications!application_id(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
+      supabase.from("job_individual_contracts").select("id, worker_id, job_applications(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
-      supabase.from("reports").select("id, status, feedback, created_at, application_id, job_applications!application_id(jobs(id, title))").eq("status", "REJECTED").eq("job_applications.worker_id", workerId).order("created_at", { ascending: false })
+      supabase.from("reports").select("id, status, feedback, created_at, application_id, job_applications!inner(jobs(id, title))").eq("status", "REJECTED").eq("job_applications.worker_id", workerId).order("created_at", { ascending: false })
     ]);
 
     const worker = workerRes.data;
@@ -101,10 +101,7 @@ export default async function Home() {
     const myPendingContracts = pendingContractsRes.data;
     const assignedApplications = assignedAppsRes.data;
 
-    // Simplified approach: Fetch rejected reports directly and join applications/jobs
     const rejectedReportsFull = (rejectedReportsRes.data || []) as any[];
-
-    // We still want to group by application and only show the latest rejected report if multiple exist
     const applicationMap = new Map<string, any>();
 
     rejectedReportsFull.forEach(report => {
