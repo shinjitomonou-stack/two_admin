@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { applicationId, workStart, workEnd, reportText, photoUrls, customFields } = body;
+        const { applicationId, workStart, workEnd, reportText, photoUrls, customFields, reportId } = body;
 
         if (!applicationId || !workStart || !workEnd || !reportText) {
             return NextResponse.json(
@@ -41,22 +41,44 @@ export async function POST(request: Request) {
             );
         }
 
-        // Insert report
-        const { error: reportError } = await supabase
-            .from("reports")
-            .insert({
-                application_id: applicationId,
-                work_start_at: workStart,
-                work_end_at: workEnd,
-                report_text: reportText,
-                photo_urls: photoUrls,
-                custom_fields: customFields,
-                status: "SUBMITTED",
-            });
+        if (reportId) {
+            // Update existing rejected report (resubmission)
+            const { error: updateError } = await supabase
+                .from("reports")
+                .update({
+                    work_start_at: workStart,
+                    work_end_at: workEnd,
+                    report_text: reportText,
+                    photo_urls: photoUrls,
+                    custom_fields: customFields,
+                    status: "SUBMITTED",
+                    feedback: null, // Clear previous feedback
+                })
+                .eq("id", reportId)
+                .eq("application_id", applicationId);
 
-        if (reportError) {
-            console.error("Report insert error:", reportError);
-            throw reportError;
+            if (updateError) {
+                console.error("Report update error:", updateError);
+                throw updateError;
+            }
+        } else {
+            // Insert new report
+            const { error: reportError } = await supabase
+                .from("reports")
+                .insert({
+                    application_id: applicationId,
+                    work_start_at: workStart,
+                    work_end_at: workEnd,
+                    report_text: reportText,
+                    photo_urls: photoUrls,
+                    custom_fields: customFields,
+                    status: "SUBMITTED",
+                });
+
+            if (reportError) {
+                console.error("Report insert error:", reportError);
+                throw reportError;
+            }
         }
 
         // Update actual work dates in job_applications

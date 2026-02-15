@@ -110,7 +110,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
         setIsProcessing(true);
 
         try {
-            const result = await updateReportStatusAction(id, "REJECTED");
+            const result = await updateReportStatusAction(id, "REJECTED", rejectionReason);
 
             if (!result.success) {
                 toast.error("差し戻しに失敗しました: " + (result.error as any)?.message);

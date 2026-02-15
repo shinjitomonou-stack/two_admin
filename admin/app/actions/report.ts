@@ -4,14 +4,19 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { verifyAdmin } from "@/lib/auth";
 
-export async function updateReportStatusAction(id: string, status: string) {
+export async function updateReportStatusAction(id: string, status: string, feedback?: string) {
     await verifyAdmin();
     const supabase = await createClient();
 
     try {
+        const updatePayload: any = { status };
+        if (status === "REJECTED") {
+            updatePayload.feedback = feedback || null;
+        }
+
         const { data: reportData, error: reportError } = await supabase
             .from("reports")
-            .update({ status })
+            .update(updatePayload)
             .eq("id", id)
             .select("*, job_applications(job_id)")
             .single();

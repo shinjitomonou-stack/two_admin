@@ -27,19 +27,38 @@ type ReportFormProps = {
         scheduledStart?: string;
         scheduledEnd?: string;
     };
+    existingReport?: {
+        id: string;
+        work_start_at: string;
+        work_end_at: string;
+        report_text: string;
+        photo_urls: string[];
+        custom_fields: Record<string, any>;
+        feedback?: string;
+    };
 };
 
-export default function ReportForm({ applicationId, jobId, template, defaultValues }: ReportFormProps) {
+export default function ReportForm({ applicationId, jobId, template, defaultValues, existingReport }: ReportFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [photos, setPhotos] = useState<string[]>([]);
+    const [photos, setPhotos] = useState<string[]>(existingReport?.photo_urls || []);
     const [uploading, setUploading] = useState(false);
 
-    // Form states
-    const [workStart, setWorkStart] = useState(defaultValues?.scheduledStart || "");
-    const [workEnd, setWorkEnd] = useState(defaultValues?.scheduledEnd || "");
-    const [reportText, setReportText] = useState("");
-    const [customFields, setCustomFields] = useState<Record<string, any>>({});
+    // Format existing datetime for datetime-local input
+    const formatForInput = (dateStr: string | undefined) => {
+        if (!dateStr) return "";
+        return new Date(dateStr).toISOString().slice(0, 16);
+    };
+
+    // Form states - pre-fill from existingReport if available
+    const [workStart, setWorkStart] = useState(
+        existingReport ? formatForInput(existingReport.work_start_at) : (defaultValues?.scheduledStart || "")
+    );
+    const [workEnd, setWorkEnd] = useState(
+        existingReport ? formatForInput(existingReport.work_end_at) : (defaultValues?.scheduledEnd || "")
+    );
+    const [reportText, setReportText] = useState(existingReport?.report_text || "");
+    const [customFields, setCustomFields] = useState<Record<string, any>>(existingReport?.custom_fields || {});
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -176,6 +195,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                     reportText,
                     photoUrls: photos,
                     customFields,
+                    ...(existingReport ? { reportId: existingReport.id } : {}),
                 }),
             });
 
@@ -184,7 +204,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                 throw new Error(error.message || "報告の送信に失敗しました");
             }
 
-            alert("作業報告を提出しました");
+            alert(existingReport ? "作業報告を再提出しました" : "作業報告を提出しました");
             router.replace("/");
             router.refresh();
         } catch (error: any) {
@@ -412,7 +432,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                         送信中...
                     </div>
                 ) : (
-                    "作業報告を提出する"
+                    existingReport ? "作業報告を再提出する" : "作業報告を提出する"
                 )}
             </button>
         </form>
