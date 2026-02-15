@@ -86,7 +86,7 @@ export default async function Home() {
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications!application_id(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, jobs(id, title), reports(id, status, feedback, created_at)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"])
+      supabase.from("job_applications").select("id, jobs(id, title), reports(id, status, feedback, created_at)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"])
     ]);
 
     const worker = workerRes.data;
