@@ -86,7 +86,7 @@ export default async function Home() {
       supabase.from("payment_notices").select("id").eq("worker_id", workerId).eq("status", "ISSUED").limit(1),
       supabase.from("job_individual_contracts").select("id, worker_id, job_applications!application_id(jobs(title))").eq("status", "PENDING").eq("worker_id", workerId),
       supabase.from("job_applications").select("id, scheduled_work_start, scheduled_work_end, jobs(id, title, start_time, status)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED"]),
-      supabase.from("job_applications").select("id, jobs(id, title), reports(id, status, feedback, created_at)").eq("worker_id", workerId).in("status", ["ASSIGNED", "CONFIRMED", "COMPLETED"])
+      supabase.from("reports").select("id, status, feedback, created_at, application_id, job_applications!application_id(jobs(id, title))").eq("status", "REJECTED").eq("job_applications.worker_id", workerId).order("created_at", { ascending: false })
     ]);
 
     const worker = workerRes.data;
@@ -101,35 +101,24 @@ export default async function Home() {
     const myPendingContracts = pendingContractsRes.data;
     const assignedApplications = assignedAppsRes.data;
 
-    // Filter for truly rejected reports (only if the LATEST report is rejected)
-    const allReportsApplications = rejectedReportsRes.data || [];
-    const rejectedReportsData = allReportsApplications.filter(app => {
-      if (!app.reports || !Array.isArray(app.reports) || app.reports.length === 0) return false;
+    // Simplified approach: Fetch rejected reports directly and join applications/jobs
+    const rejectedReportsFull = (rejectedReportsRes.data || []) as any[];
 
-      // Sort reports by created_at desc (newest first)
-      // Note: reports might be a single object if 1:1 relation, but schema says 1:N and we query it as array usually.
-      // However, without !inner or explicit array hint, supabase-js might return single object if it thinks it's 1:1.
-      // But based on our "reports(id...)" query, it usually returns array.
-      // Let's force array handling just in case.
-      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
+    // We still want to group by application and only show the latest rejected report if multiple exist
+    const applicationMap = new Map<string, any>();
 
-      const sortedReports = [...reports].sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      // Check if the NEWEST report is REJECTED
-      return sortedReports[0].status === 'REJECTED';
-    }).map(app => {
-      // Map to the format expected by the UI (attaching the specific rejected report)
-      const reports = Array.isArray(app.reports) ? app.reports : [app.reports];
-      const sortedReports = [...reports].sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      return {
-        ...app,
-        reports: [sortedReports[0]] // Keep only the latest rejected report for display
-      };
+    rejectedReportsFull.forEach(report => {
+      const appId = report.application_id;
+      if (!applicationMap.has(appId)) {
+        applicationMap.set(appId, {
+          id: appId,
+          jobs: report.job_applications?.jobs,
+          reports: [report]
+        });
+      }
     });
+
+    const rejectedReportsData = Array.from(applicationMap.values());
 
     // Process Worker Info
     if (worker) {
