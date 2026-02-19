@@ -2,7 +2,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Users, Briefcase, FileCheck, AlertCircle, ArrowRight, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getJSTDateString, toJSTDateStr } from "@/lib/utils";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { TodayJobsList } from "@/components/dashboard/TodayJobsList";
 
@@ -13,8 +13,7 @@ export default async function Home() {
 
   // 1. Prepare Dates (aligned to JST)
   // Get current JST date string (YYYY-MM-DD)
-  const jstNow = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
-  const jstTodayStr = jstNow.toISOString().split('T')[0];
+  const jstTodayStr = getJSTDateString();
 
   const startOfToday = `${jstTodayStr}T00:00:00+09:00`;
   const endOfToday = `${jstTodayStr}T23:59:59+09:00`;
@@ -89,8 +88,7 @@ export default async function Home() {
     // 1. Check if any application is scheduled for today
     const hasTodayApp = job.job_applications?.some((app: any) => {
       if (!app.scheduled_work_start) return false;
-      const appDateStr = app.scheduled_work_start.split('T')[0];
-      return appDateStr === jstTodayStr;
+      return toJSTDateStr(app.scheduled_work_start) === jstTodayStr;
     });
 
     if (hasTodayApp) return true;
@@ -102,8 +100,7 @@ export default async function Home() {
 
     // 3. Fallback: If no scheduled applications, check job.start_time
     if (!job.start_time) return false;
-    const jobDateStr = job.start_time.split('T')[0];
-    return jobDateStr === jstTodayStr;
+    return toJSTDateStr(job.start_time) === jstTodayStr;
   });
 
   const recentApps = recentAppsRes.data;

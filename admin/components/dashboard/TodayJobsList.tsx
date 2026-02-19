@@ -5,7 +5,7 @@ import { updateJob } from "@/app/actions/job";
 import { toast } from "sonner";
 import { Loader2, MapPin, Clock, Building2, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, toJSTDateStr, getJSTDateString } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
     { value: "DRAFT", label: "下書き", color: "bg-gray-100 text-gray-700" },
@@ -77,9 +77,9 @@ export function TodayJobsList({ jobs: initialJobs }: TodayJobsListProps) {
                     <tbody className="divide-y divide-border">
                         {jobs.map((job) => {
                             // Find application scheduled for TODAY if any
-                            const today = new Date(new Date().getTime() + (9 * 60 * 60 * 1000)).toISOString().split('T')[0];
+                            const jstToday = getJSTDateString();
                             const todayApp = (job as any).job_applications?.find((app: any) =>
-                                app.scheduled_work_start?.startsWith(today)
+                                toJSTDateStr(app.scheduled_work_start) === jstToday
                             );
 
                             const displayStartTime = todayApp?.scheduled_work_start || job.start_time;

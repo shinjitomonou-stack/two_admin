@@ -83,3 +83,20 @@ export function getJSTDateString(offsetDays: number = 0): string {
 
     return `${y}-${m}-${d}`;
 }
+/**
+ * ISO string (UTC) to JST date string (YYYY-MM-DD)
+ */
+export function toJSTDateStr(date: string | Date | null | undefined): string {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+
+    // Manual JST conversion: UTC timestamp + 9 hours
+    const jstDate = new Date(d.getTime() + (9 * 60 * 60 * 1000));
+
+    const y = jstDate.getUTCFullYear();
+    const m = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+    const d_ = String(jstDate.getUTCDate()).padStart(2, '0');
+
+    return `${y}-${m}-${d_}`;
+}
