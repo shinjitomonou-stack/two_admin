@@ -10,6 +10,7 @@ import { updateJob, duplicateJob, deleteJob } from "@/app/actions/job";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Briefcase, Users, CheckCircle, FileText, Loader2 } from "lucide-react";
+import { toJSTDateStr } from "@/lib/utils";
 import AdminLayout from "@/components/layout/AdminLayout";
 
 interface JobsDashboardViewProps {
@@ -102,7 +103,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
         let dateFiltered = jobs.filter(job => {
             const hasTargetDateApp = job.job_applications?.some((app: any) => {
                 if (!app.scheduled_work_start) return false;
-                return app.scheduled_work_start.startsWith(targetDateStr);
+                return toJSTDateStr(app.scheduled_work_start) === targetDateStr;
             });
 
             if (hasTargetDateApp) return true;
@@ -111,7 +112,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
             if (hasAnyScheduledApp) return false;
 
             if (!job.start_time) return false;
-            return job.start_time.startsWith(targetDateStr);
+            return toJSTDateStr(job.start_time) === targetDateStr;
         });
 
         setDateFilteredJobs(dateFiltered);
