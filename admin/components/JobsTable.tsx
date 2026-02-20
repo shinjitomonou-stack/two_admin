@@ -50,6 +50,7 @@ export interface Job {
         actual_work_start: string | null;
         workers: { full_name: string } | null;
         worker_id: string;
+        individual_contract_id: string | null;
         reports?: Array<{ id: string; status: string; created_at: string }>;
     }>;
 }
@@ -119,6 +120,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
 
                             const totalApps = applications.length;
                             const assignedCount = assignedApps.length + activePlacements.length;
+                            const hasWorkerContract = applications.some(app => !!app.individual_contract_id);
 
                             // Get scheduled and actual dates
                             const scheduledDates = applications
@@ -307,15 +309,25 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             <span className="text-xs text-slate-400">-</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-center">
-                                        {(job as any).linked_contract || (job as any).client_job_contracts?.length > 0 ? (
-                                            <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs font-bold border border-blue-100">
-                                                <FileText className="w-3 h-3" />
-                                                あり
-                                            </span>
-                                        ) : (
-                                            <span className="text-slate-300">-</span>
-                                        )}
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1 items-center">
+                                            {(job as any).linked_contract || (job as any).client_job_contracts?.length > 0 ? (
+                                                <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-100 w-full justify-center">
+                                                    <FileText className="w-3 h-3" />
+                                                    案件: あり
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-300 text-[10px]">-</span>
+                                            )}
+                                            {hasWorkerContract ? (
+                                                <span className="inline-flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-100 w-full justify-center">
+                                                    <FileText className="w-3 h-3" />
+                                                    ワーカー: あり
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-300 text-[10px]">-</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <select

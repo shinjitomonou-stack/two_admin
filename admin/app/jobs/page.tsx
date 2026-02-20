@@ -65,6 +65,7 @@ export default function JobsPage() {
                     actual_work_start,
                     workers(full_name, name_kana),
                     worker_id,
+                    individual_contract_id,
                     reports(id, status, created_at)
                 ),
                 client_job_contracts!job_id (
