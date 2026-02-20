@@ -3,7 +3,7 @@ import { ArrowLeft, ShieldCheck, ShieldAlert, Mail, Phone, Calendar, CreditCard,
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDate, formatDateTime, getJSTDateString } from "@/lib/utils";
 import ResetWorkerPassword from "@/components/ResetWorkerPassword";
 import WorkerDetailActions from "@/components/WorkerDetailActions"; // We need to create this
 
@@ -52,8 +52,18 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     const approvedReports = statsData?.flatMap(a => a.reports ? [a.reports] : []).filter(r => (r as any).status === 'APPROVED') || [];
     const totalEarnings = approvedReports.reduce((sum, r: any) => sum + (r.reward_amount || 0), 0);
 
+    // 4. Calculate stats with date awareness
+    const jstTodayStr = getJSTDateString();
+    const today = new Date(`${jstTodayStr}T00:00:00+09:00`);
+
     const completedCount = statsData?.filter(a => a.status === 'COMPLETED').length || 0;
-    const plannedCount = statsData?.filter(a => ['ASSIGNED', 'CONFIRMED'].includes(a.status)).length || 0;
+    const plannedCount = statsData?.filter(a => {
+        if (!['ASSIGNED', 'CONFIRMED'].includes(a.status)) return false;
+        // Only count future jobs as planned
+        const jobDateStr = (a as any).scheduled_work_start || (a as any).jobs?.start_time;
+        if (!jobDateStr) return true;
+        return new Date(jobDateStr) >= today;
+    }).length || 0;
 
     // Planned Jobs
     const { data: plannedJobs } = await supabase
@@ -72,7 +82,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .select(`
             *,
             jobs (title, start_time, end_time, address_text, reward_amount, reward_tax_mode),
-            reports (id, status, reward_amount)
+            reports (id, status, reward_amount, created_at)
         `)
         .eq("worker_id", id)
         .eq("status", "COMPLETED")
@@ -266,12 +276,17 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                                         ¥{Math.round(app.jobs?.reward_amount * (app.jobs?.reward_tax_mode === 'INCL' ? 1 : 1.1)).toLocaleString()}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <span className={cn(
-                                                            "px-2 py-1 rounded text-[10px] font-bold",
-                                                            app.status === 'CONFIRMED' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
-                                                        )}>
-                                                            {app.status === 'CONFIRMED' ? '確定' : '採用'}
-                                                        </span>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <span className={cn(
+                                                                "px-2 py-1 rounded text-[10px] font-bold",
+                                                                app.status === 'CONFIRMED' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                                            )}>
+                                                                {app.status === 'CONFIRMED' ? '確定' : '採用'}
+                                                            </span>
+                                                            {(app.scheduled_work_start || app.jobs?.start_time) && new Date(app.scheduled_work_start || app.jobs?.start_time) < today && (
+                                                                <span className="text-[10px] text-red-500 font-bold">報告待ち</span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))
@@ -324,7 +339,8 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                                                 app.reports?.[0]?.status === 'REJECTED' ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
                                                         )}>
                                                             {app.reports?.[0]?.status === 'APPROVED' ? '承認済' :
-                                                                app.reports?.[0]?.status === 'REJECTED' ? '非承認' : '報告済'}
+                                                                app.reports?.[0]?.status === 'REJECTED' ? '非承認' :
+                                                                    app.reports?.[0] ? '報告済' : '未報告'}
                                                         </span>
                                                     </td>
                                                 </tr>

@@ -94,6 +94,7 @@ export default function ApplicationsPage() {
     const processApplications = () => {
         const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
         const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+        const now = new Date();
 
         // 1. History (Completed jobs for the selected month)
         const history = applications.filter(app => {
@@ -152,7 +153,10 @@ export default function ApplicationsPage() {
                 }
             } else if (isAssigned) {
                 if (targetDate >= startOfMonth && targetDate <= endOfMonth) {
-                    monthlyScheduled += reward;
+                    // Only count as scheduled reward if it's in the future or today
+                    if (targetDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+                        monthlyScheduled += reward;
+                    }
                 }
             }
         });

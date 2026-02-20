@@ -182,8 +182,15 @@ export default async function Home() {
           completedCount += 1;
           actualEarnings += taxInclusiveAmount;
         } else if (app.status === 'ASSIGNED' || app.status === 'CONFIRMED') {
-          scheduledCount += 1;
-          plannedEarnings += taxInclusiveAmount;
+          // Date awareness: Only count future jobs as scheduled
+          const jobDateStr = app.scheduled_work_start || job.start_time;
+          const isFuture = jobDateStr && new Date(jobDateStr) >= new Date(jstTodayStart);
+
+          if (isFuture) {
+            scheduledCount += 1;
+            plannedEarnings += taxInclusiveAmount;
+          }
+          // Note: Past assigned/confirmed jobs are handled by applicationsOverdue alert logic
         }
       });
     }
