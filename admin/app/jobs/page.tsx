@@ -219,7 +219,7 @@ export default function JobsPage() {
         // Contract status filter
         if (filters.contractStatus !== "ALL") {
             filtered = filtered.filter((job) => {
-                const hasContract = !!((job as any).linked_contract || (job as any).client_job_contracts?.length > 0);
+                const hasContract = !!((job as any).linked_contract || (job as any).client_job_contracts?.length > 0 || job.job_applications?.some(app => !!app.individual_contract_id));
                 return filters.contractStatus === "HAS_CONTRACT" ? hasContract : !hasContract;
             });
         }
@@ -418,7 +418,7 @@ export default function JobsPage() {
     }).length;
 
     const jobsWithContractCount = filteredJobs.filter(j =>
-        !!((j as any).linked_contract || (j as any).client_job_contracts?.length > 0)
+        !!((j as any).linked_contract || (j as any).client_job_contracts?.length > 0 || j.job_applications?.some(app => !!app.individual_contract_id))
     ).length;
 
     if (loading) {
