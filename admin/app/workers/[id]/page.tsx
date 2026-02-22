@@ -44,7 +44,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .select(`
             *,
             jobs (title, status, start_time, end_time, address_text, reward_amount, reward_tax_mode),
-            reports (id, status, reward_amount, created_at)
+            reports (id, status, created_at)
         `)
         .eq("worker_id", id)
         .in("status", ["ASSIGNED", "CONFIRMED"])
@@ -56,25 +56,13 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .select(`
             *,
             jobs (title, status, start_time, end_time, address_text, reward_amount, reward_tax_mode),
-            reports (id, status, reward_amount, created_at)
+            reports (id, status, created_at)
         `)
         .eq("worker_id", id)
         .eq("status", "COMPLETED")
         .order("scheduled_work_start", { ascending: false });
 
-    // Error rendering block for debugging
-    if (plannedError || completedError) {
-        return (
-            <AdminLayout>
-                <div className="p-8 bg-red-50 text-red-600 rounded-lg">
-                    <h2 className="text-xl font-bold mb-4">Database Error Debugging</h2>
-                    <pre className="whitespace-pre-wrap">
-                        {JSON.stringify({ plannedError, completedError }, null, 2)}
-                    </pre>
-                </div>
-            </AdminLayout>
-        );
-    }
+
 
     // 4. Categorize applications locally
     const newlyCompleted = (plannedJobsRaw || []).filter(app => (app.jobs as any)?.status === 'COMPLETED');
@@ -109,7 +97,13 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     // Filter approved reports for earnings
     const allAppsForStats = [...completedJobs, ...plannedJobs];
     const approvedReports = allAppsForStats.flatMap(a => a.reports ? (Array.isArray(a.reports) ? a.reports : [a.reports]) : []).filter(r => (r as any).status === 'APPROVED') || [];
-    const totalEarnings = approvedReports.reduce((sum, r: any) => sum + (r.reward_amount || 0), 0);
+    // Calculate total earnings from jobs with approved reports (using jobs.reward_amount)
+    const trulyCompletedAndApprovedJobsForEarnings = allAppsForStats.filter(app => {
+        const hasApprovedReport = app.reports && (Array.isArray(app.reports) ? app.reports : [app.reports]).some(r => (r as any).status === 'APPROVED');
+        return hasApprovedReport;
+    });
+
+    const totalEarnings = trulyCompletedAndApprovedJobsForEarnings.reduce((sum, app: any) => sum + (app.jobs?.reward_amount || 0), 0);
 
     if (error || !worker) {
         notFound();
