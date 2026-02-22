@@ -110,10 +110,29 @@ export default function BulkJobAssignmentModal({ isOpen, onClose, workerId, work
             console.error(error);
             toast.error("案件の取得に失敗しました");
         } else {
-            const formattedJobs = data.map((job: any) => ({
-                ...job,
-                current_workers_count: job.job_applications?.[0]?.count || 0
-            }));
+            // Get worker's existing assigned jobs so we don't show them
+            const { data: existingApps } = await supabase
+                .from("job_applications")
+                .select("job_id")
+                .eq("worker_id", workerId);
+            const existingJobIds = new Set((existingApps || []).map(a => a.job_id));
+
+            const formattedJobs = data
+                .map((job: any) => ({
+                    ...job,
+                    current_workers_count: job.job_applications?.[0]?.count || 0
+                }))
+                .filter((job: any) => {
+                    // Filter out jobs the worker is already part of
+                    if (existingJobIds.has(job.id)) return false;
+
+                    // Filter out jobs that are fully staffed or COMPLETED
+                    if (job.status === 'COMPLETED') return false;
+                    if (job.current_workers_count >= job.max_workers) return false;
+
+                    return true;
+                });
+
             setJobs(formattedJobs);
         }
         setIsLoading(false);
