@@ -88,11 +88,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     const today = new Date(`${jstTodayStr}T00:00:00+09:00`);
 
     const completedCount = completedJobs.length;
-    const plannedCount = plannedJobs.filter(a => {
-        const jobDateStr = a.scheduled_work_start || (a.jobs as any)?.start_time;
-        if (!jobDateStr) return true;
-        return new Date(jobDateStr) >= today;
-    }).length;
+    const plannedCount = plannedJobs.length;
 
     // Filter approved reports for earnings
     const allAppsForStats = [...completedJobs, ...plannedJobs];
