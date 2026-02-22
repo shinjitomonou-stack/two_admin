@@ -38,55 +38,49 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         `)
         .eq("worker_id", id)
         .order("created_at", { ascending: false });
-    // 3. Get all applications for this worker with rich relations
-    const { data: allApplications } = await supabase
+    // 3. Get Statistics and Job Lists
+    // Planned Jobs (can include some whose job got completed, we will filter them locally)
+    const { data: plannedJobsRaw } = await supabase
         .from("job_applications")
         .select(`
             *,
-            jobs (
-                id,
-                title,
-                status,
-                start_time,
-                end_time,
-                address_text,
-                reward_amount,
-                reward_tax_mode
-            ),
-            reports (
-                id,
-                status,
-                reward_amount,
-                created_at
-            )
+            jobs (title, status, start_time, end_time, address_text, reward_amount, reward_tax_mode),
+            reports (id, status, reward_amount, created_at)
         `)
         .eq("worker_id", id)
-        .order("scheduled_work_start", { ascending: true }); // Order by start time
+        .in("status", ["ASSIGNED", "CONFIRMED"])
+        .order("scheduled_work_start", { ascending: true });
+
+    // Completed Jobs
+    const { data: completedJobsRaw } = await supabase
+        .from("job_applications")
+        .select(`
+            *,
+            jobs (title, status, start_time, end_time, address_text, reward_amount, reward_tax_mode),
+            reports (id, status, reward_amount, created_at)
+        `)
+        .eq("worker_id", id)
+        .eq("status", "COMPLETED")
+        .order("scheduled_work_start", { ascending: false });
 
     // 4. Categorize applications locally
-    const categorizedApps = (allApplications || []).map(app => {
-        const isCompleted = app.status === 'COMPLETED' || (app.jobs as any)?.status === 'COMPLETED';
-        return {
-            ...app,
-            isCompleted
-        };
+    const newlyCompleted = (plannedJobsRaw || []).filter(app => (app.jobs as any)?.status === 'COMPLETED');
+    const trulyPlanned = (plannedJobsRaw || []).filter(app => (app.jobs as any)?.status !== 'COMPLETED');
+
+    const completedJobs = [
+        ...(completedJobsRaw || []),
+        ...newlyCompleted
+    ].sort((a, b) => {
+        const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
+        const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
+        return dateB - dateA; // Descending for completed jobs
     });
 
-    const completedJobs = categorizedApps
-        .filter(app => app.isCompleted)
-        .sort((a, b) => {
-            const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
-            const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
-            return dateB - dateA; // Descending for completed jobs
-        });
-
-    const plannedJobs = categorizedApps
-        .filter(app => !app.isCompleted && ['ASSIGNED', 'CONFIRMED'].includes(app.status))
-        .sort((a, b) => {
-            const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
-            const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
-            return dateA - dateB; // Ascending for planned jobs
-        });
+    const plannedJobs = trulyPlanned.sort((a, b) => {
+        const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
+        const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
+        return dateA - dateB; // Ascending for planned jobs
+    });
 
     // 5. Calculate statistics from categorized applications
     const jstTodayStr = getJSTDateString();
@@ -100,7 +94,8 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     }).length;
 
     // Filter approved reports for earnings
-    const approvedReports = categorizedApps.flatMap(a => a.reports ? (Array.isArray(a.reports) ? a.reports : [a.reports]) : []).filter(r => (r as any).status === 'APPROVED') || [];
+    const allAppsForStats = [...completedJobs, ...plannedJobs];
+    const approvedReports = allAppsForStats.flatMap(a => a.reports ? (Array.isArray(a.reports) ? a.reports : [a.reports]) : []).filter(r => (r as any).status === 'APPROVED') || [];
     const totalEarnings = approvedReports.reduce((sum, r: any) => sum + (r.reward_amount || 0), 0);
 
     if (error || !worker) {
