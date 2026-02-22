@@ -38,55 +38,70 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         `)
         .eq("worker_id", id)
         .order("created_at", { ascending: false });
-    // 3. Get Statistics and Job Lists
-    const { data: statsData } = await supabase
+    // 3. Get all applications for this worker with rich relations
+    const { data: allApplications } = await supabase
         .from("job_applications")
         .select(`
-            status,
-            jobs (reward_amount, reward_tax_mode),
-            reports (reward_amount, status)
+            *,
+            jobs (
+                id,
+                title,
+                status,
+                start_time,
+                end_time,
+                address_text,
+                reward_amount,
+                reward_tax_mode
+            ),
+            reports (
+                id,
+                status,
+                reward_amount,
+                created_at
+            )
         `)
-        .eq("worker_id", id);
+        .eq("worker_id", id)
+        .order("scheduled_work_start", { ascending: true }); // Order by start time
 
-    // Filter approved reports for earnings
-    const approvedReports = statsData?.flatMap(a => a.reports ? [a.reports] : []).filter(r => (r as any).status === 'APPROVED') || [];
-    const totalEarnings = approvedReports.reduce((sum, r: any) => sum + (r.reward_amount || 0), 0);
+    // 4. Categorize applications locally
+    const categorizedApps = (allApplications || []).map(app => {
+        const isCompleted = app.status === 'COMPLETED' || (app.jobs as any)?.status === 'COMPLETED';
+        return {
+            ...app,
+            isCompleted
+        };
+    });
 
-    // 4. Calculate stats with date awareness
+    const completedJobs = categorizedApps
+        .filter(app => app.isCompleted)
+        .sort((a, b) => {
+            const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
+            const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
+            return dateB - dateA; // Descending for completed jobs
+        });
+
+    const plannedJobs = categorizedApps
+        .filter(app => !app.isCompleted && ['ASSIGNED', 'CONFIRMED'].includes(app.status))
+        .sort((a, b) => {
+            const dateA = new Date(a.scheduled_work_start || (a.jobs as any)?.start_time || 0).getTime();
+            const dateB = new Date(b.scheduled_work_start || (b.jobs as any)?.start_time || 0).getTime();
+            return dateA - dateB; // Ascending for planned jobs
+        });
+
+    // 5. Calculate statistics from categorized applications
     const jstTodayStr = getJSTDateString();
     const today = new Date(`${jstTodayStr}T00:00:00+09:00`);
 
-    const completedCount = statsData?.filter(a => a.status === 'COMPLETED').length || 0;
-    const plannedCount = statsData?.filter(a => {
-        if (!['ASSIGNED', 'CONFIRMED'].includes(a.status)) return false;
-        // Only count future jobs as planned
-        const jobDateStr = (a as any).scheduled_work_start || (a as any).jobs?.start_time;
+    const completedCount = completedJobs.length;
+    const plannedCount = plannedJobs.filter(a => {
+        const jobDateStr = a.scheduled_work_start || (a.jobs as any)?.start_time;
         if (!jobDateStr) return true;
         return new Date(jobDateStr) >= today;
-    }).length || 0;
+    }).length;
 
-    // Planned Jobs
-    const { data: plannedJobs } = await supabase
-        .from("job_applications")
-        .select(`
-            *,
-            jobs (title, start_time, end_time, address_text, reward_amount, reward_tax_mode)
-        `)
-        .eq("worker_id", id)
-        .in("status", ["ASSIGNED", "CONFIRMED"])
-        .order("scheduled_work_start", { ascending: true });
-
-    // Completed Jobs
-    const { data: completedJobs } = await supabase
-        .from("job_applications")
-        .select(`
-            *,
-            jobs (title, start_time, end_time, address_text, reward_amount, reward_tax_mode),
-            reports (id, status, reward_amount, created_at)
-        `)
-        .eq("worker_id", id)
-        .eq("status", "COMPLETED")
-        .order("scheduled_work_start", { ascending: false });
+    // Filter approved reports for earnings
+    const approvedReports = categorizedApps.flatMap(a => a.reports ? (Array.isArray(a.reports) ? a.reports : [a.reports]) : []).filter(r => (r as any).status === 'APPROVED') || [];
+    const totalEarnings = approvedReports.reduce((sum, r: any) => sum + (r.reward_amount || 0), 0);
 
     if (error || !worker) {
         notFound();
