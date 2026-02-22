@@ -38,9 +38,8 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         `)
         .eq("worker_id", id)
         .order("created_at", { ascending: false });
-    // 3. Get Statistics and Job Lists
     // Planned Jobs (can include some whose job got completed, we will filter them locally)
-    const { data: plannedJobsRaw } = await supabase
+    const { data: plannedJobsRaw, error: plannedError } = await supabase
         .from("job_applications")
         .select(`
             *,
@@ -52,7 +51,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .order("scheduled_work_start", { ascending: true });
 
     // Completed Jobs
-    const { data: completedJobsRaw } = await supabase
+    const { data: completedJobsRaw, error: completedError } = await supabase
         .from("job_applications")
         .select(`
             *,
@@ -62,6 +61,20 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         .eq("worker_id", id)
         .eq("status", "COMPLETED")
         .order("scheduled_work_start", { ascending: false });
+
+    // Error rendering block for debugging
+    if (plannedError || completedError) {
+        return (
+            <AdminLayout>
+                <div className="p-8 bg-red-50 text-red-600 rounded-lg">
+                    <h2 className="text-xl font-bold mb-4">Database Error Debugging</h2>
+                    <pre className="whitespace-pre-wrap">
+                        {JSON.stringify({ plannedError, completedError }, null, 2)}
+                    </pre>
+                </div>
+            </AdminLayout>
+        );
+    }
 
     // 4. Categorize applications locally
     const newlyCompleted = (plannedJobsRaw || []).filter(app => (app.jobs as any)?.status === 'COMPLETED');
