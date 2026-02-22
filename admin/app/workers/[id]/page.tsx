@@ -99,7 +99,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
     const approvedReports = allAppsForStats.flatMap(a => a.reports ? (Array.isArray(a.reports) ? a.reports : [a.reports]) : []).filter(r => (r as any).status === 'APPROVED') || [];
     // Calculate total earnings from jobs with approved reports (using jobs.reward_amount)
     const trulyCompletedAndApprovedJobsForEarnings = allAppsForStats.filter(app => {
-        const hasApprovedReport = app.reports && (Array.isArray(app.reports) ? app.reports : [app.reports]).some(r => (r as any).status === 'APPROVED');
+        const hasApprovedReport = app.reports && (Array.isArray(app.reports) ? app.reports : [app.reports]).some((r: any) => r.status === 'APPROVED');
         return hasApprovedReport;
     });
 
