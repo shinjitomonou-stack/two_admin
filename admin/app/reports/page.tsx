@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Edit, Search, X } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock, Filter, ArrowLeft, Eye, Search, X, ExternalLink } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
 import AdminLayout from "@/components/layout/AdminLayout";
 
@@ -345,9 +345,13 @@ export default function ReportsPage() {
                                         {paginatedReports.map((report) => (
                                             <tr key={report.id} className="hover:bg-slate-50/80 transition-all group">
                                                 <td className="px-6 py-4">
-                                                    <div className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                                    <Link
+                                                        href={`/jobs/${report.job_applications?.job_id}`}
+                                                        className="text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-1 group/link"
+                                                    >
                                                         {report.job_applications?.jobs?.title || "-"}
-                                                    </div>
+                                                        <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                                                    </Link>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
@@ -383,13 +387,7 @@ export default function ReportsPage() {
                                                             title="詳細を確認"
                                                         >
                                                             <Eye className="w-4 h-4" />
-                                                        </Link>
-                                                        <Link
-                                                            href={`/reports/${report.id}/edit`}
-                                                            className="p-2 hover:bg-white hover:shadow-sm hover:text-green-600 rounded-lg transition-all"
-                                                            title="編集"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
+                                                            <span className="text-xs font-bold ml-1">詳細</span>
                                                         </Link>
                                                     </div>
                                                 </td>

@@ -1,7 +1,7 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
-import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, Edit, X } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, X, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -176,7 +176,13 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                             <div className="flex items-center gap-2 text-muted-foreground text-sm">
                                 <span>{report.job_applications.workers.full_name}</span>
                                 <span>•</span>
-                                <span>{report.job_applications.jobs.title}</span>
+                                <Link
+                                    href={`/jobs/${report.job_applications.job_id}`}
+                                    className="hover:text-blue-600 transition-colors flex items-center gap-1 group/job"
+                                >
+                                    {report.job_applications.jobs.title}
+                                    <ExternalLink className="w-3 h-3 opacity-0 group-hover/job:opacity-100 transition-opacity" />
+                                </Link>
                                 {template && (
                                     <>
                                         <span>•</span>
@@ -188,13 +194,7 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                         </div>
                     </div>
-                    <Link
-                        href={`/reports/${id}/edit?returnTo=${encodeURIComponent(returnTo)}`}
-                        className="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition-colors text-sm font-medium"
-                    >
-                        <Edit className="w-4 h-4" />
-                        編集する
-                    </Link>
+
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
