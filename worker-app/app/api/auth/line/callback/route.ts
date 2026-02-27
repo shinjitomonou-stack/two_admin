@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendLineMessage } from "@/lib/line";
 
 const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || '2006927485';
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || 'bd2af8603cadd17d4bf62c0f64dde0e8';
@@ -75,6 +76,14 @@ export async function GET(request: NextRequest) {
             console.error('Database update failed:', updateError);
             return NextResponse.redirect(`${origin}/settings/line?error=db_failed`);
         }
+
+        // LINE連携完了通知を送信（失敗してもリダイレクトは行う）
+        await sendLineMessage(
+            lineUserId,
+            "LINE連携が完了しました！\n\nこれより、お仕事の採用通知や契約書の確認依頼などをLINEでお届けします。"
+        ).catch((err) => {
+            console.error("Failed to send LINE integration notification:", err);
+        });
 
         return NextResponse.redirect(`${origin}/settings/line?success=true`);
     } catch (error) {
