@@ -9,8 +9,11 @@ interface BillingData {
     client_id: string;
     client_name: string;
     job_billing: number;
+    job_billing_incl: number;
     monthly_billing: number;
+    monthly_billing_incl: number;
     total_billing: number;
+    total_billing_incl: number;
     job_count: number;
 }
 
@@ -103,13 +106,18 @@ export default function ClientBillingPage() {
                     client_id: clientId,
                     client_name: job.clients?.name || '',
                     job_billing: 0,
+                    job_billing_incl: 0,
                     monthly_billing: 0,
+                    monthly_billing_incl: 0,
                     total_billing: 0,
+                    total_billing_incl: 0,
                     job_count: 0,
                 });
             }
             const data = clientMap.get(clientId)!;
-            data.job_billing += parseFloat(job.billing_amount || 0);
+            const billingAmount = parseFloat(job.billing_amount || 0);
+            data.job_billing += billingAmount;
+            data.job_billing_incl += Math.round(billingAmount * 1.1);
             data.job_count += 1;
         });
 
@@ -120,8 +128,11 @@ export default function ClientBillingPage() {
                     client_id: clientId,
                     client_name: contract.clients?.name || '',
                     job_billing: 0,
+                    job_billing_incl: 0,
                     monthly_billing: 0,
+                    monthly_billing_incl: 0,
                     total_billing: 0,
+                    total_billing_incl: 0,
                     job_count: 0,
                 });
             }
@@ -133,13 +144,16 @@ export default function ClientBillingPage() {
                 if (contractStartDate < startDate || contractStartDate > endDate) return;
             }
 
-            data.monthly_billing += parseFloat(contract.contract_amount || 0);
+            const contractAmount = parseFloat(contract.contract_amount || 0);
+            data.monthly_billing += contractAmount;
+            data.monthly_billing_incl += Math.round(contractAmount * 1.1);
         });
 
         // Calculate totals
         const result = Array.from(clientMap.values()).map(data => ({
             ...data,
             total_billing: data.job_billing + data.monthly_billing,
+            total_billing_incl: data.job_billing_incl + data.monthly_billing_incl,
         }));
 
         setBillingData(result);
@@ -222,8 +236,8 @@ export default function ClientBillingPage() {
             Math.round(data.job_billing).toLocaleString(),
             Math.round(data.monthly_billing).toLocaleString(),
             Math.round(data.total_billing).toLocaleString(),
-            Math.round(data.total_billing * 0.1).toLocaleString(),
-            Math.round(data.total_billing * 1.1).toLocaleString(),
+            (data.total_billing_incl - Math.round(data.total_billing)).toLocaleString(),
+            data.total_billing_incl.toLocaleString(),
         ]);
 
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -237,6 +251,7 @@ export default function ClientBillingPage() {
     const totalJobBilling = billingData.reduce((sum, data) => sum + data.job_billing, 0);
     const totalMonthlyBilling = billingData.reduce((sum, data) => sum + data.monthly_billing, 0);
     const grandTotal = totalJobBilling + totalMonthlyBilling;
+    const grandTotalIncl = billingData.reduce((sum, data) => sum + data.total_billing_incl, 0);
 
     return (
         <AdminLayout>
@@ -296,7 +311,7 @@ export default function ClientBillingPage() {
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
                         <div className="text-2xl font-bold text-blue-600">¥{Math.round(grandTotal).toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                            税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
+                            税込: ¥{grandTotalIncl.toLocaleString()}
                         </div>
                     </div>
                 </div>
@@ -352,7 +367,7 @@ export default function ClientBillingPage() {
                                                 ¥{Math.round(data.total_billing).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right text-blue-600 font-medium">
-                                                ¥{Math.round(data.total_billing * 1.1).toLocaleString()}
+                                                ¥{data.total_billing_incl.toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -444,11 +459,11 @@ export default function ClientBillingPage() {
                                     </div>
                                     <div className="flex justify-between text-muted-foreground">
                                         <span>消費税(10%)</span>
-                                        <span>¥{Math.round(selectedClient.total_billing * 0.1).toLocaleString()}</span>
+                                        <span>¥{(selectedClient.total_billing_incl - selectedClient.total_billing).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-xl text-blue-600">
                                         <span className="font-bold">税込合計</span>
-                                        <span className="font-bold">¥{Math.round(selectedClient.total_billing * 1.1).toLocaleString()}</span>
+                                        <span className="font-bold">¥{selectedClient.total_billing_incl.toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
