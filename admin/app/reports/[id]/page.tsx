@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/layout/AdminLayout";
 import { ArrowLeft, MapPin, Calendar, CheckCircle, XCircle, FileText, X, ExternalLink } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -228,16 +229,21 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                                 {isPhoto ? (
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                                                         {(value as string[]).map((url, idx) => (
-                                                            <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-slate-50 border border-slate-100">
-                                                                <img
+                                                            <div
+                                                                key={idx}
+                                                                className="relative aspect-square rounded-lg overflow-hidden bg-slate-50 border border-slate-100 cursor-zoom-in"
+                                                                onClick={() => {
+                                                                    setPreviewImages(value as string[]);
+                                                                    setPreviewInitialIndex(idx);
+                                                                    setIsPreviewOpen(true);
+                                                                }}
+                                                            >
+                                                                <Image
                                                                     src={url}
                                                                     alt={`${field.label} ${idx + 1}`}
-                                                                    className="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
-                                                                    onClick={() => {
-                                                                        setPreviewImages(value as string[]);
-                                                                        setPreviewInitialIndex(idx);
-                                                                        setIsPreviewOpen(true);
-                                                                    }}
+                                                                    fill
+                                                                    sizes="(max-width: 640px) 50vw, 25vw"
+                                                                    className="object-cover hover:opacity-90 transition-opacity"
                                                                 />
                                                             </div>
                                                         ))}
@@ -262,17 +268,19 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
                                     {report.photo_urls.map((url: string, index: number) => (
                                         <div
                                             key={index}
-                                            className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in"
+                                            className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-zoom-in"
                                             onClick={() => {
                                                 setPreviewImages(report.photo_urls);
                                                 setPreviewInitialIndex(index);
                                                 setIsPreviewOpen(true);
                                             }}
                                         >
-                                            <img
+                                            <Image
                                                 src={url}
                                                 alt={`Report photo ${index + 1}`}
-                                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, 33vw"
+                                                className="object-cover hover:scale-105 transition-transform duration-300"
                                             />
                                         </div>
                                     ))}

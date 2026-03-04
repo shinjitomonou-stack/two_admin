@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Upload, X, Calendar, Clock, MapPin } from "lucide-react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 type FieldType = "text" | "textarea" | "number" | "select" | "checkbox" | "photo";
@@ -270,7 +271,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                     <div className="grid grid-cols-3 gap-2">
                         {photos.map((url, index) => (
                             <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100">
-                                <img src={url} alt={`Report photo ${index + 1}`} className="w-full h-full object-cover" />
+                                <Image src={url} alt={`Report photo ${index + 1}`} fill sizes="33vw" className="object-cover" />
                                 <button
                                     type="button"
                                     onClick={() => removePhoto(index)}
@@ -385,7 +386,7 @@ export default function ReportForm({ applicationId, jobId, template, defaultValu
                                     <div className="grid grid-cols-3 gap-2">
                                         {(customFields[field.id] || []).map((url: string, pIdx: number) => (
                                             <div key={pIdx} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100">
-                                                <img src={url} alt={`${field.label} ${pIdx + 1}`} className="w-full h-full object-cover" />
+                                                <Image src={url} alt={`${field.label} ${pIdx + 1}`} fill sizes="33vw" className="object-cover" />
                                                 <button
                                                     type="button"
                                                     onClick={() => removeCustomPhoto(field.id, pIdx)}
