@@ -284,63 +284,63 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
 
     return (
         <AdminLayout>
-            <div className="space-y-8">
+            <div className="space-y-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
-                    <p className="text-muted-foreground mt-2">{description}</p>
+                    <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{description}</p>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 md:grid-cols-5">
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                <div className="grid gap-3 md:grid-cols-5">
+                    <div className="px-4 py-3 bg-white rounded-lg border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">全案件数</p>
-                                <p className="text-2xl font-bold mt-1">{totalJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">全案件数</p>
+                                <p className="text-xl font-bold">{totalJobsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <Briefcase className="w-8 h-8 text-blue-500 opacity-20" />
+                            <Briefcase className="w-6 h-6 text-blue-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="px-4 py-3 bg-white rounded-lg border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">配置状況</p>
-                                <p className="text-2xl font-bold mt-1">{assignedCount} / {totalMaxWorkers} <span className="text-sm font-normal text-muted-foreground">名</span></p>
-                                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                                <p className="text-xs font-medium text-muted-foreground">配置状況</p>
+                                <p className="text-xl font-bold">{assignedCount} / {totalMaxWorkers} <span className="text-xs font-normal text-muted-foreground">名</span></p>
+                                <div className="w-full bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
                                     <div
                                         className="bg-green-500 h-full transition-all duration-500"
                                         style={{ width: `${totalMaxWorkers > 0 ? (assignedCount / totalMaxWorkers) * 100 : 0}%` }}
                                     />
                                 </div>
                             </div>
-                            <Users className="w-8 h-8 text-green-500 opacity-20" />
+                            <Users className="w-6 h-6 text-green-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="px-4 py-3 bg-white rounded-lg border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">作業報告提出</p>
-                                <p className="text-2xl font-bold mt-1">{submittedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">作業報告提出</p>
+                                <p className="text-xl font-bold">{submittedReportsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <FileText className="w-8 h-8 text-purple-500 opacity-20" />
+                            <FileText className="w-6 h-6 text-purple-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="px-4 py-3 bg-white rounded-lg border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">承認済み報告</p>
-                                <p className="text-2xl font-bold mt-1">{approvedReportsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">承認済み報告</p>
+                                <p className="text-xl font-bold">{approvedReportsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
+                            <CheckCircle className="w-6 h-6 text-green-500 opacity-20" />
                         </div>
                     </div>
-                    <div className="p-6 bg-white rounded-xl border border-border shadow-sm">
+                    <div className="px-4 py-3 bg-white rounded-lg border border-border shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">完了済み案件</p>
-                                <p className="text-2xl font-bold mt-1">{completedJobsCount} <span className="text-sm font-normal text-muted-foreground">件</span></p>
+                                <p className="text-xs font-medium text-muted-foreground">完了済み案件</p>
+                                <p className="text-xl font-bold">{completedJobsCount} <span className="text-xs font-normal text-muted-foreground">件</span></p>
                             </div>
-                            <CheckCircle className="w-8 h-8 text-blue-500 opacity-20" />
+                            <CheckCircle className="w-6 h-6 text-blue-500 opacity-20" />
                         </div>
                     </div>
                 </div>
@@ -350,7 +350,7 @@ export function JobsDashboardView({ title, description, targetDateStr }: JobsDas
 
                 {/* Jobs Table */}
                 {loading ? (
-                    <div className="flex items-center justify-center p-20">
+                    <div className="flex items-center justify-center p-12">
                         <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
                     </div>
                 ) : (

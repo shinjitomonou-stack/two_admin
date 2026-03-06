@@ -80,20 +80,20 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
 
     return (
         <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto max-h-[calc(100vh-24rem)]">
-                <table className="w-full text-sm text-left">
+            <div className="overflow-x-auto max-h-[calc(100vh-16rem)]">
+                <table className="w-full text-xs text-left">
                     <thead className="bg-slate-50 border-b border-border text-slate-500 sticky top-0 z-10">
                         <tr>
-                            <th className="px-6 py-3 font-medium">案件名 / クライアント/パートナー</th>
-                            <th className="px-6 py-3 font-medium">作業予定日 / 実施日</th>
-                            <th className="px-6 py-3 font-medium">場所</th>
-                            <th className="px-6 py-3 font-medium">報酬 / 請求金額</th>
-                            <th className="px-6 py-3 font-medium">応募数 / 募集人数</th>
-                            <th className="px-6 py-3 font-medium">アサイン済み</th>
-                            <th className="px-6 py-3 font-medium">報告状況</th>
-                            <th className="px-6 py-3 font-medium text-center">個別契約</th>
-                            <th className="px-6 py-3 font-medium">ステータス</th>
-                            <th className="px-6 py-3 font-medium text-right">操作</th>
+                            <th className="px-3 py-2 font-medium">案件名 / クライアント/パートナー</th>
+                            <th className="px-3 py-2 font-medium">作業予定日 / 実施日</th>
+                            <th className="px-3 py-2 font-medium">場所</th>
+                            <th className="px-3 py-2 font-medium">報酬 / 請求金額</th>
+                            <th className="px-3 py-2 font-medium">応募数 / 募集人数</th>
+                            <th className="px-3 py-2 font-medium">アサイン済み</th>
+                            <th className="px-3 py-2 font-medium">報告状況</th>
+                            <th className="px-3 py-2 font-medium text-center">個別契約</th>
+                            <th className="px-3 py-2 font-medium">ステータス</th>
+                            <th className="px-3 py-2 font-medium text-right">操作</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -158,7 +158,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
 
                             return (
                                 <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <Link href={`/jobs/${job.id}`} className="block group">
                                             <div className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
                                                 {job.title}
@@ -168,7 +168,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             </div>
                                         </Link>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <div className="space-y-1 text-xs">
                                             {(earliestScheduled || !earliestActual) && (
                                                 <div className="flex items-center gap-1 text-slate-600">
@@ -184,7 +184,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <div className="flex items-center gap-1.5 text-slate-600 text-xs">
                                             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                                             <span className="truncate max-w-[150px]">
@@ -192,7 +192,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <div className="space-y-1 text-xs">
                                             <div className="font-medium text-slate-900">
                                                 報酬: ¥{Math.round(job.reward_amount).toLocaleString()} /人
@@ -210,7 +210,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <div className="flex items-center gap-2">
                                             <Users className="w-4 h-4 text-slate-400" />
                                             <span className="text-xs text-slate-600">
@@ -218,7 +218,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         {assignedCount > 0 ? (
                                             <div className="space-y-1">
                                                 <div className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-block">
@@ -242,7 +242,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             <span className="text-xs text-slate-400">未アサイン</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         {assignedApps.length > 0 ? (
                                             <div className="space-y-2">
                                                 <div className={cn(
@@ -309,7 +309,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             <span className="text-xs text-slate-400">-</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <div className="flex flex-col gap-1 items-center">
                                             {(job as any).linked_contract || (job as any).client_job_contracts?.length > 0 ? (
                                                 <span className="inline-flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-100 w-full justify-center">
@@ -329,7 +329,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-3 py-2">
                                         <select
                                             value={job.status}
                                             onChange={(e) => onStatusChange(job.id, e.target.value)}
@@ -346,7 +346,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                             ))}
                                         </select>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-3 py-2 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => onDuplicate(job)}
@@ -371,7 +371,7 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                         })}
                         {jobs.length === 0 && (
                             <tr>
-                                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                                <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
                                     案件がありません。
                                 </td>
                             </tr>
