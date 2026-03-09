@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatDateTime, getJSTDateString } from "@/lib/utils";
 import ResetWorkerPassword from "@/components/ResetWorkerPassword";
+import WorkerMemo from "@/components/WorkerMemo";
 import WorkerDetailActions from "@/components/WorkerDetailActions"; // We need to create this
 
 export default async function WorkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -458,6 +459,8 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                 </div>
                             </div>
                         </div>
+
+                        <WorkerMemo workerId={worker.id} initialMemo={worker.admin_memo} />
 
                         <div className="pt-4 border-t border-border">
                             <button className="w-full bg-slate-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">

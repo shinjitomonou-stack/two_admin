@@ -31,6 +31,7 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
         birth_date: "",
         tags: [] as string[],
         is_verified: false,
+        admin_memo: "",
     });
 
     useEffect(() => {
@@ -66,6 +67,7 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                     birth_date: data.birth_date || "",
                     tags: data.tags || [],
                     is_verified: data.is_verified || false,
+                    admin_memo: data.admin_memo || "",
                 });
                 setTagInput((data.tags || []).join(", "));
             }
@@ -245,6 +247,16 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                             />
                         </div>
+                    </div>
+
+                    <div className="space-y-2 pt-4 border-t border-border">
+                        <label className="text-sm font-medium">管理者メモ</label>
+                        <textarea
+                            value={formData.admin_memo}
+                            onChange={(e) => setFormData({ ...formData, admin_memo: e.target.value })}
+                            placeholder="ワーカーに関するメモを入力..."
+                            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 min-h-[100px] resize-y"
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
