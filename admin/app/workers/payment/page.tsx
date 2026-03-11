@@ -12,6 +12,7 @@ interface PaymentData {
     worker_id: string;
     worker_name: string;
     total_payment: number;
+    total_payment_incl: number;
     job_count: number;
     bank_account?: {
         bank_name?: string;
@@ -100,12 +101,15 @@ export default function WorkerPaymentPage() {
                         worker_id: workerId,
                         worker_name: app.workers?.full_name || '',
                         total_payment: 0,
+                        total_payment_incl: 0,
                         job_count: 0,
                         bank_account: app.workers?.bank_account,
                     });
                 }
                 const data = workerMap.get(workerId)!;
-                data.total_payment += parseFloat(job.reward_amount || 0);
+                const rewardAmount = parseFloat(job.reward_amount || 0);
+                data.total_payment += rewardAmount;
+                data.total_payment_incl += Math.round(rewardAmount * 1.1);
                 data.job_count += 1;
             });
         });
@@ -284,8 +288,8 @@ export default function WorkerPaymentPage() {
             data.bank_account?.account_holder_name_kana || '',
             data.job_count,
             data.total_payment,
-            Math.round(data.total_payment * 0.1),
-            Math.round(data.total_payment * 1.1),
+            data.total_payment_incl - Math.round(data.total_payment),
+            data.total_payment_incl,
         ]);
 
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -297,6 +301,7 @@ export default function WorkerPaymentPage() {
     };
 
     const grandTotal = paymentData.reduce((sum, data) => sum + data.total_payment, 0);
+    const grandTotalIncl = paymentData.reduce((sum, data) => sum + data.total_payment_incl, 0);
     const totalJobs = paymentData.reduce((sum, data) => sum + data.job_count, 0);
 
     return (
@@ -364,7 +369,7 @@ export default function WorkerPaymentPage() {
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
                         <div className="text-2xl font-bold text-blue-600">¥{Math.round(grandTotal).toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                            税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
+                            税込: ¥{grandTotalIncl.toLocaleString()}
                         </div>
                     </div>
                 </div>
@@ -428,7 +433,7 @@ export default function WorkerPaymentPage() {
                                                 ¥{Math.round(data.total_payment).toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-blue-600">
-                                                ¥{Math.round(data.total_payment * 1.1).toLocaleString()}
+                                                ¥{data.total_payment_incl.toLocaleString()}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -482,11 +487,11 @@ export default function WorkerPaymentPage() {
                                                 </div>
                                                 <div className="flex justify-between w-full text-sm font-medium">
                                                     <span className="text-muted-foreground">消費税(10%)</span>
-                                                    <span>¥{Math.round(selectedWorker.total_payment * 0.1).toLocaleString()}</span>
+                                                    <span>¥{(selectedWorker.total_payment_incl - Math.round(selectedWorker.total_payment)).toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between w-full text-lg font-bold text-blue-600 pt-1">
                                                     <span>税込合計</span>
-                                                    <span>¥{Math.round(selectedWorker.total_payment * 1.1).toLocaleString()}</span>
+                                                    <span>¥{selectedWorker.total_payment_incl.toLocaleString()}</span>
                                                 </div>
                                             </div>
                                         </div>
