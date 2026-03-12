@@ -20,11 +20,14 @@ export async function generatePaymentNotices(month: string, workersData: any[]) 
                 .eq("month", month)
                 .maybeSingle();
 
+            const totalIncl = (data.details || []).reduce(
+                (sum: number, d: any) => sum + Math.round(parseFloat(d.amount || 0) * 1.1), 0
+            );
             const payload = {
                 worker_id: data.worker_id,
                 month: month,
                 total_amount: data.total_payment,
-                tax_amount: Math.round(data.total_payment * 1.1) - data.total_payment,
+                tax_amount: totalIncl - data.total_payment,
                 job_details: data.details || [],
                 status: "DRAFT",
             };

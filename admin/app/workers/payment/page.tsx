@@ -109,14 +109,12 @@ export default function WorkerPaymentPage() {
                 const data = workerMap.get(workerId)!;
                 const rewardAmount = parseFloat(job.reward_amount || 0);
                 data.total_payment += rewardAmount;
+                data.total_payment_incl += Math.round(rewardAmount * 1.1);
                 data.job_count += 1;
             });
         });
 
         const result = Array.from(workerMap.values());
-        result.forEach(data => {
-            data.total_payment_incl = Math.round(data.total_payment * 1.1);
-        });
         setPaymentData(result);
         setIsLoading(false);
     };
@@ -303,6 +301,7 @@ export default function WorkerPaymentPage() {
     };
 
     const grandTotal = paymentData.reduce((sum, data) => sum + data.total_payment, 0);
+    const grandTotalIncl = paymentData.reduce((sum, data) => sum + data.total_payment_incl, 0);
     const totalJobs = paymentData.reduce((sum, data) => sum + data.job_count, 0);
 
     return (
@@ -370,7 +369,7 @@ export default function WorkerPaymentPage() {
                         <div className="text-sm text-muted-foreground mb-1">合計(税抜)</div>
                         <div className="text-2xl font-bold text-blue-600">¥{Math.round(grandTotal).toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                            税込: ¥{Math.round(grandTotal * 1.1).toLocaleString()}
+                            税込: ¥{grandTotalIncl.toLocaleString()}
                         </div>
                     </div>
                 </div>
