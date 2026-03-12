@@ -109,12 +109,14 @@ export default function WorkerPaymentPage() {
                 const data = workerMap.get(workerId)!;
                 const rewardAmount = parseFloat(job.reward_amount || 0);
                 data.total_payment += rewardAmount;
-                data.total_payment_incl += Math.round(rewardAmount * 1.1);
                 data.job_count += 1;
             });
         });
 
         const result = Array.from(workerMap.values());
+        result.forEach(data => {
+            data.total_payment_incl = Math.round(data.total_payment * 1.1);
+        });
         setPaymentData(result);
         setIsLoading(false);
     };
