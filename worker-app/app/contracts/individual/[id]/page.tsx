@@ -118,7 +118,7 @@ export default async function IndividualContractPage({ params }: { params: Promi
         if (p2) {
             today.setDate(today.getDate() + parseInt(p2, 10));
         }
-        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
     });
 
     // 3. Job-specific Variables

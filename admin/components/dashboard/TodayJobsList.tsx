@@ -91,14 +91,14 @@ export function TodayJobsList({ jobs: initialJobs }: TodayJobsListProps) {
                             if (displayStartTime) {
                                 const d = new Date(displayStartTime);
                                 if (!isNaN(d.getTime())) {
-                                    startTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                                    startTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                                 }
                             }
 
                             if (displayEndTime) {
                                 const d = new Date(displayEndTime);
                                 if (!isNaN(d.getTime())) {
-                                    endTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                                    endTime = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
                                 }
                             }
 

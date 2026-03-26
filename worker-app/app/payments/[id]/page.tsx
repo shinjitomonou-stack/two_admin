@@ -86,7 +86,7 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
                                 <div className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-1 text-slate-500">
                                         <Calendar className="w-3.5 h-3.5" />
-                                        {new Date(job.work_date).toLocaleDateString('ja-JP')}
+                                        {new Date(job.work_date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}
                                     </div>
                                     <div className="font-bold text-slate-900">
                                         ¥{Math.round(job.amount).toLocaleString()}

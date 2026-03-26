@@ -408,11 +408,11 @@ export default function ClientBillingPage() {
                                                             {(() => {
                                                                 const apps = job.job_applications || [];
                                                                 const actual = apps.find((a: any) => a.actual_work_start)?.actual_work_start;
-                                                                if (actual) return `実施日: ${new Date(actual).toLocaleDateString('ja-JP')}`;
+                                                                if (actual) return `実施日: ${new Date(actual).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
                                                                 const scheduled = apps.find((a: any) => a.scheduled_work_start)?.scheduled_work_start;
-                                                                if (scheduled) return `予定日: ${new Date(scheduled).toLocaleDateString('ja-JP')}`;
-                                                                if (job.is_flexible && job.work_period_end) return `期間終了: ${new Date(job.work_period_end).toLocaleDateString('ja-JP')}`;
-                                                                return `終了日時: ${new Date(job.end_time).toLocaleDateString('ja-JP')}`;
+                                                                if (scheduled) return `予定日: ${new Date(scheduled).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+                                                                if (job.is_flexible && job.work_period_end) return `期間終了: ${new Date(job.work_period_end).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+                                                                return `終了日時: ${new Date(job.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
                                                             })()}
                                                         </div>
                                                     </div>

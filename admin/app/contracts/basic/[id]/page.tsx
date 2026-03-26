@@ -55,7 +55,7 @@ export default async function SignedContractDetailPage(props: { params: Promise<
             if (p2) {
                 date.setDate(date.getDate() + parseInt(p2, 10));
             }
-            return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+            return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
         });
 
         return result;

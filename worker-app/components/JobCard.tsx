@@ -37,14 +37,15 @@ export function JobCard({ job, returnTo }: { job: Job, returnTo?: string }) {
         const startDate = new Date(job.work_period_start);
         const endDate = new Date(job.work_period_end);
         // Simple format for range: 12/1 - 12/5
-        const format = (d: Date) => d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+        const format = (d: Date) => d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", timeZone: "Asia/Tokyo" });
         dateStr = `${format(startDate)} 〜 ${format(endDate)}`;
         timeStr = "期間内自由";
     } else if (job.start_time && job.end_time) {
         const startDate = new Date(job.start_time);
         const endDate = new Date(job.end_time);
-        dateStr = startDate.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
-        timeStr = `${startDate.getHours()}:${startDate.getMinutes().toString().padStart(2, '0')} - ${endDate.getHours()}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+        dateStr = startDate.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short", timeZone: "Asia/Tokyo" });
+        const tf = (d: Date) => d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Tokyo" });
+        timeStr = `${tf(startDate)} - ${tf(endDate)}`;
     }
 
     const image = job.image || "https://images.unsplash.com/photo-1581578731117-104f2a863a30?w=800&q=80";

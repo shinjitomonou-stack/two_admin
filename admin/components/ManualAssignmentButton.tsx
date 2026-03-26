@@ -172,7 +172,7 @@ export function ManualAssignmentButton({ jobId, existingWorkerIds }: { jobId: st
                                         <option value="">契約を紐付けない</option>
                                         {workerIndividualContracts.map((c: any) => (
                                             <option key={c.id} value={c.id}>
-                                                {c.contract_templates?.title} ({new Date(c.signed_at).toLocaleDateString('ja-JP')})
+                                                {c.contract_templates?.title} ({new Date(c.signed_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })})
                                             </option>
                                         ))}
                                     </select>

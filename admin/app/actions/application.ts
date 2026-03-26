@@ -51,7 +51,7 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
             const worker = application.workers;
 
             if (newStatus === 'ASSIGNED') {
-                const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
+                const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
                 await sendLineMessage(worker.line_user_id, message);
             }
         }
@@ -142,7 +142,7 @@ export async function assignMultipleWorkers(applicationIds: string[]) {
                 if (app.workers?.line_user_id) {
                     const job = app.jobs;
                     const worker = app.workers;
-                    const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
+                    const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
 
                     try {
                         await sendLineMessage(worker.line_user_id, message);
@@ -273,7 +273,7 @@ export async function assignWorkerToJobs(workerId: string, jobIds: string[], ind
             const { sendLineMessage } = await import("@/lib/line");
 
             await Promise.all(notifications.map(async ({ job }) => {
-                const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
+                const message = `【採用通知】\n\n${worker.full_name}さん\n\n案件「${job.title}」に採用されました！\n\n日時: ${new Date(job.start_time).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}\n場所: ${job.address_text || '未設定'}\n\n詳細はアプリでご確認ください。`;
                 try {
                     await sendLineMessage(worker.line_user_id, message);
                 } catch (e) {

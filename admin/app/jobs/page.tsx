@@ -249,8 +249,8 @@ export default function JobsPage() {
             const date = !job.is_flexible && job.start_time ? new Date(job.start_time).toISOString().split('T')[0] : "";
             const periodStart = job.work_period_start ? job.work_period_start.split('T')[0] : "";
             const periodEnd = job.work_period_end ? job.work_period_end.split('T')[0] : "";
-            const startTime = !job.is_flexible && job.start_time ? new Date(job.start_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false }) : "";
-            const endTime = !job.is_flexible && job.end_time ? new Date(job.end_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false }) : "";
+            const startTime = !job.is_flexible && job.start_time ? new Date(job.start_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' }) : "";
+            const endTime = !job.is_flexible && job.end_time ? new Date(job.end_time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' }) : "";
 
             const clientName = job.clients?.name || "";
             const templateName = job.report_templates?.name || "";

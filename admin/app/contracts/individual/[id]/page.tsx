@@ -128,10 +128,10 @@ export default async function IndividualContractDetailPage(props: { params: Prom
             result = result
                 .replace(/{{job_title}}/g, job.title || "")
                 .replace(/{{reward_amount}}/g, Math.round(job.reward_amount || 0).toLocaleString())
-                .replace(/{{start_time}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{start_date}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{end_time}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{end_date}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP') : "");
+                .replace(/{{start_time}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{start_date}}/g, job.start_time ? new Date(job.start_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{end_time}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{end_date}}/g, job.end_time ? new Date(job.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "");
         }
 
         // Date Variables (using signed_at if available, else today)
@@ -141,7 +141,7 @@ export default async function IndividualContractDetailPage(props: { params: Prom
             if (p2) {
                 date.setDate(date.getDate() + parseInt(p2, 10));
             }
-            return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+            return date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
         });
 
         return result;

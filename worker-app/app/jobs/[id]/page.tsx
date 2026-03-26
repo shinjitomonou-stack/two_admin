@@ -132,7 +132,7 @@ export default async function JobDetailPage({
                                 {existingReport.status === 'SUBMITTED' && '日報確認中'}
                             </span>
                             <span className="text-xs opacity-70">
-                                {new Date(existingReport.created_at).toLocaleDateString()}
+                                {new Date(existingReport.created_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}
                             </span>
                         </div>
                         {existingReport.status === 'REJECTED' && existingReport.feedback && (
@@ -185,13 +185,13 @@ export default async function JobDetailPage({
                                 <div className="text-sm text-slate-600 mt-0.5">
                                     {job.is_flexible ? (
                                         <>
-                                            <div>{startDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })} 〜 {endDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}</div>
+                                            <div>{startDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' })} 〜 {endDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' })}</div>
                                             <div className="text-xs text-blue-600 mt-1">期間内で自由に実施可能</div>
                                         </>
                                     ) : (
                                         <>
-                                            <div>{startDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}</div>
-                                            <div>{startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })} 〜 {endDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</div>
+                                            <div>{startDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo' })}</div>
+                                            <div>{startDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })} 〜 {endDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })}</div>
                                         </>
                                     )}
                                 </div>

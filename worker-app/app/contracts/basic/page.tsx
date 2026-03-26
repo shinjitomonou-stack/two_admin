@@ -74,7 +74,7 @@ export default async function BasicContractPage() {
         if (p2) {
             today.setDate(today.getDate() + parseInt(p2, 10));
         }
-        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+        return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
     });
 
     return (

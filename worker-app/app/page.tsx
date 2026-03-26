@@ -273,13 +273,13 @@ export default async function Home() {
   // Helper function to format date
   const formatScheduleDate = (dateString: string) => {
     const date = new Date(dateString);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-    const weekday = weekdays[date.getDay()];
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return { date: `${month}/${day} (${weekday})`, time: `${hours}:${minutes}` };
+    const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
+      month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Tokyo'
+    });
+    const timeFormatter = new Intl.DateTimeFormat('ja-JP', {
+      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo'
+    });
+    return { date: dateFormatter.format(date), time: timeFormatter.format(date) };
   };
 
   if (!workerId) {
@@ -615,7 +615,7 @@ export default async function Home() {
                   const job = Array.isArray(schedule.jobs) ? schedule.jobs[0] : schedule.jobs;
                   const client = job?.clients ? (Array.isArray(job.clients) ? job.clients[0] : job.clients) : null;
                   const startDate = formatScheduleDate(schedule.scheduled_work_start);
-                  const endTime = new Date(schedule.scheduled_work_end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                  const endTime = new Date(schedule.scheduled_work_end).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' });
 
                   return (
                     <Link

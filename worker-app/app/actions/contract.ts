@@ -64,7 +64,7 @@ export async function signBasicContract(templateId: string) {
             if (p2) {
                 today.setDate(today.getDate() + parseInt(p2, 10));
             }
-            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
         });
         return result;
     }
@@ -184,10 +184,10 @@ export async function signIndividualContract(formData: FormData) {
             result = result
                 .replace(/{{job_title}}/g, jobData.title || "")
                 .replace(/{{reward_amount}}/g, Math.round(jobData.reward_amount || 0).toLocaleString())
-                .replace(/{{start_time}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{start_date}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{end_time}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP') : "")
-                .replace(/{{end_date}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP') : "")
+                .replace(/{{start_time}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{start_date}}/g, jobData.start_time ? new Date(jobData.start_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{end_time}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
+                .replace(/{{end_date}}/g, jobData.end_time ? new Date(jobData.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) : "")
                 .replace(/{{address}}/g, jobData.address_text || "");
         }
 
@@ -197,7 +197,7 @@ export async function signIndividualContract(formData: FormData) {
             if (p2) {
                 today.setDate(today.getDate() + parseInt(p2, 10));
             }
-            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+            return today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo' });
         });
         return result;
     }

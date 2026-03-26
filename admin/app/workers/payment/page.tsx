@@ -471,10 +471,10 @@ export default function WorkerPaymentPage() {
                                                     <div>
                                                         <div className="font-medium">{app.jobs?.title}</div>
                                                         <div className="text-xs text-muted-foreground">
-                                                            {app.actual_work_start ? `実施日: ${new Date(app.actual_work_start).toLocaleDateString('ja-JP')}` :
-                                                                app.scheduled_work_start ? `予定日: ${new Date(app.scheduled_work_start).toLocaleDateString('ja-JP')}` :
-                                                                    app.jobs?.is_flexible && app.jobs?.work_period_end ? `期間終了: ${new Date(app.jobs.work_period_end).toLocaleDateString('ja-JP')}` :
-                                                                        `終了日時: ${new Date(app.jobs?.end_time).toLocaleDateString('ja-JP')}`}
+                                                            {app.actual_work_start ? `実施日: ${new Date(app.actual_work_start).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}` :
+                                                                app.scheduled_work_start ? `予定日: ${new Date(app.scheduled_work_start).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}` :
+                                                                    app.jobs?.is_flexible && app.jobs?.work_period_end ? `期間終了: ${new Date(app.jobs.work_period_end).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}` :
+                                                                        `終了日時: ${new Date(app.jobs?.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`}
                                                         </div>
                                                     </div>
                                                     <div className="font-medium text-slate-900">¥{Math.round(parseFloat(app.jobs?.reward_amount || 0)).toLocaleString()}</div>
