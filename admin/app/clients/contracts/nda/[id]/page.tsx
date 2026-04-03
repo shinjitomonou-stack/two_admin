@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import StatusChanger from "@/components/StatusChanger";
+import ContractRenewalHistory from "@/components/ContractRenewalHistory";
 
 export default async function NDAContractDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -210,6 +211,9 @@ export default async function NDAContractDetailPage({ params }: { params: Promis
                         </div>
                     </div>
                 )}
+
+                {/* Renewal History */}
+                <ContractRenewalHistory contractId={id} contractTable="client_contracts" />
 
                 {/* Audit Log */}
                 <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
