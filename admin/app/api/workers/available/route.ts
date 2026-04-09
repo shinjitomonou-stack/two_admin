@@ -15,6 +15,7 @@ export async function GET(request: Request) {
         const { data: workers, error } = await supabase
             .from("workers")
             .select("id, full_name, email")
+            .is("deleted_at", null)
             .order("full_name", { ascending: true });
 
         if (error) {

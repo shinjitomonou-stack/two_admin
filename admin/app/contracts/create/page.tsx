@@ -100,10 +100,11 @@ export default function CreateContractPage() {
                 }
             }
 
-            // Fetch Workers
+            // Fetch Workers (exclude soft-deleted)
             const { data: workersData } = await supabase
                 .from("workers")
                 .select("id, full_name, email")
+                .is("deleted_at", null)
                 .order("created_at", { ascending: false });
             if (workersData) setWorkers(workersData);
 

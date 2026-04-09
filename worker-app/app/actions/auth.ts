@@ -122,10 +122,10 @@ export async function loginWithEmail(formData: FormData) {
         return { error: "メールアドレスまたはパスワードが間違っています" };
     }
 
-    // Check if worker exists in workers table
+    // Check if worker exists in workers table (and is not soft-deleted)
     const { data: worker } = await supabase
         .from("workers")
-        .select("id")
+        .select("id, deleted_at")
         .eq("id", data.user.id)
         .single();
 
@@ -133,6 +133,11 @@ export async function loginWithEmail(formData: FormData) {
         // User exists in auth but not in workers table
         await supabase.auth.signOut();
         return { error: "ワーカー情報が見つかりません" };
+    }
+
+    if (worker.deleted_at) {
+        await supabase.auth.signOut();
+        return { error: "このアカウントは無効化されています。管理者にお問い合わせください。" };
     }
 
     const redirectTo = (formData.get("redirectTo") as string) || "/";

@@ -128,9 +128,15 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                         <p className="text-muted-foreground text-[10px] font-mono mt-1 opacity-50">System ID: {worker.id}</p>
                     </div>
                     <div className="ml-auto">
-                        <WorkerDetailActions workerId={worker.id} workerName={worker.full_name} />
+                        <WorkerDetailActions workerId={worker.id} workerName={worker.full_name} isDeleted={!!worker.deleted_at} />
                     </div>
                 </div>
+
+                {worker.deleted_at && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+                        このワーカーは {formatDate(worker.deleted_at)} に削除されています。一覧には表示されず、ログインもできません。
+                    </div>
+                )}
 
                 {/* Statistics Grid */}
                 <div className="grid gap-4 md:grid-cols-3">

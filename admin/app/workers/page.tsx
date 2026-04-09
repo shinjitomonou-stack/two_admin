@@ -50,15 +50,17 @@ export default async function WorkersPage({
 
     const supabase = await createClient();
 
-    // Build query for total count
+    // Build query for total count (exclude soft-deleted)
     let countQuery = supabase
         .from("workers")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null);
 
-    // Build query for paginated data
+    // Build query for paginated data (exclude soft-deleted)
     let dataQuery = supabase
         .from("workers")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .range(from, to);
 

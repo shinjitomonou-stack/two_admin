@@ -42,8 +42,8 @@ export default async function Home() {
     supabase.from("jobs").select("*", { count: "exact", head: true }).in("status", ["OPEN", "FILLED"]),
     // Pending Applications (APPLIED)
     supabase.from("job_applications").select("*", { count: "exact", head: true }).eq("status", "APPLIED"),
-    // Unverified Workers Count
-    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", false),
+    // Unverified Workers Count (exclude soft-deleted)
+    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", false).is("deleted_at", null),
     // Pending Basic Contracts
     supabase.from("worker_basic_contracts").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
     // Today's Jobs (Fetch with buffer to allow in-memory rescheduling prioritization)
@@ -68,14 +68,14 @@ export default async function Home() {
       workers(full_name),
       jobs(title)
     `).eq("status", "APPLIED").order("created_at", { ascending: false }).limit(5),
-    // Unverified Workers List
-    supabase.from("workers").select("id, full_name, email, created_at").eq("is_verified", false).order("created_at", { ascending: false }).limit(5),
+    // Unverified Workers List (exclude soft-deleted)
+    supabase.from("workers").select("id, full_name, email, created_at").eq("is_verified", false).is("deleted_at", null).order("created_at", { ascending: false }).limit(5),
     // Client Job Contracts for Monthly Sales
     supabase.from("client_job_contracts").select("contract_amount, billing_cycle, created_at").gte("created_at", sixMonthsAgo.toISOString()),
     // Applications for Trends
     supabase.from("job_applications").select("created_at").gte("created_at", thirtyDaysAgo.toISOString()),
-    // Verified Workers Count
-    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", true)
+    // Verified Workers Count (exclude soft-deleted)
+    supabase.from("workers").select("*", { count: "exact", head: true }).eq("is_verified", true).is("deleted_at", null)
   ]);
 
   const activeJobsCount = activeJobsRes.count;

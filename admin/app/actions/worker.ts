@@ -170,18 +170,14 @@ export async function deleteWorkerAction(id: string) {
     const supabaseAdmin = await createAdminClient();
 
     try {
+        // Soft delete: set deleted_at timestamp
         const { error: dbError } = await supabaseAdmin
             .from("workers")
-            .delete()
-            .eq("id", id);
+            .update({ deleted_at: new Date().toISOString() })
+            .eq("id", id)
+            .is("deleted_at", null);
 
         if (dbError) throw dbError;
-
-        // Best-effort: delete auth user as well
-        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
-        if (authError) {
-            console.warn("Worker row deleted but auth user deletion failed:", authError);
-        }
 
         revalidatePath("/workers");
         return { success: true };
@@ -189,7 +185,31 @@ export async function deleteWorkerAction(id: string) {
         console.error("Error deleting worker:", error);
         return {
             success: false,
-            error: error.message || "削除に失敗しました。関連データが残っている可能性があります。",
+            error: error.message || "削除に失敗しました。",
+        };
+    }
+}
+
+export async function restoreWorkerAction(id: string) {
+    await verifyAdmin();
+    const supabaseAdmin = await createAdminClient();
+
+    try {
+        const { error } = await supabaseAdmin
+            .from("workers")
+            .update({ deleted_at: null })
+            .eq("id", id);
+
+        if (error) throw error;
+
+        revalidatePath("/workers");
+        revalidatePath(`/workers/${id}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error restoring worker:", error);
+        return {
+            success: false,
+            error: error.message || "復元に失敗しました。",
         };
     }
 }

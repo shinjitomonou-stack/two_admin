@@ -41,19 +41,19 @@ export async function bulkUpdateWorkerBankAccounts(accountsData: any[]) {
 
             // 1. Try Email (Priority requested by user)
             if (email) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("email", email).single();
+                const { data } = await supabaseAdmin.from("workers").select("id").eq("email", email).is("deleted_at", null).single();
                 if (data) targetWorkerId = data.id;
             }
 
             // 2. Try ID as UUID (Fallback)
             if (!targetWorkerId && id && isUuid(id)) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("id", id).single();
+                const { data } = await supabaseAdmin.from("workers").select("id").eq("id", id).is("deleted_at", null).single();
                 if (data) targetWorkerId = data.id;
             }
 
             // 3. Try Worker Number (Fallback)
             if (!targetWorkerId && workerNumber) {
-                const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", workerNumber).single();
+                const { data } = await supabaseAdmin.from("workers").select("id").eq("worker_number", workerNumber).is("deleted_at", null).single();
                 if (data) targetWorkerId = data.id;
             }
 
