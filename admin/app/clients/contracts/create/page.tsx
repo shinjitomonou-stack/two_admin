@@ -38,6 +38,7 @@ function CreateClientContractForm() {
         start_date: new Date().toISOString().split('T')[0],
         end_date: "",
         auto_renew: false,
+        renewal_period_months: "",
         monthly_amount: "",
         billing_cycle: "ONCE" as "ONCE" | "MONTHLY" | "QUARTERLY" | "YEARLY",
         contract_amount: "",
@@ -199,6 +200,7 @@ function CreateClientContractForm() {
                         start_date: formData.start_date,
                         end_date: formData.end_date || null,
                         is_auto_renew: formData.auto_renew,
+                        renewal_period_months: formData.renewal_period_months ? parseInt(formData.renewal_period_months) : null,
                         uploaded_files: fileUrls,
                     }]);
 
@@ -216,6 +218,7 @@ function CreateClientContractForm() {
                         start_date: formData.start_date,
                         end_date: formData.end_date || null,
                         auto_renew: formData.auto_renew,
+                        renewal_period_months: formData.renewal_period_months ? parseInt(formData.renewal_period_months) : null,
                         monthly_amount: formData.monthly_amount ? (formData.amountTaxMode === 'INCL' ? parseFloat(formData.monthly_amount) / 1.1 : parseFloat(formData.monthly_amount)) : null,
                         uploaded_files: fileUrls,
                     }]);
@@ -471,6 +474,21 @@ function CreateClientContractForm() {
                             </label>
                         </div>
 
+                        {formData.auto_renew && (
+                            <div className="space-y-2 ml-6">
+                                <label className="text-sm font-medium">更新期間（月数）</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.renewal_period_months}
+                                    onChange={(e) => setFormData({ ...formData, renewal_period_months: e.target.value })}
+                                    className="w-32 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                    placeholder="12"
+                                />
+                                <p className="text-xs text-muted-foreground">例: 1=1ヶ月、3=3ヶ月、6=半年、12=1年</p>
+                            </div>
+                        )}
+
                     </div>
                 )}
 
@@ -557,6 +575,21 @@ function CreateClientContractForm() {
                                 自動更新
                             </label>
                         </div>
+
+                        {formData.auto_renew && (
+                            <div className="space-y-2 ml-6">
+                                <label className="text-sm font-medium">更新期間（月数）</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.renewal_period_months}
+                                    onChange={(e) => setFormData({ ...formData, renewal_period_months: e.target.value })}
+                                    className="w-32 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                    placeholder="12"
+                                />
+                                <p className="text-xs text-muted-foreground">例: 1=1ヶ月、3=3ヶ月、6=半年、12=1年</p>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">支払条件</label>

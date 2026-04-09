@@ -165,6 +165,35 @@ export async function bulkCreateWorkersAction(workersData: any[]) {
     };
 }
 
+export async function deleteWorkerAction(id: string) {
+    await verifyAdmin();
+    const supabaseAdmin = await createAdminClient();
+
+    try {
+        const { error: dbError } = await supabaseAdmin
+            .from("workers")
+            .delete()
+            .eq("id", id);
+
+        if (dbError) throw dbError;
+
+        // Best-effort: delete auth user as well
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+        if (authError) {
+            console.warn("Worker row deleted but auth user deletion failed:", authError);
+        }
+
+        revalidatePath("/workers");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error deleting worker:", error);
+        return {
+            success: false,
+            error: error.message || "削除に失敗しました。関連データが残っている可能性があります。",
+        };
+    }
+}
+
 export async function resetWorkerPasswordAction(id: string, newPassword: string) {
     await verifyAdmin();
     const supabaseAdmin = await createAdminClient();

@@ -255,8 +255,9 @@ export default function JobsPage() {
             const clientName = job.clients?.name || "";
             const templateName = job.report_templates?.name || "";
 
-            const rewardExport = job.reward_tax_mode === 'INCL' ? Math.round(job.reward_amount * 1.1) : job.reward_amount;
-            const billingExport = (job.billing_amount && job.billing_tax_mode === 'INCL') ? Math.round(job.billing_amount * 1.1) : job.billing_amount;
+            // DBには入力値がそのまま保存されている。CSVにもそのまま出力。
+            const rewardExport = job.reward_amount;
+            const billingExport = job.billing_amount;
 
             const fields = [
                 job.id,

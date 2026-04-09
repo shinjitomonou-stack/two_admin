@@ -34,6 +34,7 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
         start_date: "",
         end_date: "",
         auto_renew: false,
+        renewal_period_months: "",
         monthly_amount: "",
         billing_cycle: "MONTHLY" as "MONTHLY" | "QUARTERLY" | "YEARLY",
         amountTaxMode: "EXCL" as "EXCL" | "INCL",
@@ -79,6 +80,7 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
                         start_date: contract.start_date,
                         end_date: contract.end_date || "",
                         auto_renew: contract.auto_renew,
+                        renewal_period_months: contract.renewal_period_months ? contract.renewal_period_months.toString() : "",
                         monthly_amount: contract.monthly_amount ? contract.monthly_amount.toString() : "",
                         billing_cycle: contract.billing_cycle || "MONTHLY",
                         amountTaxMode: "EXCL",
@@ -163,6 +165,7 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
                     start_date: formData.start_date,
                     end_date: formData.end_date || null,
                     auto_renew: formData.auto_renew,
+                    renewal_period_months: formData.renewal_period_months ? parseInt(formData.renewal_period_months) : null,
                     monthly_amount: formData.monthly_amount ? (formData.amountTaxMode === 'INCL' ? Math.round(parseFloat(formData.monthly_amount) / 1.1) : parseFloat(formData.monthly_amount)) : null,
                     billing_cycle: formData.billing_cycle,
                     uploaded_files: allFiles,
@@ -346,6 +349,21 @@ export default function EditNDAContractPage({ params }: { params: Promise<{ id: 
                             自動更新
                         </label>
                     </div>
+
+                    {formData.auto_renew && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">更新期間（月数）</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={formData.renewal_period_months}
+                                onChange={(e) => setFormData({ ...formData, renewal_period_months: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                placeholder="例: 12（12ヶ月ごとに更新）"
+                            />
+                            <p className="text-xs text-muted-foreground">空欄の場合は請求サイクルに基づいて更新されます</p>
+                        </div>
+                    )}
 
                     <div className="grid sm:grid-cols-2 gap-6">
                         <div className="space-y-2">

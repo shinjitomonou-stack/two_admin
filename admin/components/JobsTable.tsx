@@ -3,6 +3,7 @@
 import { Calendar, MapPin, Users, Copy, Trash2, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
+import { toExcl, toIncl, type TaxMode } from "@/lib/tax";
 import { usePathname } from "next/navigation";
 
 const STATUS_STYLES = {
@@ -195,16 +196,16 @@ export function JobsTable({ jobs, onStatusChange, onDuplicate, onDelete, process
                                     <td className="px-3 py-2">
                                         <div className="space-y-1 text-xs">
                                             <div className="font-medium text-slate-900">
-                                                報酬: ¥{Math.round(job.reward_amount).toLocaleString()} /人
+                                                報酬: ¥{toExcl(job.reward_amount, (job.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()} /人
                                                 <span className="text-[10px] text-muted-foreground ml-1">
-                                                    (税込: ¥{Math.round(job.reward_amount * 1.1).toLocaleString()})
+                                                    (税込: ¥{toIncl(job.reward_amount, (job.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()})
                                                 </span>
                                             </div>
                                             {job.billing_amount && (
                                                 <div className="text-blue-600">
-                                                    請求: ¥{Math.round(job.billing_amount).toLocaleString()} /人
+                                                    請求: ¥{toExcl(job.billing_amount, (job.billing_tax_mode as TaxMode) || "EXCL").toLocaleString()} /人
                                                     <span className="text-[10px] opacity-70 ml-1">
-                                                        (税込: ¥{Math.round(job.billing_amount * 1.1).toLocaleString()})
+                                                        (税込: ¥{toIncl(job.billing_amount, (job.billing_tax_mode as TaxMode) || "EXCL").toLocaleString()})
                                                     </span>
                                                 </div>
                                             )}

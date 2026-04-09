@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatDateTime, getJSTDateString } from "@/lib/utils";
+import { toIncl, type TaxMode } from "@/lib/tax";
 import ResetWorkerPassword from "@/components/ResetWorkerPassword";
 import WorkerMemo from "@/components/WorkerMemo";
 import WorkerDetailActions from "@/components/WorkerDetailActions"; // We need to create this
@@ -287,7 +288,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                                         {formatDateTime(app.scheduled_work_start || app.jobs?.start_time).split(" ")[1]} 〜
                                                     </td>
                                                     <td className="px-6 py-4 font-medium">
-                                                        ¥{Math.round(app.jobs?.reward_amount * (app.jobs?.reward_tax_mode === 'INCL' ? 1 : 1.1)).toLocaleString()}
+                                                        ¥{toIncl(app.jobs?.reward_amount || 0, (app.jobs?.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex flex-col items-end gap-1">
@@ -342,7 +343,7 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="font-medium text-slate-900">
-                                                            ¥{(app.reports?.[0]?.reward_amount || Math.round(app.jobs?.reward_amount * (app.jobs?.reward_tax_mode === 'INCL' ? 1 : 1.1))).toLocaleString()}
+                                                            ¥{(app.reports?.[0]?.reward_amount || toIncl(app.jobs?.reward_amount || 0, (app.jobs?.reward_tax_mode as TaxMode) || "EXCL")).toLocaleString()}
                                                         </div>
                                                         <div className="text-[10px] text-slate-400">確定報酬</div>
                                                     </td>

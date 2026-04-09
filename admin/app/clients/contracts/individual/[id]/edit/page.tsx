@@ -40,6 +40,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
         start_date: "",
         end_date: "",
         is_auto_renew: false,
+        renewal_period_months: "",
         amountTaxMode: "EXCL" as "EXCL" | "INCL",
     });
 
@@ -88,6 +89,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                         start_date: contract.start_date || "",
                         end_date: contract.end_date || "",
                         is_auto_renew: contract.is_auto_renew || false,
+                        renewal_period_months: contract.renewal_period_months ? contract.renewal_period_months.toString() : "",
                         amountTaxMode: "EXCL",
                     });
 
@@ -209,6 +211,7 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                     start_date: formData.start_date,
                     end_date: formData.end_date || null,
                     is_auto_renew: formData.is_auto_renew,
+                    renewal_period_months: formData.renewal_period_months ? parseInt(formData.renewal_period_months) : null,
                     uploaded_files: allFiles,
                     updated_at: new Date().toISOString(),
                 })
@@ -468,6 +471,21 @@ export default function EditIndividualContractPage({ params }: { params: Promise
                             自動更新
                         </label>
                     </div>
+
+                    {formData.is_auto_renew && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">更新期間（月数）</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={formData.renewal_period_months}
+                                onChange={(e) => setFormData({ ...formData, renewal_period_months: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                placeholder="例: 12（12ヶ月ごとに更新）"
+                            />
+                            <p className="text-xs text-muted-foreground">空欄の場合は請求サイクルに基づいて更新されます</p>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium">支払条件</label>

@@ -319,17 +319,9 @@ export async function bulkCreateJobs(jobs: any[], defaultPublish: boolean = true
             const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
             const billingTaxMode = parseTaxMode(job.billing_tax_mode);
 
-            let rewardAmount = parseNumber(job.reward_amount);
-            if (rewardTaxMode === 'INCL') {
-                rewardAmount = Math.ceil((rewardAmount / 1.1) * 101) / 101; // Match form logic or use standard conversion
-                // Actually, the form uses: Math.ceil((rewardAmount / 1.1) * 100) / 100;
-                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
-            }
-
-            let billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
-            if (billingAmount !== null && billingTaxMode === 'INCL') {
-                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
-            }
+            // 入力値をそのまま保存する（税抜/税込の区別は tax_mode で記録）。
+            const rewardAmount = parseNumber(job.reward_amount);
+            const billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
 
             if (!job.title) throw new Error("案件タイトルが未入力の行があります。");
             if (!job.address_text) throw new Error(`住所が未入力です: ${job.title}`);
@@ -437,15 +429,9 @@ export async function bulkUpdateJobs(jobs: any[]) {
             const rewardTaxMode = parseTaxMode(job.reward_tax_mode);
             const billingTaxMode = parseTaxMode(job.billing_tax_mode);
 
-            let rewardAmount = parseNumber(job.reward_amount);
-            if (rewardTaxMode === 'INCL') {
-                rewardAmount = Math.ceil((rewardAmount / 1.1) * 100) / 100;
-            }
-
-            let billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
-            if (billingAmount !== null && billingTaxMode === 'INCL') {
-                billingAmount = Math.ceil((billingAmount / 1.1) * 100) / 100;
-            }
+            // 入力値をそのまま保存する（税抜/税込の区別は tax_mode で記録）。
+            const rewardAmount = parseNumber(job.reward_amount);
+            const billingAmount = job.billing_amount ? parseNumber(job.billing_amount) : null;
 
             const payload: any = {
                 title: job.title,

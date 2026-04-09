@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Calendar, MapPin, Briefcase, ChevronRight, Clock, CheckCircle, ChevronLeft, ArrowRight, User, TrendingUp } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/client";
+import { toIncl, type TaxMode } from "@/lib/tax";
 import { useEffect, useState } from "react";
 
 const TABS = {
@@ -140,7 +141,7 @@ export default function ApplicationsPage() {
             if (!job) return;
 
             const baseAmount = job.reward_amount || 0;
-            const reward = Math.round(baseAmount * 1.1);
+            const reward = toIncl(baseAmount, (job.reward_tax_mode as TaxMode) || "EXCL");
 
             const isCompleted = job.status === 'COMPLETED' || app.status === 'COMPLETED';
             const isAssigned = app.status === 'ASSIGNED' || app.status === 'CONFIRMED';
@@ -361,7 +362,7 @@ export default function ApplicationsPage() {
                                                         <span className="line-clamp-1">{job?.address_text || "場所未定"}</span>
                                                     </div>
                                                     <div className="text-sm font-black text-slate-900">
-                                                        ¥{Math.round((job?.reward_amount || 0) * 1.1).toLocaleString()}
+                                                        ¥{toIncl(job?.reward_amount || 0, (job?.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}
                                                         <span className="text-[9px] font-medium text-slate-400 ml-1">税込</span>
                                                     </div>
                                                 </div>
@@ -451,7 +452,7 @@ export default function ApplicationsPage() {
                                                         <span className="line-clamp-1">{job?.address_text || "場所未定"}</span>
                                                     </div>
                                                     <div className="text-sm font-black text-slate-900">
-                                                        ¥{Math.round((job?.reward_amount || 0) * 1.1).toLocaleString()}
+                                                        ¥{toIncl(job?.reward_amount || 0, (job?.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}
                                                         <span className="text-[9px] font-medium text-slate-400 ml-1">税込</span>
                                                     </div>
                                                 </div>
@@ -490,7 +491,7 @@ export default function ApplicationsPage() {
                                         <h3 className="font-bold text-slate-900 mb-3 text-lg leading-snug group-hover:text-amber-600 transition-colors">{job?.title}</h3>
                                         <div className="flex items-center gap-2.5 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl">
                                             <span className="text-[10px] font-bold text-slate-400">予定報酬</span>
-                                            <span className="font-black text-slate-900">¥{Math.round((job?.reward_amount || 0) * 1.1).toLocaleString()}</span>
+                                            <span className="font-black text-slate-900">¥{toIncl(job?.reward_amount || 0, (job?.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}</span>
                                             <span className="text-[10px] text-slate-400 font-medium">(税込)</span>
                                         </div>
                                     </Link>

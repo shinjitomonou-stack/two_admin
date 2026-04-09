@@ -20,14 +20,26 @@ export async function generatePaymentNotices(month: string, workersData: any[]) 
                 .eq("month", month)
                 .maybeSingle();
 
+            // details[].amount は税抜金額、amount_incl は税込金額で渡される。
+            // 明細を個別に税込変換して足し合わせた値を「税込合計」とすることで、
+            // 明細行表示と合計が完全に一致する。
+            const totalExcl = (data.details || []).reduce(
+                (sum: number, d: any) => sum + Number(d.amount || 0), 0
+            );
             const totalIncl = (data.details || []).reduce(
-                (sum: number, d: any) => sum + Math.round(parseFloat(d.amount || 0) * 1.1), 0
+                (sum: number, d: any) => {
+                    // 旧データ互換: amount_incl が無ければ round(amount * 1.1) で補完
+                    if (d.amount_incl !== undefined && d.amount_incl !== null) {
+                        return sum + Number(d.amount_incl);
+                    }
+                    return sum + Math.round(Number(d.amount || 0) * 1.1);
+                }, 0
             );
             const payload = {
                 worker_id: data.worker_id,
                 month: month,
-                total_amount: data.total_payment,
-                tax_amount: totalIncl - data.total_payment,
+                total_amount: totalExcl,
+                tax_amount: totalIncl - totalExcl,
                 job_details: data.details || [],
                 status: "DRAFT",
             };

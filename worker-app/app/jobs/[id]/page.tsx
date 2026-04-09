@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MapPin, Clock, Calendar, JapaneseYen, Building2 } from "lucide-react";
 import { ApplyButton } from "@/components/ApplyButton";
 import BackButton from "@/components/BackButton";
+import { toIncl, type TaxMode } from "@/lib/tax";
 
 export default async function JobDetailPage({
     params,
@@ -161,9 +162,7 @@ export default async function JobDetailPage({
                             <div className="text-xs text-slate-500 font-medium">報酬 (税込)</div>
                             <div className="flex items-center gap-1 font-bold text-slate-900">
                                 <JapaneseYen className="w-4 h-4 text-slate-400" />
-                                <span>¥{Math.round(
-                                    (job.reward_amount || 0) * 1.1
-                                ).toLocaleString()}</span>
+                                <span>¥{toIncl(job.reward_amount || 0, (job.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="bg-slate-50 p-3 rounded-xl space-y-1">

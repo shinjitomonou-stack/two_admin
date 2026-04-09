@@ -32,6 +32,12 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
         tags: [] as string[],
         is_verified: false,
         admin_memo: "",
+        bank_name: "",
+        branch_name: "",
+        account_type: "",
+        account_number: "",
+        account_holder_name: "",
+        account_holder_name_kana: "",
     });
 
     useEffect(() => {
@@ -68,6 +74,12 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                     tags: data.tags || [],
                     is_verified: data.is_verified || false,
                     admin_memo: data.admin_memo || "",
+                    bank_name: data.bank_account?.bank_name || "",
+                    branch_name: data.bank_account?.branch_name || "",
+                    account_type: data.bank_account?.account_type || "",
+                    account_number: data.bank_account?.account_number || "",
+                    account_holder_name: data.bank_account?.account_holder_name || "",
+                    account_holder_name_kana: data.bank_account?.account_holder_name_kana || "",
                 });
                 setTagInput((data.tags || []).join(", "));
             }
@@ -84,7 +96,32 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
         const supabase = createClient();
 
         try {
-            const result = await updateWorkerAction(id!, formData);
+            const {
+                bank_name,
+                branch_name,
+                account_type,
+                account_number,
+                account_holder_name,
+                account_holder_name_kana,
+                ...rest
+            } = formData;
+            const hasBank =
+                bank_name || branch_name || account_type || account_number ||
+                account_holder_name || account_holder_name_kana;
+            const payload: any = {
+                ...rest,
+                bank_account: hasBank
+                    ? {
+                        bank_name,
+                        branch_name,
+                        account_type,
+                        account_number,
+                        account_holder_name,
+                        account_holder_name_kana,
+                    }
+                    : null,
+            };
+            const result = await updateWorkerAction(id!, payload);
 
             if (!result.success) throw result.error;
 
@@ -285,6 +322,72 @@ function EditWorkerForm({ params }: { params: Promise<{ id: string }> }) {
                                     <span className="text-sm">確認済み</span>
                                 </label>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-border shadow-sm space-y-6">
+                    <div>
+                        <h3 className="text-lg font-bold">銀行口座情報</h3>
+                        <p className="text-xs text-slate-400 mt-1">すべて空欄にすると口座情報を削除します。</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">銀行名</label>
+                            <input
+                                type="text"
+                                value={formData.bank_name}
+                                onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">支店名</label>
+                            <input
+                                type="text"
+                                value={formData.branch_name}
+                                onChange={(e) => setFormData({ ...formData, branch_name: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">預金種別</label>
+                            <select
+                                value={formData.account_type}
+                                onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            >
+                                <option value="">未選択</option>
+                                <option value="普通">普通</option>
+                                <option value="当座">当座</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">口座番号</label>
+                            <input
+                                type="text"
+                                value={formData.account_number}
+                                onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">口座名義</label>
+                            <input
+                                type="text"
+                                value={formData.account_holder_name}
+                                onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">口座名義(カナ)</label>
+                            <input
+                                type="text"
+                                value={formData.account_holder_name_kana}
+                                onChange={(e) => setFormData({ ...formData, account_holder_name_kana: e.target.value })}
+                                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
                         </div>
                     </div>
                 </div>

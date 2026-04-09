@@ -5,6 +5,7 @@ import { Download, User, Calendar, ChevronRight, ChevronLeft } from "lucide-reac
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { generatePaymentNotices } from "@/app/actions/payment";
+import { toExcl, toIncl, type TaxMode } from "@/lib/tax";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -65,7 +66,7 @@ export default function WorkerPaymentPage() {
 
         const { data: jobs, error: jobsError } = await supabase
             .from('jobs')
-            .select('id, title, reward_amount, end_time, is_flexible, work_period_end, status, job_applications(worker_id, status, workers(full_name, bank_account), actual_work_start, scheduled_work_start)')
+            .select('id, title, reward_amount, reward_tax_mode, end_time, is_flexible, work_period_end, status, job_applications(worker_id, status, workers(full_name, bank_account), actual_work_start, scheduled_work_start)')
             .eq('status', 'COMPLETED')
             .gte('end_time', queryStartDate)
             .lte('end_time', queryEndDate);
@@ -108,8 +109,10 @@ export default function WorkerPaymentPage() {
                 }
                 const data = workerMap.get(workerId)!;
                 const rewardAmount = parseFloat(job.reward_amount || 0);
-                data.total_payment += rewardAmount;
-                data.total_payment_incl += Math.round(rewardAmount * 1.1);
+                const rewardTaxMode: TaxMode = (job.reward_tax_mode as TaxMode) || "EXCL";
+                // 明細行ごとに税抜・税込を算出して加算 → 合計と一致する
+                data.total_payment += toExcl(rewardAmount, rewardTaxMode);
+                data.total_payment_incl += toIncl(rewardAmount, rewardTaxMode);
                 data.job_count += 1;
             });
         });
@@ -232,10 +235,15 @@ export default function WorkerPaymentPage() {
 
                         const effectiveDate = getEffectiveDate(job, app);
                         if (effectiveDate >= startDate && effectiveDate < endDate) {
+                            const rawAmount = parseFloat(job.reward_amount || 0);
+                            const taxMode: TaxMode = (job.reward_tax_mode as TaxMode) || "EXCL";
                             details.push({
                                 job_id: job.id,
                                 job_title: job.title,
-                                amount: parseFloat(job.reward_amount || 0),
+                                // 税抜金額で保存（明細表示の整合性のため）
+                                amount: toExcl(rawAmount, taxMode),
+                                amount_incl: toIncl(rawAmount, taxMode),
+                                tax_mode: taxMode,
                                 work_date: effectiveDate.toISOString()
                             });
                         }
@@ -477,7 +485,7 @@ export default function WorkerPaymentPage() {
                                                                         `終了日時: ${new Date(app.jobs?.end_time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`}
                                                         </div>
                                                     </div>
-                                                    <div className="font-medium text-slate-900">¥{Math.round(parseFloat(app.jobs?.reward_amount || 0)).toLocaleString()}</div>
+                                                    <div className="font-medium text-slate-900">¥{toExcl(parseFloat(app.jobs?.reward_amount || 0), (app.jobs?.reward_tax_mode as TaxMode) || "EXCL").toLocaleString()}</div>
                                                 </div>
                                             ))}
                                             <div className="flex flex-col items-end pt-4 border-t-2 border-slate-900 space-y-1">

@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/server";
+import { toIncl, type TaxMode } from "@/lib/tax";
 
 export default async function ReportsPage() {
     const supabase = await createClient();
@@ -283,8 +284,8 @@ export default async function ReportsPage() {
                                                         <div className="flex items-center justify-between p-2 bg-green-50 rounded">
                                                             <span className="text-green-700">報酬金額 (税込)</span>
                                                             <span className="text-green-900 font-bold">
-                                                                ¥{Math.round(
-                                                                    (job.reward_amount || 0) * 1.1
+                                                                ¥{toIncl(
+                                                                    job.reward_amount || 0, (job.reward_tax_mode as TaxMode) || "EXCL"
                                                                 ).toLocaleString()}
                                                             </span>
                                                         </div>

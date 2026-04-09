@@ -200,7 +200,7 @@ export default async function IndividualContractDetailPage({ params }: { params:
                                     </div>
                                     {contract.is_auto_renew && (
                                         <div className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold">
-                                            自動更新あり
+                                            自動更新あり{contract.renewal_period_months ? `（${contract.renewal_period_months}ヶ月ごと）` : ''}
                                         </div>
                                     )}
                                 </div>

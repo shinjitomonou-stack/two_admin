@@ -4,6 +4,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { Download, FileText, Building2, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toExcl, toIncl, type TaxMode } from "@/lib/tax";
 
 interface BillingData {
     client_id: string;
@@ -116,8 +117,9 @@ export default function ClientBillingPage() {
             }
             const data = clientMap.get(clientId)!;
             const billingAmount = parseFloat(job.billing_amount || 0);
-            data.job_billing += billingAmount;
-            data.job_billing_incl += Math.round(billingAmount * 1.1);
+            const billingTaxMode: TaxMode = (job.billing_tax_mode as TaxMode) || "EXCL";
+            data.job_billing += toExcl(billingAmount, billingTaxMode);
+            data.job_billing_incl += toIncl(billingAmount, billingTaxMode);
             data.job_count += 1;
         });
 
@@ -416,7 +418,7 @@ export default function ClientBillingPage() {
                                                             })()}
                                                         </div>
                                                     </div>
-                                                    <div className="font-medium">¥{Math.round(parseFloat(job.billing_amount || 0)).toLocaleString()}</div>
+                                                    <div className="font-medium">¥{toExcl(parseFloat(job.billing_amount || 0), (job.billing_tax_mode as TaxMode) || "EXCL").toLocaleString()}</div>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end pt-2 border-t border-border">

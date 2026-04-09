@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { createJob } from "@/app/actions/job";
+import { toExcl, toIncl } from "@/lib/tax";
 
 function CreateJobForm() {
     const [isLoading, setIsLoading] = useState(false);
@@ -75,22 +76,10 @@ function CreateJobForm() {
             const billingUnitPrice = parseFloat(formData.billingUnitPrice) || 0;
             const quantity = parseFloat(formData.rewardQuantity) || 0;
 
-            // Calculate reward
-            let rewardTotal;
-            if (formData.rewardTaxMode === 'INCL') {
-                // Round total first, then extract base
-                rewardTotal = Math.round(unitPrice * quantity) / 1.1;
-            } else {
-                rewardTotal = unitPrice * quantity;
-            }
-
-            // Calculate billing
-            let billingTotal;
-            if (formData.billingTaxMode === 'INCL') {
-                billingTotal = Math.round(billingUnitPrice * quantity) / 1.1;
-            } else {
-                billingTotal = billingUnitPrice * quantity;
-            }
+            // 入力された単価 × 数量をそのまま保存する。
+            // 税込/税抜の区別は rewardTaxMode / billingTaxMode に記録する。
+            const rewardTotal = unitPrice * quantity;
+            const billingTotal = billingUnitPrice * quantity;
 
             setFormData(prev => ({
                 ...prev,
@@ -134,29 +123,14 @@ function CreateJobForm() {
                 throw new Error("クライアント/パートナーを選択してください（デモ用IDは使用できません）");
             }
 
-            let rewardAmount = parseFloat(formData.reward);
+            const rewardAmount = parseFloat(formData.reward);
             if (isNaN(rewardAmount)) {
                 throw new Error("報酬金額には数値を入力してください");
             }
-            // Convert to exclusive if inclusive mode was used for fixed reward
-            if (formData.rewardType === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                rewardAmount = Math.round(rewardAmount / 1.1);
-            }
-
-            let billingAmount = formData.billingAmount ? parseFloat(formData.billingAmount) : null;
-            if (billingAmount !== null && formData.rewardType === 'FIXED' && formData.billingTaxMode === 'INCL') {
-                billingAmount = Math.round(billingAmount / 1.1);
-            }
-
-            let rewardUnitPrice = formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null;
-            if (rewardUnitPrice !== null && formData.rewardTaxMode === 'INCL') {
-                rewardUnitPrice = rewardUnitPrice / 1.1;
-            }
-
-            let billingUnitPrice = formData.rewardType === 'UNIT' && formData.billingUnitPrice ? parseFloat(formData.billingUnitPrice) : null;
-            if (billingUnitPrice !== null && formData.billingTaxMode === 'INCL') {
-                billingUnitPrice = billingUnitPrice / 1.1;
-            }
+            // 入力値をそのまま保存する。税抜/税込の区別は reward_tax_mode で記録。
+            const billingAmount = formData.billingAmount ? parseFloat(formData.billingAmount) : null;
+            const rewardUnitPrice = formData.rewardType === 'UNIT' ? parseFloat(formData.rewardUnitPrice) : null;
+            const billingUnitPrice = formData.rewardType === 'UNIT' && formData.billingUnitPrice ? parseFloat(formData.billingUnitPrice) : null;
 
             let startDateTime: Date;
             let endDateTime: Date;
@@ -512,8 +486,8 @@ function CreateJobForm() {
                                             {formData.rewardUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.rewardUnitPrice) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.rewardUnitPrice) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.rewardUnitPrice), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.rewardUnitPrice), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -552,8 +526,8 @@ function CreateJobForm() {
                                             {formData.billingUnitPrice && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billingUnitPrice) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billingUnitPrice) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.billingUnitPrice), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.billingUnitPrice), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -595,8 +569,8 @@ function CreateJobForm() {
                                         {formData.reward && (
                                             <p className="text-[10px] text-muted-foreground mt-1">
                                                 {formData.rewardTaxMode === 'INCL'
-                                                    ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward) / 1.1) * 100) / 100).toLocaleString()}`
-                                                    : `税込金額: ¥${Math.round(parseFloat(formData.reward) * 1.1).toLocaleString()}`
+                                                    ? `税抜金額: ¥${toExcl(parseFloat(formData.reward), 'INCL').toLocaleString()}`
+                                                    : `税込金額: ¥${toIncl(parseFloat(formData.reward), 'EXCL').toLocaleString()}`
                                                 }
                                             </p>
                                         )}
@@ -659,8 +633,8 @@ function CreateJobForm() {
                                     {formData.billingAmount && (
                                         <p className="text-[10px] text-muted-foreground mt-1">
                                             {formData.billingTaxMode === 'INCL'
-                                                ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billingAmount) / 1.1) * 100) / 100).toLocaleString()}`
-                                                : `税込金額: ¥${Math.round(parseFloat(formData.billingAmount) * 1.1).toLocaleString()}`
+                                                ? `税抜金額: ¥${toExcl(parseFloat(formData.billingAmount), 'INCL').toLocaleString()}`
+                                                : `税込金額: ¥${toIncl(parseFloat(formData.billingAmount), 'EXCL').toLocaleString()}`
                                             }
                                         </p>
                                     )}

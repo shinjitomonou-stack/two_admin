@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { AlertTriangle, Calendar, Briefcase, TrendingUp, Search, FileText, Settings, Clock, CheckCircle, Bell, User, JapaneseYen, ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
 import { AuthSuccessMessage } from "@/components/AuthSuccessMessage";
+import { toIncl, type TaxMode } from "@/lib/tax";
 
 export const dynamic = 'force-dynamic';
 
@@ -173,8 +174,8 @@ export default async function Home() {
 
         // Calculate tax-inclusive amount
         const baseAmount = job.reward_amount || 0;
-        // DB always stores tax-excluded amount regardless of tax mode setting in Admin
-        const taxInclusiveAmount = Math.round(baseAmount * 1.1);
+        const rewardTaxMode: TaxMode = (job.reward_tax_mode as TaxMode) || "EXCL";
+        const taxInclusiveAmount = toIncl(baseAmount, rewardTaxMode);
 
         const isCompleted = job.status === 'COMPLETED' || app.status === 'COMPLETED';
 
@@ -720,8 +721,8 @@ export default async function Home() {
                       <span className="text-xs text-slate-500">{formattedDate}完了</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-green-600 font-medium">報酬: ¥{Math.round(
-                        (job?.reward_amount || 0) * 1.1
+                      <span className="text-green-600 font-medium">報酬: ¥{toIncl(
+                        job?.reward_amount || 0, (job?.reward_tax_mode as TaxMode) || "EXCL"
                       ).toLocaleString()}</span>
                       {report ? (
                         <span className="text-blue-600">📋 報告済み</span>

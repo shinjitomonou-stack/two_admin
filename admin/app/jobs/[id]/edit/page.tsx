@@ -7,6 +7,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { updateJob } from "@/app/actions/job";
+import { toExcl, toIncl } from "@/lib/tax";
 import { toast } from "sonner";
 
 function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
@@ -91,10 +92,10 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                 const rewardTaxMode = (data.reward_tax_mode as "EXCL" | "INCL") || "EXCL";
                 const billingTaxMode = (data.billing_tax_mode as "EXCL" | "INCL") || "EXCL";
 
-                // Restore inclusive amounts back to integers for display
-                const restoreAmount = (val: number | null, mode: string) => {
+                // DBには入力値がそのまま保存されているので、そのまま表示する。
+                const restoreAmount = (val: number | null, _mode: string) => {
                     if (val === null) return "0";
-                    return mode === 'INCL' ? Math.round(val * 1.1).toString() : val.toString();
+                    return val.toString();
                 };
 
                 setFormData({
@@ -135,21 +136,9 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
             const billingUnitPrice = parseFloat(formData.billing_unit_price) || 0;
             const quantity = parseFloat(formData.reward_quantity) || 0;
 
-            // Calculate reward base for DB
-            let rewardTotal;
-            if (formData.rewardTaxMode === 'INCL') {
-                rewardTotal = Math.round(unitPrice * quantity) / 1.1;
-            } else {
-                rewardTotal = unitPrice * quantity;
-            }
-
-            // Calculate billing base for DB
-            let billingTotal;
-            if (formData.billingTaxMode === 'INCL') {
-                billingTotal = Math.round(billingUnitPrice * quantity) / 1.1;
-            } else {
-                billingTotal = billingUnitPrice * quantity;
-            }
+            // 入力値をそのまま保存する（税抜/税込の区別は tax_mode で記録）。
+            const rewardTotal = unitPrice * quantity;
+            const billingTotal = billingUnitPrice * quantity;
 
             const newReward = Math.round(rewardTotal);
             const newBilling = Math.round(billingTotal);
@@ -182,24 +171,11 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
         };
 
         try {
-            let reward_amount = Number(formData.reward_amount);
-            let billing_amount = Number(formData.billing_amount);
-            let reward_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null;
-            let billing_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null;
-
-            // Handle Tax Mode Conversions
-            if (formData.reward_type === 'FIXED' && formData.rewardTaxMode === 'INCL') {
-                reward_amount = Math.round(reward_amount / 1.1);
-            }
-            if (formData.reward_type === 'FIXED' && formData.billing_amount && formData.billingTaxMode === 'INCL') {
-                billing_amount = Math.round(billing_amount / 1.1);
-            }
-            if (formData.reward_type === 'UNIT' && reward_unit_price !== null && formData.rewardTaxMode === 'INCL') {
-                reward_unit_price = reward_unit_price / 1.1;
-            }
-            if (formData.reward_type === 'UNIT' && billing_unit_price !== null && formData.billingTaxMode === 'INCL') {
-                billing_unit_price = billing_unit_price / 1.1;
-            }
+            // 入力値をそのまま保存する（税抜/税込の区別は tax_mode で記録）。
+            const reward_amount = Number(formData.reward_amount);
+            const billing_amount = Number(formData.billing_amount);
+            const reward_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.reward_unit_price)) : null;
+            const billing_unit_price = formData.reward_type === 'UNIT' ? parseFloat(String(formData.billing_unit_price)) : null;
 
             const result = await updateJob(id!, {
                 title: formData.title,
@@ -377,8 +353,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward_unit_price) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.reward_unit_price) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.reward_unit_price), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.reward_unit_price), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -412,8 +388,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_unit_price) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billing_unit_price) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billing_unit_price) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.billing_unit_price), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.billing_unit_price), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -452,8 +428,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.reward_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.rewardTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.reward_amount) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.reward_amount) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.reward_amount), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.reward_amount), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -488,8 +464,8 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                             {parseFloat(formData.billing_amount) > 0 && (
                                                 <p className="text-[10px] text-muted-foreground mt-1">
                                                     {formData.billingTaxMode === 'INCL'
-                                                        ? `税抜金額: ¥${Math.round(Math.ceil((parseFloat(formData.billing_amount) / 1.1) * 100) / 100).toLocaleString()}`
-                                                        : `税込金額: ¥${Math.round(parseFloat(formData.billing_amount) * 1.1).toLocaleString()}`
+                                                        ? `税抜金額: ¥${toExcl(parseFloat(formData.billing_amount), 'INCL').toLocaleString()}`
+                                                        : `税込金額: ¥${toIncl(parseFloat(formData.billing_amount), 'EXCL').toLocaleString()}`
                                                     }
                                                 </p>
                                             )}
@@ -534,7 +510,7 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                 {formData.rewardTaxMode === 'INCL' && (
                                     <div className="flex justify-between text-[11px] text-muted-foreground">
                                         <span>内 税抜額:</span>
-                                        <span>¥{(parseInt(formData.reward_amount) * parseInt(formData.max_workers)).toLocaleString()}</span>
+                                        <span>¥{(toExcl(parseFloat(formData.reward_amount) || 0, 'INCL') * (parseInt(formData.max_workers) || 0)).toLocaleString()}</span>
                                     </div>
                                 )}
 
@@ -555,18 +531,25 @@ function EditJobForm({ params }: { params: Promise<{ id: string }> }) {
                                         {formData.billingTaxMode === 'INCL' && (
                                             <div className="flex justify-between text-[11px] text-muted-foreground">
                                                 <span>内 税抜額:</span>
-                                                <span>¥{(parseInt(formData.billing_amount) * parseInt(formData.max_workers)).toLocaleString()}</span>
+                                                <span>¥{(toExcl(parseFloat(formData.billing_amount) || 0, 'INCL') * (parseInt(formData.max_workers) || 0)).toLocaleString()}</span>
                                             </div>
                                         )}
 
-                                        <div className="flex justify-between pt-2 border-t border-slate-300">
-                                            <span className="text-slate-600 font-medium">粗利 (税抜ベース):</span>
-                                            <span className="font-semibold text-green-600">
-                                                ¥{((parseInt(formData.billing_amount) - parseInt(formData.reward_amount)) * parseInt(formData.max_workers)).toLocaleString()}
-                                                {' '}
-                                                ({Math.round(((parseInt(formData.billing_amount) - parseInt(formData.reward_amount)) / parseInt(formData.billing_amount)) * 100)}%)
-                                            </span>
-                                        </div>
+                                        {(() => {
+                                            const rewardExcl = toExcl(parseFloat(formData.reward_amount) || 0, formData.rewardTaxMode);
+                                            const billingExcl = toExcl(parseFloat(formData.billing_amount) || 0, formData.billingTaxMode);
+                                            const workers = parseInt(formData.max_workers) || 0;
+                                            const margin = (billingExcl - rewardExcl) * workers;
+                                            const marginRate = billingExcl > 0 ? Math.round(((billingExcl - rewardExcl) / billingExcl) * 100) : 0;
+                                            return (
+                                                <div className="flex justify-between pt-2 border-t border-slate-300">
+                                                    <span className="text-slate-600 font-medium">粗利 (税抜ベース):</span>
+                                                    <span className="font-semibold text-green-600">
+                                                        ¥{margin.toLocaleString()} ({marginRate}%)
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </>
                                 )}
                             </div>

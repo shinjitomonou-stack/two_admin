@@ -109,7 +109,9 @@ export default async function ClientContractDetailPage({ params }: { params: Pro
                                     </span>
                                 </div>
                                 {contract.auto_renew && (
-                                    <p className="text-xs text-green-600 mt-1">自動更新あり</p>
+                                    <p className="text-xs text-green-600 mt-1">
+                                        自動更新あり{contract.renewal_period_months ? `（${contract.renewal_period_months}ヶ月ごと）` : ''}
+                                    </p>
                                 )}
                             </div>
 

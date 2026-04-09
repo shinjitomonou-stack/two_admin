@@ -5,28 +5,14 @@ import { sendSlackNotification } from "@/lib/slack";
 export const dynamic = "force-dynamic";
 
 /**
- * Calculate new end_date based on billing_cycle.
+ * Calculate new end_date by adding N months.
  * Handles month-end clamping (e.g., 1/31 + 1 month = 2/28).
  */
-function calculateNewEndDate(currentEndDate: string, billingCycle: string): string {
+function calculateNewEndDate(currentEndDate: string, months: number): string {
   const [year, month, day] = currentEndDate.split("-").map(Number);
 
   let newYear = year;
-  let newMonth = month;
-
-  switch (billingCycle) {
-    case "MONTHLY":
-      newMonth += 1;
-      break;
-    case "QUARTERLY":
-      newMonth += 3;
-      break;
-    case "YEARLY":
-      newYear += 1;
-      break;
-    default:
-      throw new Error(`Unsupported billing cycle: ${billingCycle}`);
-  }
+  let newMonth = month + months;
 
   // Handle month overflow
   while (newMonth > 12) {
@@ -43,6 +29,22 @@ function calculateNewEndDate(currentEndDate: string, billingCycle: string): stri
   const d = String(clampedDay).padStart(2, "0");
 
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * Get renewal period in months.
+ * Uses renewal_period_months if set, otherwise falls back to billing_cycle.
+ */
+function getRenewalMonths(contract: { renewal_period_months?: number | null; billing_cycle?: string }): number | null {
+  if (contract.renewal_period_months && contract.renewal_period_months > 0) {
+    return contract.renewal_period_months;
+  }
+  switch (contract.billing_cycle) {
+    case "MONTHLY": return 1;
+    case "QUARTERLY": return 3;
+    case "YEARLY": return 12;
+    default: return null;
+  }
 }
 
 /**
@@ -167,17 +169,19 @@ export async function GET(request: Request) {
     // client_contracts
     const { data: basicToRenew } = await supabase
       .from("client_contracts")
-      .select("id, end_date, billing_cycle, title, clients(name)")
+      .select("id, end_date, billing_cycle, renewal_period_months, title, clients(name)")
       .lte("end_date", today)
       .eq("auto_renew", true)
       .eq("status", "ACTIVE")
-      .not("end_date", "is", null)
-      .in("billing_cycle", ["MONTHLY", "QUARTERLY", "YEARLY"]);
+      .not("end_date", "is", null);
 
     for (const c of basicToRenew || []) {
       if (alreadyRenewed.has(`client_contracts:${c.id}`)) continue;
 
-      const newEndDate = calculateNewEndDate(c.end_date, c.billing_cycle);
+      const months = getRenewalMonths(c);
+      if (!months) continue;
+
+      const newEndDate = calculateNewEndDate(c.end_date, months);
       const { error } = await supabase
         .from("client_contracts")
         .update({ end_date: newEndDate })
@@ -193,7 +197,7 @@ export async function GET(request: Request) {
         contract_id: c.id,
         previous_end_date: c.end_date,
         new_end_date: newEndDate,
-        billing_cycle: c.billing_cycle,
+        billing_cycle: c.billing_cycle || `${months}M`,
         renewal_type: "AUTO_RENEWED",
       });
 
@@ -203,17 +207,19 @@ export async function GET(request: Request) {
     // client_job_contracts
     const { data: individualToRenew } = await supabase
       .from("client_job_contracts")
-      .select("id, end_date, billing_cycle, title, clients(name)")
+      .select("id, end_date, billing_cycle, renewal_period_months, title, clients(name)")
       .lte("end_date", today)
       .eq("is_auto_renew", true)
       .eq("status", "ACTIVE")
-      .not("end_date", "is", null)
-      .in("billing_cycle", ["MONTHLY", "QUARTERLY", "YEARLY"]);
+      .not("end_date", "is", null);
 
     for (const c of individualToRenew || []) {
       if (alreadyRenewed.has(`client_job_contracts:${c.id}`)) continue;
 
-      const newEndDate = calculateNewEndDate(c.end_date, c.billing_cycle);
+      const months = getRenewalMonths(c);
+      if (!months) continue;
+
+      const newEndDate = calculateNewEndDate(c.end_date, months);
       const { error } = await supabase
         .from("client_job_contracts")
         .update({ end_date: newEndDate })
@@ -229,7 +235,7 @@ export async function GET(request: Request) {
         contract_id: c.id,
         previous_end_date: c.end_date,
         new_end_date: newEndDate,
-        billing_cycle: c.billing_cycle,
+        billing_cycle: c.billing_cycle || `${months}M`,
         renewal_type: "AUTO_RENEWED",
       });
 

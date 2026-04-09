@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatDate, formatTime } from "@/lib/utils";
+import { toExcl, toIncl, type TaxMode } from "@/lib/tax";
 import { ApplicationList } from "@/components/ApplicationList";
 import { JobStatusSelect } from "@/components/JobStatusSelect";
 import { LinkExistingContractButton } from "@/components/LinkExistingContractButton";
@@ -161,25 +162,37 @@ export default async function JobDetailPage({
 
                                 <div>
                                     <label className="text-xs font-medium text-muted-foreground">報酬</label>
-                                    <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
-                                        <JapaneseYen className="w-4 h-4 text-slate-400" />
-                                        ¥{Math.round(job.reward_amount).toLocaleString()}
-                                        <span className="text-xs font-normal text-muted-foreground ml-1">
-                                            (税込: ¥{Math.round(job.reward_amount * 1.1).toLocaleString()})
-                                        </span>
-                                    </div>
+                                    {(() => {
+                                        const mode: TaxMode = job.reward_tax_mode || "EXCL";
+                                        const amt = job.reward_amount || 0;
+                                        return (
+                                            <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
+                                                <JapaneseYen className="w-4 h-4 text-slate-400" />
+                                                ¥{toExcl(amt, mode).toLocaleString()}
+                                                <span className="text-xs font-normal text-muted-foreground ml-1">
+                                                    (税込: ¥{toIncl(amt, mode).toLocaleString()})
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {job.billing_amount && (
                                     <div>
                                         <label className="text-xs font-medium text-muted-foreground">請求金額</label>
-                                        <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
-                                            <Banknote className="w-4 h-4 text-slate-400" />
-                                            ¥{Math.round(job.billing_amount).toLocaleString()}
-                                            <span className="text-xs font-normal text-muted-foreground ml-1">
-                                                (税込: ¥{Math.round(job.billing_amount * 1.1).toLocaleString()})
-                                            </span>
-                                        </div>
+                                        {(() => {
+                                            const mode: TaxMode = job.billing_tax_mode || "EXCL";
+                                            const amt = job.billing_amount || 0;
+                                            return (
+                                                <div className="flex items-center gap-2 text-sm mt-1 font-bold text-slate-900">
+                                                    <Banknote className="w-4 h-4 text-slate-400" />
+                                                    ¥{toExcl(amt, mode).toLocaleString()}
+                                                    <span className="text-xs font-normal text-muted-foreground ml-1">
+                                                        (税込: ¥{toIncl(amt, mode).toLocaleString()})
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
 
